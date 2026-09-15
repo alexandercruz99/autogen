@@ -25,21 +25,70 @@ def setup_logging(verbose: bool = False) -> None:
 def build_runtime(config_path: str | None = None):
     config = load_config(config_path)
     store = Store(config.storage.sqlite_path)
-    # Sync mode/budget into state on boot without enabling live.
+    # Sync mode/budget into state on boot. Live requires config.live.enabled or prior ack.
     state = store.get_state()
-    updates = {
-        "mode": "paper" if (config.mode == "live" and not state.live_enabled) else config.mode,
+    from kalshi_bot.data.store import PositionRecord, utcnow
+
+    live_ok = bool(config.live.enabled or state.live_enabled)
+    if config.mode == "live" and live_ok:
+        mode = "live"
+        live_enabled = True
+    elif config.mode == "live" and not live_ok:
+        mode = "paper"
+        live_enabled = False
+    else:
+        mode = config.mode
+        live_enabled = False
+
+    updates: dict = {
+        "mode": mode,
+        "live_enabled": live_enabled,
         "trading_budget": str(config.trading.budget_dollars),
     }
+    if live_enabled and mode == "live":
+        updates["kill_switch"] = False
+        updates["pause_buying"] = False
+        if not state.live_ack_at:
+            updates["live_ack_at"] = utcnow()
+        # Archive paper positions so they do not affect live risk accounting.
+        for p in store.list_positions(status="open"):
+            if p.get("mode") != "paper":
+                continue
+            store.save_position(
+                PositionRecord(
+                    id=p["id"],
+                    opened_at=p["opened_at"],
+                    mode="paper",
+                    kind=p.get("kind") or "individual",
+                    market_ticker=p["market_ticker"],
+                    event_ticker=p.get("event_ticker") or "",
+                    side=p["side"],
+                    quantity=p["quantity"],
+                    avg_price=p["avg_price"],
+                    fees_paid=p.get("fees_paid") or "0",
+                    status="closed",
+                    settlement_value=p.get("settlement_value") or "",
+                    realized_pnl=p.get("realized_pnl") or "",
+                    correlation_keys_json=p.get("correlation_keys_json") or "[]",
+                    details_json=p.get("details_json") or "{}",
+                )
+            )
+        store.audit(
+            "live_boot",
+            f"live trading armed; budget={config.trading.budget_dollars} "
+            f"max_loss/trade={config.trading.max_loss_per_trade_dollars} "
+            f"target_trade={config.trading.target_trade_dollars}",
+            level="warning",
+        )
     if not state.daily_pnl_date:
-        from kalshi_bot.data.store import utcnow
-
         updates["daily_pnl_date"] = utcnow()[:10]
         updates["paper_cash"] = str(config.trading.budget_dollars)
         updates["peak_equity"] = str(config.trading.budget_dollars)
     store.update_state(**updates)
     client = KalshiClient(config.api)
     pipeline = TradingPipeline(config, store, client)
+    if live_enabled and mode == "live":
+        pipeline.sync_live_cash()
     loop = BotLoop(pipeline, store, config.scan.scan_interval_seconds)
     return config, store, client, pipeline, loop
 

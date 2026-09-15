@@ -1,7 +1,7 @@
 # Example configuration — copy to config.yaml and fill in local paths.
 # NEVER put private keys or API secrets in this file or commit them.
 
-mode: paper  # research | paper | live
+mode: paper  # research | paper | live — live also requires live.enabled: true
 environment: production  # production | demo
 
 api:
@@ -40,19 +40,20 @@ scan:
   max_data_age_seconds: 900
 
 trading:
-  budget_dollars: 100.00          # Cap on deployable capital; deposits do NOT raise this
-  min_cash_reserve_dollars: 25.00
-  max_loss_per_trade_dollars: 10.00
-  max_event_exposure_dollars: 25.00
-  max_portfolio_exposure_dollars: 75.00
-  max_combo_exposure_dollars: 20.00
-  max_daily_loss_dollars: 20.00
-  max_drawdown_dollars: 40.00
+  budget_dollars: 25.00           # Cap on deployable capital; deposits do NOT raise this
+  min_cash_reserve_dollars: 0.00
+  max_loss_per_trade_dollars: 5.00
+  max_event_exposure_dollars: 5.00
+  max_portfolio_exposure_dollars: 25.00
+  max_combo_exposure_dollars: 5.00
+  max_daily_loss_dollars: 25.00
+  max_drawdown_dollars: 25.00
   min_net_edge: 0.05              # Minimum EV after fees (dollars per contract)
   uncertainty_buffer: 0.03        # Extra edge required vs conservative probability
   max_model_market_divergence: 0.25  # Skip unvalidated models that diverge this much from mid
   default_contract_quantity: "1.00"
-  max_contracts_per_order: "5.00"
+  max_contracts_per_order: "500.00"
+  target_trade_dollars: 5.00      # Aim ~$5 notional per individual trade
   hold_to_settlement: true
   fee_multiplier: 1.0             # Series M in fee formula; override per series when known
   assume_taker: true              # Conservative: assume immediate match pays taker fee
@@ -108,6 +109,6 @@ alerts:
   webhook_url: ""
 
 live:
-  # Live trading is NEVER auto-enabled. Set enabled via dashboard after validation.
+  # Also require mode: live. Prefer dashboard enablement; set true only intentionally.
   enabled: false
   require_budget_and_limits: true

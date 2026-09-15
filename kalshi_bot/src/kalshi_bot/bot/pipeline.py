@@ -93,12 +93,33 @@ class TradingPipeline:
             "configs_tried": self.model_configs_tried,
         }
 
+    def sync_live_cash(self) -> str | None:
+        """Refresh free-cash snapshot from Kalshi when live trading is on."""
+        state = self.store.get_state()
+        if state.mode != "live" or not state.live_enabled:
+            return None
+        try:
+            bal = self.client.get_balance()
+            dollars = bal.get("balance_dollars")
+            if dollars is None and bal.get("balance") is not None:
+                # Legacy cent integer
+                dollars = str(D(bal["balance"]) / D(100))
+            if dollars is None:
+                return None
+            self.store.update_state(paper_cash=str(D(dollars)))
+            return str(D(dollars))
+        except Exception as exc:
+            self.store.audit("live_balance_error", str(exc), level="warning")
+            return None
+
     def run_scan_once(self) -> dict[str, Any]:
         health = self.health_check()
         if not health.get("ok"):
             self.store.update_state(last_scan_ok=False, last_scan_at=utcnow(), last_error=str(health))
             self.store.audit("scan_abort", "exchange/data health check failed", level="error", details=health)
             return {"ok": False, "health": health, "opportunities": 0, "orders": 0}
+
+        self.sync_live_cash()
 
         # Reconcile any exchange-settled markets before new risk
         settle_result = self.settlement.reconcile_open_positions()
@@ -203,7 +224,6 @@ class TradingPipeline:
                 )
 
                 if ev.qualifies and ev is best and self.store.get_state().mode in ("paper", "live"):
-                    # Never live in this agent run — force paper path if live somehow set without ack
                     mode = self.store.get_state().mode
                     if mode == "live" and not self.store.get_state().live_enabled:
                         mode = "paper"
@@ -218,7 +238,7 @@ class TradingPipeline:
                         ev=ev,
                         opportunity_id=opp_id,
                         correlation_keys=[c for c in corr if c and not c.endswith(":None")],
-                        mode="paper" if mode != "live" else "paper",  # hard paper for this verification run
+                        mode=mode,
                     )
                     if order and order.status in ("filled", "resting", "partial", "submitted"):
                         orders_placed += 1

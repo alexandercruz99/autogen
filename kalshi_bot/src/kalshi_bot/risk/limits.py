@@ -26,8 +26,11 @@ class RiskManager:
 
     def portfolio_snapshot(self) -> dict[str, Decimal]:
         state = self.store.get_state()
-        open_positions = self.store.list_positions(status="open")
-        open_orders = self.store.list_open_orders()
+        mode = state.mode
+        open_positions = [
+            p for p in self.store.list_positions(status="open") if p.get("mode") == mode
+        ]
+        open_orders = [o for o in self.store.list_open_orders() if o.get("mode") == mode]
         reserved = self.store.active_reservations_total()
 
         position_exposure = ZERO
@@ -44,8 +47,8 @@ class RiskManager:
         for o in open_orders:
             order_exposure += D(o["limit_price"]) * D(o["quantity"])
 
-        cash = D(state.paper_cash) if state.mode != "live" else D(state.paper_cash)
-        # In live mode paper_cash field stores last known free cash snapshot for display.
+        # paper_cash holds paper bankroll, or last synced live free cash in live mode.
+        cash = D(state.paper_cash)
         budget = D(state.trading_budget)
         realized = D(state.realized_pnl)
         daily = D(state.daily_realized_pnl)
@@ -116,7 +119,9 @@ class RiskManager:
 
         # Correlated group: treat shared keys as event-like caps (same limit).
         if correlation_keys:
-            open_positions = self.store.list_positions(status="open")
+            open_positions = [
+                p for p in self.store.list_positions(status="open") if p.get("mode") == state.mode
+            ]
             for key in correlation_keys:
                 grouped = ZERO
                 for p in open_positions:

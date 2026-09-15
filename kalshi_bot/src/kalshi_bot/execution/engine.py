@@ -211,8 +211,12 @@ class ExecutionEngine:
             order.fees_paid = str(resp["average_fee_paid"])
         self.store.save_order(order)
         self.store.audit("live_order", f"submitted {order.client_order_id}", details={"resp_keys": list(resp.keys())})
-        if order.status == "filled":
-            self.store.release_reservation(order.reservation_id, "consumed")
+        if order.status in ("resting", "partial"):
+            # Exposure tracked via open order; drop reservation to avoid double-count.
+            self.store.release_reservation(order.reservation_id, "linked_order")
+        if order.status in ("filled", "partial") and D(order.filled_quantity) > ZERO:
+            if order.status == "filled":
+                self.store.release_reservation(order.reservation_id, "consumed")
             pos = PositionRecord(
                 id=str(uuid.uuid4()),
                 opened_at=utcnow(),

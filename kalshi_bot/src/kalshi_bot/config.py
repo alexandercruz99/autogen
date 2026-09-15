@@ -50,6 +50,8 @@ class TradingConfig(BaseModel):
     max_model_market_divergence: Decimal = Decimal("0.25")
     default_contract_quantity: Decimal = Decimal("1.00")
     max_contracts_per_order: Decimal = Decimal("5.00")
+    # Target capital per individual trade (price×qty + fees), capped by max_loss_per_trade.
+    target_trade_dollars: Decimal = Decimal("0")
     hold_to_settlement: bool = True
     fee_multiplier: Decimal = Decimal("1.0")
     assume_taker: bool = True
@@ -69,6 +71,7 @@ class TradingConfig(BaseModel):
         "max_model_market_divergence",
         "default_contract_quantity",
         "max_contracts_per_order",
+        "target_trade_dollars",
         "fee_multiplier",
         "balance_precision",
         mode="before",

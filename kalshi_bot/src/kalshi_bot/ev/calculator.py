@@ -8,7 +8,7 @@ from kalshi_bot.api.fees import estimate_net_fee, fee_per_contract
 from kalshi_bot.api.orderbook import ExecutableBook, market_implied_yes_prob
 from kalshi_bot.config import TradingConfig
 from kalshi_bot.models.base import Prediction
-from kalshi_bot.money import D, ONE, ZERO, clamp01, fp_count, fp_price
+from kalshi_bot.money import D, ONE, ZERO, clamp01, floor_to, fp_count, fp_price
 
 
 Side = Literal["yes", "no"]
@@ -47,13 +47,31 @@ def evaluate_binary_contract(
     EV_no  = (1-p) - a_no - c_no
     Uses conservative probability and uncertainty buffer for qualification.
     """
-    qty = fp_count(quantity or config.default_contract_quantity)
-    qty = min(qty, fp_count(config.max_contracts_per_order))
+    base_qty = fp_count(quantity or config.default_contract_quantity)
+    base_qty = min(base_qty, fp_count(config.max_contracts_per_order))
     results: list[EvResult] = []
 
     for side in ("yes", "no"):
-        results.append(_eval_side(side, prediction, book, config, qty))
+        results.append(_eval_side(side, prediction, book, config, base_qty))
     return results
+
+
+def _target_quantity(ask: Decimal, config: TradingConfig, base_qty: Decimal) -> Decimal:
+    """Size toward target_trade_dollars (and max_loss), never above max_contracts."""
+    qty = base_qty
+    target = D(config.target_trade_dollars)
+    if target > ZERO and ask > ZERO:
+        # Leave a small fee cushion so capital ≈ target.
+        raw = target / ask
+        qty = fp_count(min(raw, D(config.max_contracts_per_order)))
+        loss_cap = D(config.max_loss_per_trade_dollars)
+        if ask > ZERO and loss_cap > ZERO:
+            by_loss = fp_count(floor_to(loss_cap / ask, D("0.01")))
+            if by_loss > ZERO:
+                qty = min(qty, by_loss)
+        if qty < D("0.01"):
+            qty = min(base_qty, fp_count(config.max_contracts_per_order))
+    return qty
 
 
 def _eval_side(
@@ -61,11 +79,12 @@ def _eval_side(
     prediction: Prediction,
     book: ExecutableBook,
     config: TradingConfig,
-    qty: Decimal,
+    base_qty: Decimal,
 ) -> EvResult:
     if side == "yes":
         ask = book.best_yes_ask
         fillable, vwap = (ZERO, ZERO)
+        qty = _target_quantity(ask, config, base_qty) if ask is not None else base_qty
         if ask is not None:
             # Cap at ask + small slip only within available depth at/under a max limit later.
             fillable, vwap = book.fillable_yes(qty, max_price=ask)
@@ -76,6 +95,7 @@ def _eval_side(
     else:
         ask = book.best_no_ask
         fillable, vwap = (ZERO, ZERO)
+        qty = _target_quantity(ask, config, base_qty) if ask is not None else base_qty
         if ask is not None:
             fillable, vwap = book.fillable_no(qty, max_price=ask)
         p = prediction.p_no

@@ -17,10 +17,19 @@ Evidence-based Kalshi market scanner, probability models, EV/risk checks, paper 
 
 ### Honest limitations
 
-- The weather forecast-error σ is a **configurable prior**, not a walk-forward calibrated edge. Do not treat paper fills as proof of live profitability.
-- Sports / player props / economics models are **not implemented** — markets in those categories are listed as skipped with a reason.
-- Combo joint probabilities for dependent legs (same game, related props) are **skipped** unless a validated dependence model is supplied. Independence across distinct weather cities is optional and **off by default**.
-- Demo environment credentials are separate from production. Demo fills ≠ live edge.
+- Daily weather markets settle on the **NWS Daily Climate Report (CLI)**, not Weather Company hourly products. Forecasts are still grid/Open-Meteo proxies until residual models are decision-time validated.
+- Empirical residual fits may use **retrospective** Open-Meteo↔CLI joins while the decision-time NWS archive is still collecting — labeled in validation evidence.
+- Trading profitability vs executable books is **unvalidated**. Do not treat paper/live fills as proof of edge.
+- Sports / player props models are **not implemented**.
+- Combo joint probabilities for dependent legs are **skipped** unless a validated dependence model is supplied.
+
+### Weather archive commands
+
+```bash
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-collect
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-train
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-validate
+```
 
 ## Docs verified for this build
 

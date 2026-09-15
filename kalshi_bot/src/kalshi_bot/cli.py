@@ -89,6 +89,9 @@ def build_runtime(config_path: str | None = None):
     pipeline = TradingPipeline(config, store, client)
     if live_enabled and mode == "live":
         pipeline.sync_live_cash()
+        # Reset peak to live equity so prior paper peak cannot trip drawdown.
+        st = store.get_state()
+        store.update_state(peak_equity=str(st.paper_cash))
     loop = BotLoop(pipeline, store, config.scan.scan_interval_seconds)
     return config, store, client, pipeline, loop
 

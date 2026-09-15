@@ -43,9 +43,20 @@ PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-validate
 
 Archive DB: `data/weather_archive.db` (gitignored pattern under `data/*.db`).
 
+### Observation-driven engine (NYC)
+
+Independent module: `docs/OBS_ENGINE.md`. Learns remaining rise from ASOS/METAR features + GHCND labels.
+NWS forecasts are benchmarks only. **Live blocked** (`obs_engine_live_eligible: false`).
+
+```bash
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-train
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-validate
+```
+
 ### Legacy model
 
-`weather.high_temp.v0.3-*` remains as fallback. Prefer `models.weather.use_ai_forecaster: true`.
+`weather.high_temp.v0.3-*` remains as fallback. Prefer `models.weather.use_ai_forecaster: true`
+for non-NYC cities; NYC daily-max resolves to obs engine when `obs_engine_enabled: true`.
 
 ## Combos
 

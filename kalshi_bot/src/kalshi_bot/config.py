@@ -98,6 +98,12 @@ class WeatherModelConfig(BaseModel):
     enabled: bool = True
     # Prefer CLI-aligned AI forecaster when true; legacy Gaussian kept as fallback registry entry.
     use_ai_forecaster: bool = True
+    # Observation-driven NYC engine (research/paper). Registered ahead of AI for NYC when enabled.
+    obs_engine_enabled: bool = True
+    # Hard gate: even with live account + live.enabled, obs engine cannot trade until this is true
+    # AND promotion metrics pass. Default false — existing live connection does not authorize it.
+    obs_engine_live_eligible: bool = False
+    obs_engine_data_dir: str = "data/obs_engine"
     archive_path: str = "data/weather_archive.db"
     forecast_error_sigma_f: float = 3.0
     min_sigma_f: float = 2.0

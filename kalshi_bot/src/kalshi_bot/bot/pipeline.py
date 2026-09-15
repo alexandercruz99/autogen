@@ -23,6 +23,7 @@ from kalshi_bot.models.economics.cpi import CpiMomModel
 from kalshi_bot.models.registry import ModelRegistry
 from kalshi_bot.models.weather.ai_forecaster import AIWeatherForecaster
 from kalshi_bot.models.weather.high_temp import WeatherHighTempModel
+from kalshi_bot.models.weather.obs_engine.forecaster import ObsDrivenNycForecaster
 from kalshi_bot.money import D
 
 logger = logging.getLogger(__name__)
@@ -35,9 +36,13 @@ class TradingPipeline:
         self.client = client
         self.scanner = MarketScanner(client, store, config.scan)
         self.registry = ModelRegistry()
+        self.obs_weather = ObsDrivenNycForecaster(config.models.weather, store=store)
         self.ai_weather = AIWeatherForecaster(config.models.weather, store=store)
         self.weather_model = WeatherHighTempModel(config.models.weather, store=store)
         self.cpi_model = CpiMomModel(store=store)
+        # Obs engine first so NYC daily-max resolves to observation-driven research model.
+        if config.models.weather.obs_engine_enabled:
+            self.registry.register(self.obs_weather)
         if config.models.weather.use_ai_forecaster:
             self.registry.register(self.ai_weather)
         self.registry.register(self.weather_model)
@@ -51,12 +56,17 @@ class TradingPipeline:
             hvm=True,
         )
         self.settlement = SettlementReconciler(client, store)
-        self.model_configs_tried: list[str] = [
-            self.ai_weather.version if config.models.weather.use_ai_forecaster else self.weather_model.version,
-            self.cpi_model.version,
-        ]
+        tried = []
+        if config.models.weather.obs_engine_enabled:
+            tried.append(self.obs_weather.version)
+        tried.append(
+            self.ai_weather.version if config.models.weather.use_ai_forecaster else self.weather_model.version
+        )
+        tried.append(self.cpi_model.version)
+        self.model_configs_tried: list[str] = tried
 
     def close(self) -> None:
+        self.obs_weather.close()
         self.ai_weather.close()
         self.weather_model.close()
         self.cpi_model.close()
@@ -77,22 +87,32 @@ class TradingPipeline:
             weather_val = self.ai_weather.archive.latest_validation()
         except Exception:
             weather_val = None
+        obs_live = bool(getattr(self.config.models.weather, "obs_engine_live_eligible", False))
+        paper_only = [
+            {
+                "model": self.obs_weather.version,
+                "reason": (
+                    "Observation-driven NYC remaining-rise model. "
+                    "Live blocked until obs_engine_live_eligible=true AND promotion metrics pass. "
+                    f"config.obs_engine_live_eligible={obs_live}"
+                ),
+            },
+            {
+                "model": self.ai_weather.version,
+                "reason": (
+                    "CLI-aligned target; empirical residuals when trained. "
+                    "Need holdout ≥100 Kalshi settlements + executable-price paper PnL"
+                ),
+            },
+            {
+                "model": self.cpi_model.version,
+                "reason": "Climatology prior only; holdout n insufficient for promotion",
+            },
+        ]
         return {
             "promotion_criteria": "docs/PROMOTION_CRITERIA.md",
             "live_eligible_strategies": [],
-            "paper_only": [
-                {
-                    "model": self.ai_weather.version,
-                    "reason": (
-                        "CLI-aligned target; empirical residuals when trained. "
-                        "Need holdout ≥100 Kalshi settlements + executable-price paper PnL"
-                    ),
-                },
-                {
-                    "model": self.cpi_model.version,
-                    "reason": "Climatology prior only; holdout n insufficient for promotion",
-                },
-            ],
+            "paper_only": paper_only,
             "blocked": [
                 {
                     "strategy": "sports/props",
@@ -101,6 +121,13 @@ class TradingPipeline:
                 {
                     "strategy": "weather/CPI Kalshi combos",
                     "missing": "Events not in open MVE associated_events (API-verified)",
+                },
+                {
+                    "strategy": "obs_engine live execution",
+                    "missing": (
+                        "Explicit obs_engine_live_eligible + multi-season holdout proof vs NWS benchmark "
+                        "+ forward paper PnL with executable prices"
+                    ),
                 },
             ],
             "configs_tried": self.model_configs_tried,
@@ -221,7 +248,8 @@ class TradingPipeline:
                             "best_for_market": ev is best,
                             "feature_times": feature_times,
                             "decision_time": pred.as_of.isoformat(),
-                            "live_eligible": False,
+                            "live_eligible": bool((pred.details or {}).get("model_live_eligible", False)),
+                            "engine": (pred.details or {}).get("engine"),
                         }
                     ),
                 )
@@ -240,6 +268,16 @@ class TradingPipeline:
                 if ev.qualifies and ev is best and self.store.get_state().mode in ("paper", "live"):
                     mode = self.store.get_state().mode
                     if mode == "live" and not self.store.get_state().live_enabled:
+                        mode = "paper"
+                    # Model-level live gate: research engines (obs NYC) cannot use live account
+                    # merely because live.enabled is true. Require details.model_live_eligible.
+                    model_live_ok = bool((pred.details or {}).get("model_live_eligible", True))
+                    if mode == "live" and not model_live_ok:
+                        self.store.audit(
+                            "model_live_block",
+                            f"{pred.model_version} not model_live_eligible — paper only",
+                            details={"ticker": ticker, "engine": (pred.details or {}).get("engine")},
+                        )
                         mode = "paper"
                     city = (pred.details or {}).get("city")
                     corr = [

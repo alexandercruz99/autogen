@@ -65,6 +65,10 @@ models:
   weather:
     enabled: true
     use_ai_forecaster: true
+    # Observation-driven NYC Central Park engine — research/paper until promotion.
+    obs_engine_enabled: true
+    obs_engine_live_eligible: false   # MUST stay false until docs/PROMOTION_CRITERIA met
+    obs_engine_data_dir: data/obs_engine
     archive_path: data/weather_archive.db
     # Legacy Gaussian σ (fallback model only)
     forecast_error_sigma_f: 3.0

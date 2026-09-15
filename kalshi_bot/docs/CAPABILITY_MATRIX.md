@@ -33,6 +33,7 @@
 | --- | --- | --- | --- | --- |
 | Market discovery | implemented_tested, connected_real_data | `discovery/scanner.py`, `api/client.py` | `tests/test_scanner_smoke.py` | DB markets/snapshots from open series |
 | Weather model | implemented_tested, connected_real_data, forward_paper_obs | `models/weather/*` | parse + leakage + settlement + AI guards | **Daily max target = NWS CLI** (not Weather Co hourly). AI module `weather.ai_cli.v1.0-collecting` with empirical residuals; **not** statistically_validated / **not** live_eligible; decision-time forecast archive still thin |
+| Obs-driven NYC engine | implemented_tested (unit), research/paper | `models/weather/obs_engine/*` | `tests/test_obs_engine.py` | Learns from ASOS/METAR + GHCND; NWS forecasts = benchmarks only; **live blocked** (`obs_engine_live_eligible=false`); trading PnL **unvalidated**; multi-season NWS head-to-head still incomplete |
 | Economics CPI model | implemented_tested, connected_real_data | `models/economics/cpi.py` | CPI parse + BLS mom tests | Prior from BLS history; **not statistically_validated**; **not live_eligible** |
 | Sports / props | blocked | — | — | Need licensed lineup/odds feeds; no free reliable end-to-end source wired |
 | Individual EV/fees/book | implemented_tested, connected_real_data | `api/orderbook.py`, `api/fees.py`, `ev/calculator.py` | fees, orderbook, EV tests | — |

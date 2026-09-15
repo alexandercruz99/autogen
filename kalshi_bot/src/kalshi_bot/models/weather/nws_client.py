@@ -19,6 +19,7 @@ class NWSClient:
         self._client = httpx.Client(
             timeout=timeout,
             headers={"User-Agent": USER_AGENT, "Accept": "application/geo+json"},
+            follow_redirects=True,
         )
 
     def close(self) -> None:

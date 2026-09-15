@@ -111,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-collect", help="Collect NWS CLI outcomes + forecast snapshots into archive")
     sub.add_parser("weather-train", help="Train station empirical/quantile models from archive")
     sub.add_parser("weather-validate", help="Walk-forward style validation report (honest gaps)")
+    sub.add_parser("weather-obs-train", help="Train observation-driven NYC remaining-rise model")
+    sub.add_parser("weather-obs-validate", help="Summarize obs-engine holdout metrics (research only)")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -123,15 +125,34 @@ def main(argv: list[str] | None = None) -> int:
         cfg_path = "config.example.yaml"
 
     # Weather ops can run without starting the trading loop / live boot side effects.
-    if args.cmd in ("weather-collect", "weather-train", "weather-validate"):
+    weather_ops = (
+        "weather-collect",
+        "weather-train",
+        "weather-validate",
+        "weather-obs-train",
+        "weather-obs-validate",
+    )
+    if args.cmd in weather_ops:
         config = load_config(cfg_path)
-        from kalshi_bot.models.weather.ops import weather_collect, weather_train, weather_validate
+        from kalshi_bot.models.weather.ops import (
+            weather_collect,
+            weather_obs_train,
+            weather_obs_validate,
+            weather_train,
+            weather_validate,
+        )
 
         if args.cmd == "weather-collect":
             print(json.dumps(weather_collect(config), indent=2, default=str))
             return 0
         if args.cmd == "weather-train":
             print(json.dumps(weather_train(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-obs-train":
+            print(json.dumps(weather_obs_train(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-obs-validate":
+            print(json.dumps(weather_obs_validate(config), indent=2, default=str))
             return 0
         print(json.dumps(weather_validate(config), indent=2, default=str))
         return 0

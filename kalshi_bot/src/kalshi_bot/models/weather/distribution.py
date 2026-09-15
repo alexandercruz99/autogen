@@ -67,34 +67,50 @@ def from_empirical_residuals(
     support_low: int | None = None,
     support_high: int | None = None,
     method: str = "empirical_residual",
+    min_support_width: int = 8,
 ) -> PredictiveDistribution:
     """Shift historical (outcome − forecast) residuals onto today's point forecast.
 
     Residuals must be from settlement-aligned outcomes vs same-vintage forecasts.
+    Small samples get a variance floor so they cannot collapse to ~0%/100%.
     """
     if not residuals_f:
         raise ValueError("need residuals")
     res = np.asarray(list(residuals_f), dtype=float)
-    # Map residual samples → integer temps via rounding (CLI is whole °F)
+    # Variance floor: with n<30, blend in N(0, max(2.5, sample_std)) noise
+    sample_std = float(res.std(ddof=1)) if len(res) > 1 else 2.5
+    floor_std = max(2.5, sample_std)
+    if len(res) < 30:
+        rng = np.random.default_rng(abs(hash((round(point_forecast_f, 1), len(res)))) % (2**32))
+        extra = rng.normal(0.0, floor_std, size=max(40, 80 - len(res)))
+        res = np.concatenate([res, extra])
+        method = f"{method}+var_floor"
     samples = np.rint(point_forecast_f + res).astype(int)
     low = int(support_low if support_low is not None else samples.min() - 2)
     high = int(support_high if support_high is not None else samples.max() + 2)
+    if high - low < min_support_width:
+        mid = int(round(point_forecast_f))
+        low = mid - min_support_width // 2
+        high = mid + min_support_width // 2
     temps = list(range(low, high + 1))
-    counts = {t: 0 for t in temps}
+    counts = {t: 0.0 for t in temps}
     for s in samples:
         t = int(np.clip(s, low, high))
-        counts[t] += 1
-    # Laplace smooth so empty bins near support get tiny mass
-    probs = [(counts[t] + 1e-3) for t in temps]
+        counts[t] += 1.0
+    # Stronger Laplace for small n
+    alpha = 0.5 if len(residuals_f) < 30 else 1e-3
+    probs = [(counts[t] + alpha) for t in temps]
     return PredictiveDistribution(
         temps_f=temps,
         probs=probs,
         method=method,
         details={
-            "n_residuals": len(res),
+            "n_residuals_raw": len(residuals_f),
+            "n_samples_effective": int(len(res)),
             "point_forecast_f": point_forecast_f,
-            "resid_mean": float(res.mean()),
-            "resid_std": float(res.std(ddof=1)) if len(res) > 1 else 0.0,
+            "resid_mean": float(np.mean(list(residuals_f))),
+            "resid_std": sample_std,
+            "variance_floor_std": floor_std if len(residuals_f) < 30 else None,
         },
     )
 
@@ -120,8 +136,13 @@ def from_normal(
 
 
 def truncate_below(dist: PredictiveDistribution, floor_f: float, *, reason: str) -> PredictiveDistribution:
-    """Same-day: observed max so far implies official max ≥ floor (preliminary evidence)."""
-    floor_i = int(np.floor(floor_f))
+    """Same-day: observed max so far implies official max ≥ floor (preliminary evidence).
+
+    Mass strictly below floor is removed and renormalized. If floor is an integer °F
+    already observed, bins < floor get zero — a 70–71 band cannot stay at 50% when
+    the day has already reached 72.
+    """
+    floor_i = int(np.ceil(floor_f - 1e-9))  # observed 72.0 → support starts at 72
     temps = []
     probs = []
     for t, p in zip(dist.temps_f, dist.probs):
@@ -129,14 +150,13 @@ def truncate_below(dist: PredictiveDistribution, floor_f: float, *, reason: str)
             temps.append(t)
             probs.append(p)
     if not temps:
-        # Degenerate: put mass on floor
         temps = [floor_i]
         probs = [1.0]
     return PredictiveDistribution(
         temps_f=temps,
         probs=probs,
         method=f"{dist.method}+same_day_floor",
-        details={**dist.details, "same_day_floor_f": floor_f, "same_day_reason": reason},
+        details={**dist.details, "same_day_floor_f": floor_f, "same_day_floor_int": floor_i, "same_day_reason": reason},
     )
 
 

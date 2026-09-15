@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Any
 
 from kalshi_bot.config import AppConfig
@@ -14,7 +15,6 @@ from kalshi_bot.models.weather.forecast_collect import ForecastCollector
 from kalshi_bot.models.weather.stations import STATIONS
 from kalshi_bot.models.weather.train import build_pairs, train_empirical, train_quantile_gbm
 from kalshi_bot.validation.metrics import brier_score
-from kalshi_bot.money import D
 
 logger = logging.getLogger(__name__)
 
@@ -132,3 +132,48 @@ def weather_validate(config: AppConfig) -> dict[str, Any]:
         "executable-price paper PnL before live_eligible"
     )
     return report
+
+
+def weather_obs_train(config: AppConfig) -> dict[str, Any]:
+    """Train observation-driven NYC remaining-rise model (no forecast features)."""
+    from kalshi_bot.models.weather.obs_engine.train_obs import train_obs_nyc
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    archive_path = getattr(config.models.weather, "archive_path", None) or "data/weather_archive.db"
+    return train_obs_nyc(data_dir=data_dir, archive_path=archive_path)
+
+
+def weather_obs_validate(config: AppConfig) -> dict[str, Any]:
+    """Summarize last obs train report + artifact; does not claim NWS superiority without metrics."""
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    report_path = data_dir / "last_train_report.json"
+    archive = archive_from_config(config)
+    art = archive.load_artifact("NYC", "obs_nyc_remaining_rise_v1")
+    out: dict[str, Any] = {
+        "engine": "obs_driven_nyc",
+        "live_eligible": False,
+        "config_obs_engine_live_eligible": bool(
+            getattr(config.models.weather, "obs_engine_live_eligible", False)
+        ),
+        "artifact_present": art is not None,
+        "trading_profitability": "UNVALIDATED — no executable-price paper PnL yet",
+        "nws_benchmark_comparison": (
+            "Not run in this command — NWS grid forecasts are benchmarks only; "
+            "pair same decision-time NWS snapshots in a future validation pass."
+        ),
+    }
+    if report_path.exists():
+        out["last_train_report"] = json.loads(report_path.read_text())
+        metrics = (out["last_train_report"] or {}).get("metrics") or {}
+        out["beats_climatology"] = metrics.get("beats_climatology")
+        out["beats_continuation"] = metrics.get("beats_continuation")
+        out["hold_final_mae_q50"] = metrics.get("hold_final_mae_q50")
+        out["baselines_holdout"] = metrics.get("baselines_holdout")
+    else:
+        out["note"] = "Run weather-obs-train first"
+    out["meets_live_promotion"] = False
+    out["reason"] = (
+        "Need multi-season holdout MAE/Brier vs same-time NWS benchmark + forward paper PnL "
+        "before setting models.weather.obs_engine_live_eligible=true"
+    )
+    return out

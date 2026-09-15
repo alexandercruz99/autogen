@@ -29,7 +29,12 @@ Evidence-based Kalshi market scanner, probability models, EV/risk checks, paper 
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-collect
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-train
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-validate
+# Observation-driven NYC engine (research/paper; live blocked by default):
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-train
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-validate
 ```
+
+See `docs/OBS_ENGINE.md` for station identity, provenance, and live gates.
 
 ## Docs verified for this build
 

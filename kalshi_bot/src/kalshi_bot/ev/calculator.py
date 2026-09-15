@@ -82,6 +82,12 @@ def _eval_side(
     base_qty: Decimal,
 ) -> EvResult:
     unvalidated = "UNVALIDATED" in (prediction.validation_evidence or "")
+    research_only = "RESEARCH" in (prediction.validation_evidence or "")
+    # Research/obs engines get the same market-shrink guards as UNVALIDATED until promoted.
+    if research_only:
+        unvalidated = True
+    # Explicit model live flag (obs engine sets False) — do not treat missing as research.
+    model_live_eligible = (prediction.details or {}).get("model_live_eligible")
     implied_yes = market_implied_yes_prob(book)
 
     if side == "yes":
@@ -236,6 +242,9 @@ def _eval_side(
 
     if unvalidated and shrink_w > ZERO and mkt_side is not None:
         reasons.append(f"applied unvalidated market shrink w={shrink_w} toward {mkt_side}")
+
+    if research_only or model_live_eligible is False:
+        reasons.append("RESEARCH/paper engine — live execution blocked at pipeline gate")
 
     if qualifies:
         reasons.append(

@@ -118,8 +118,11 @@ class CombosConfig(BaseModel):
 
 
 class DashboardConfig(BaseModel):
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8787
+    # HTTP basic auth for remote/phone access. Empty password = auth disabled (local only).
+    username: str = "kalshi"
+    password: str = ""
 
 
 class AlertsConfig(BaseModel):

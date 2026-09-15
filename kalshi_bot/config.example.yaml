@@ -97,8 +97,11 @@ combos:
   paper_fixture_yes_price: null
 
 dashboard:
-  host: 127.0.0.1
+  # 0.0.0.0 required for phone/tunnel access; keep password set when exposed.
+  host: 0.0.0.0
   port: 8787
+  username: kalshi
+  password: ""  # set in config.yaml (gitignored); see data/secrets/dashboard_password.txt
 
 alerts:
   # Optional webhook (Slack/Discord/etc). Leave empty to disable.

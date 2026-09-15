@@ -20,4 +20,11 @@ Secrets are **not** committed. Use these local paths:
 
 Already ignored: `config.yaml`, `data/secrets/`, `*.key`, `.env`.
 
-Never paste private keys into chat or commit them.
+## Dashboard password (phone / remote access)
+
+| What | Path |
+| --- | --- |
+| Username | `kalshi` (set in `config.yaml` → `dashboard.username`) |
+| Password | `kalshi_bot/data/secrets/dashboard_password.txt` and `config.yaml` → `dashboard.password` |
+
+When exposing via a tunnel, keep `dashboard.host: 0.0.0.0` and always set a password.

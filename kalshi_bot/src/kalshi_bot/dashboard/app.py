@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import json
-from decimal import Decimal
+import secrets
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 
 from kalshi_bot.bot.loop import BotLoop
@@ -18,6 +18,7 @@ from kalshi_bot.risk.limits import RiskManager
 
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+security = HTTPBasic(auto_error=False)
 
 
 def create_app(
@@ -29,6 +30,56 @@ def create_app(
     app = FastAPI(title="Kalshi Trading Bot", version="0.1.0")
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
     risk = RiskManager(store, config.trading)
+
+    def require_dashboard_auth(
+        credentials: HTTPBasicCredentials | None = Depends(security),
+    ) -> None:
+        expected_user = config.dashboard.username or "kalshi"
+        expected_pass = config.dashboard.password or ""
+        if not expected_pass:
+            # No password configured — allow (intended for localhost-only binds).
+            return
+        if credentials is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": 'Basic realm="Kalshi Bot"'},
+            )
+        user_ok = secrets.compare_digest(credentials.username, expected_user)
+        pass_ok = secrets.compare_digest(credentials.password, expected_pass)
+        if not (user_ok and pass_ok):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+                headers={"WWW-Authenticate": 'Basic realm="Kalshi Bot"'},
+            )
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+        expected_pass = config.dashboard.password or ""
+        if expected_pass:
+            auth = request.headers.get("Authorization")
+            ok = False
+            if auth and auth.startswith("Basic "):
+                import base64
+
+                try:
+                    raw = base64.b64decode(auth.split(" ", 1)[1]).decode()
+                    user, pwd = raw.split(":", 1)
+                    ok = secrets.compare_digest(user, config.dashboard.username or "kalshi") and secrets.compare_digest(
+                        pwd, expected_pass
+                    )
+                except Exception:
+                    ok = False
+            if not ok:
+                from fastapi.responses import Response
+
+                return Response(
+                    content="Authentication required",
+                    status_code=401,
+                    headers={"WWW-Authenticate": 'Basic realm="Kalshi Bot"'},
+                )
+        return await call_next(request)
 
     @app.get("/", response_class=HTMLResponse)
     def dashboard(request: Request) -> HTMLResponse:

@@ -85,13 +85,17 @@ class BLSClient:
         for r in rows:
             if not str(r.get("period", "")).startswith("M"):
                 continue
-            if r.get("value") in (None, "."):
+            if r.get("value") in (None, ".", "-"):
+                continue
+            try:
+                value = float(r["value"])
+            except (TypeError, ValueError):
                 continue
             out.append(
                 {
                     "year": int(r["year"]),
                     "month": int(r["period"][1:]),
-                    "value": float(r["value"]),
+                    "value": value,
                     "period_name": r.get("periodName"),
                     # BLS does not always provide exact release timestamp here;
                     # we store fetch time separately and refuse to use future months.

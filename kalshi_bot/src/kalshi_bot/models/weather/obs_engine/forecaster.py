@@ -106,6 +106,8 @@ class ObsDrivenNycForecaster(ProbabilityModel):
             if ot is None:
                 continue
             valid = datetime.fromtimestamp(int(ot), tz=timezone.utc)
+            receipt = row.get("receiptTime")
+            retrieved = datetime.now(timezone.utc)
             temp_c = row.get("temp")
             dewp_c = row.get("dewp")
             tmpf = float(temp_c) * 9 / 5 + 32 if temp_c is not None else None
@@ -122,20 +124,24 @@ class ObsDrivenNycForecaster(ProbabilityModel):
                 except (TypeError, ValueError):
                     return None
 
-            out.append(
-                HourlyObs(
-                    valid_utc=valid,
-                    tmpf=tmpf,
-                    dwpf=dwpf,
-                    sknt=_num("wspd"),
-                    drct=_num("wdir"),
-                    alti=None,
-                    p01i=None,
-                    skyc1=(row.get("cover") or None),
-                    station=NYC_TARGET.metar_id,
-                    source="aviationweather_metar",
-                )
+            obs = HourlyObs(
+                valid_utc=valid,
+                tmpf=tmpf,
+                dwpf=dwpf,
+                sknt=_num("wspd"),
+                drct=_num("wdir"),
+                alti=None,
+                p01i=None,
+                skyc1=(row.get("cover") or None),
+                station=NYC_TARGET.metar_id,
+                source="aviationweather_metar",
             )
+            # Attach provenance on object for live path (dataclass has no extra fields — store via source tag)
+            obs.source = (
+                f"aviationweather_metar;obsTime={valid.isoformat()};"
+                f"receiptTime={receipt};retrieved={retrieved.isoformat()}"
+            )
+            out.append(obs)
         out.sort(key=lambda o: o.valid_utc)
         return out
 
@@ -159,6 +165,14 @@ class ObsDrivenNycForecaster(ProbabilityModel):
                     "fetched_at": fc.get("fetched_at"),
                     "start_time": fc.get("start_time"),
                 }
+            return {
+                "source": "nws_grid_daytime_benchmark_only",
+                "status": "unavailable",
+                "reason": (
+                    "No daytime NWS forecast period for target day in current product "
+                    "(common after local evening when the day period rolls off)."
+                ),
+            }
         except Exception as exc:
             return {"error": str(exc)}
         return None

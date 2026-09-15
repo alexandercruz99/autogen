@@ -1,0 +1,187 @@
+{
+  "status": "ok",
+  "generation_time_utc": "2026-09-15T23:14:43.933906+00:00",
+  "generation_time_local": "2026-09-15T19:14:43.933906-04:00",
+  "timezone": "America/New_York",
+  "station": {
+    "display": "New York City Central Park",
+    "ghcnd": "USW00094728",
+    "cli": "NYC",
+    "metar": "KNYC",
+    "lat": 40.77898,
+    "lon": -73.96925,
+    "settlement_source": "NWS Daily Climate Report (CLI) for Central Park"
+  },
+  "model_version": "weather.obs_nyc.v1.1-research",
+  "live_eligible": false,
+  "mode": "RESEARCH",
+  "orders_placed": false,
+  "note": "Research forecast only \u2014 not a validated trading signal; no live orders submitted.",
+  "prefer_day_local": "2026-09-15",
+  "n_open_nyc_daily_markets_found": 12,
+  "target_date": "2026-09-15",
+  "horizon": "same_day",
+  "training_cutoff": "2025-07-10",
+  "latest_observation": {
+    "n_obs_used": 18,
+    "latest_obs_utc": "2026-09-15T22:51:00+00:00",
+    "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+    "station": "NYC",
+    "source": "iem_asos_hourly"
+  },
+  "observed_max_so_far_f": 71.06,
+  "predicted_median_f": 74,
+  "prediction_intervals": {
+    "q10": 72,
+    "q50": 74,
+    "q90": 77
+  },
+  "distribution_mean_f": 74.3088308792434,
+  "distribution_method": "obs_nyc_remain_quantiles+same_day_floor+same_day_floor",
+  "factors": [
+    "Target: NWS Daily Climate Report (CLI) for Central Park (New York City Central Park)",
+    "GHCND=USW00094728; METAR=KNYC; coords=(40.77898,-73.96925)",
+    "Features: observations only (no third-party forecast inputs)",
+    "CLI prelim max=72 issued=2026-09-15T20:38:00+00:00",
+    "max_so_far=71.1\u00b0F remain q10/50/90=0.0/0.8/3.4",
+    "dist mean=74.3 q10/50/90=72/74/77 method=obs_nyc_remain_quantiles+same_day_floor+same_day_floor"
+  ],
+  "nws_benchmark": {
+    "source": "nws_grid_daytime_benchmark_only",
+    "status": "unavailable",
+    "reason": "No daytime NWS forecast period for target day in current product (common after local evening when the day period rolls off)."
+  },
+  "validation_evidence": "RESEARCH/PAPER ONLY \u2014 observation-driven NYC engine. Not live_eligible. NWS forecasts used only as benchmarks. Artifact loaded=True; joblib=True.",
+  "model_live_eligible": false,
+  "bracket_prob_sum": "1.00000000",
+  "bracket_prob_sum_note": "Sum \u2248 1 only if the listed markets form an exhaustive partition of outcomes",
+  "brackets": [
+    {
+      "ticker": "KXHIGHNY-26SEP15-B70.5",
+      "title": "Will the maximum temperature be 70-71\u00b0 on Sep 15, 2026?",
+      "strike_type": "between",
+      "floor_strike": 70,
+      "cap_strike": 71,
+      "interval": {
+        "op": "range_inclusive",
+        "low": 70.0,
+        "high": 71.0
+      },
+      "p_yes": "0E-8",
+      "p_yes_conservative": "0E-8",
+      "uncertainty": "0.05",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:44.635922+00:00",
+      "estimated_fee_1_contract": "0.000600",
+      "conservative_ev_yes_approx": "-0.06060000",
+      "qualifies_as_validated_signal": false
+    },
+    {
+      "ticker": "KXHIGHNY-26SEP15-B72.5",
+      "title": "Will the maximum temperature be 72-73\u00b0 on Sep 15, 2026?",
+      "strike_type": "between",
+      "floor_strike": 72,
+      "cap_strike": 73,
+      "interval": {
+        "op": "range_inclusive",
+        "low": 72.0,
+        "high": 73.0
+      },
+      "p_yes": "0.46142017",
+      "p_yes_conservative": "0.46142017",
+      "uncertainty": "0.05",
+      "yes_ask": null,
+      "no_ask": "0.0100",
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:44.839146+00:00",
+      "estimated_fee_1_contract": null,
+      "conservative_ev_yes_approx": null,
+      "qualifies_as_validated_signal": false
+    },
+    {
+      "ticker": "KXHIGHNY-26SEP15-B74.5",
+      "title": "Will the maximum temperature be 74-75\u00b0 on Sep 15, 2026?",
+      "strike_type": "between",
+      "floor_strike": 74,
+      "cap_strike": 75,
+      "interval": {
+        "op": "range_inclusive",
+        "low": 74.0,
+        "high": 75.0
+      },
+      "p_yes": "0.26919380",
+      "p_yes_conservative": "0.26919380",
+      "uncertainty": "0.05",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.046809+00:00",
+      "estimated_fee_1_contract": "0.000600",
+      "conservative_ev_yes_approx": "0.20859380",
+      "qualifies_as_validated_signal": false
+    },
+    {
+      "ticker": "KXHIGHNY-26SEP15-B76.5",
+      "title": "Will the maximum temperature be 76-77\u00b0 on Sep 15, 2026?",
+      "strike_type": "between",
+      "floor_strike": 76,
+      "cap_strike": 77,
+      "interval": {
+        "op": "range_inclusive",
+        "low": 76.0,
+        "high": 77.0
+      },
+      "p_yes": "0.23074853",
+      "p_yes_conservative": "0.10005998",
+      "uncertainty": "0.13068855",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.267068+00:00",
+      "estimated_fee_1_contract": "0.000600",
+      "conservative_ev_yes_approx": "0.03945998",
+      "qualifies_as_validated_signal": false
+    },
+    {
+      "ticker": "KXHIGHNY-26SEP15-T77",
+      "title": "Will the maximum temperature be >77\u00b0 on Sep 15, 2026?",
+      "strike_type": "greater",
+      "floor_strike": 77,
+      "cap_strike": null,
+      "interval": {
+        "op": "gt",
+        "low": 77.0,
+        "high": null
+      },
+      "p_yes": "0.03863750",
+      "p_yes_conservative": "0.00009996",
+      "uncertainty": "0.05",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.443299+00:00",
+      "estimated_fee_1_contract": "0.000600",
+      "conservative_ev_yes_approx": "-0.06050004",
+      "qualifies_as_validated_signal": false
+    },
+    {
+      "ticker": "KXHIGHNY-26SEP15-T70",
+      "title": "Will the maximum temperature be <70\u00b0 on Sep 15, 2026?",
+      "strike_type": "less",
+      "floor_strike": null,
+      "cap_strike": 70,
+      "interval": {
+        "op": "lt",
+        "low": null,
+        "high": 70.0
+      },
+      "p_yes": "0E-8",
+      "p_yes_conservative": "0E-8",
+      "uncertainty": "0.05",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.624032+00:00",
+      "estimated_fee_1_contract": "0.000600",
+      "conservative_ev_yes_approx": "-0.06060000",
+      "qualifies_as_validated_signal": false
+    }
+  ],
+  "research_vs_trading": "RESEARCH forecast with executable prices for context. Not live_eligible; do not treat EV figures as validated edge."
+}

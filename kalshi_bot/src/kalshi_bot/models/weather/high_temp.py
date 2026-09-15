@@ -208,6 +208,9 @@ class WeatherHighTempModel(ProbabilityModel):
                 "p_yes_high": p_yes_high,
                 "settlement_aligned": False,
                 "decision_time": now.isoformat(),
+                "model_live_eligible": False,
+                "engine": "legacy_high_temp",
+                "validation_status": "UNVALIDATED",
             },
         )
 
@@ -250,4 +253,5 @@ class WeatherHighTempModel(ProbabilityModel):
             as_of=now,
             supported=False,
             skip_reason=reason,
+            details={"model_live_eligible": False, "engine": "legacy_high_temp"},
         )

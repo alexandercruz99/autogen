@@ -269,9 +269,9 @@ class TradingPipeline:
                     mode = self.store.get_state().mode
                     if mode == "live" and not self.store.get_state().live_enabled:
                         mode = "paper"
-                    # Model-level live gate: research engines (obs NYC) cannot use live account
-                    # merely because live.enabled is true. Require details.model_live_eligible.
-                    model_live_ok = bool((pred.details or {}).get("model_live_eligible", True))
+                    # Model-level live gate: require explicit details.model_live_eligible=True.
+                    # Missing/False → paper only (AI/legacy/obs all default ineligible).
+                    model_live_ok = (pred.details or {}).get("model_live_eligible") is True
                     if mode == "live" and not model_live_ok:
                         self.store.audit(
                             "model_live_block",
@@ -291,6 +291,7 @@ class TradingPipeline:
                         opportunity_id=opp_id,
                         correlation_keys=[c for c in corr if c and not c.endswith(":None")],
                         mode=mode,
+                        model_live_eligible=model_live_ok,
                     )
                     if order and order.status in ("filled", "resting", "partial", "submitted"):
                         orders_placed += 1

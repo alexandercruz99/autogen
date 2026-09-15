@@ -144,9 +144,10 @@ def weather_obs_train(config: AppConfig) -> dict[str, Any]:
 
 
 def weather_obs_validate(config: AppConfig) -> dict[str, Any]:
-    """Summarize last obs train report + artifact; does not claim NWS superiority without metrics."""
+    """Summarize last obs train/backtest reports; does not claim NWS superiority without metrics."""
     data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
     report_path = data_dir / "last_train_report.json"
+    backtest_path = data_dir / "backtest_report.json"
     archive = archive_from_config(config)
     art = archive.load_artifact("NYC", "obs_nyc_remaining_rise_v1")
     out: dict[str, Any] = {
@@ -157,11 +158,23 @@ def weather_obs_validate(config: AppConfig) -> dict[str, Any]:
         ),
         "artifact_present": art is not None,
         "trading_profitability": "UNVALIDATED — no executable-price paper PnL yet",
-        "nws_benchmark_comparison": (
-            "Not run in this command — NWS grid forecasts are benchmarks only; "
-            "pair same decision-time NWS snapshots in a future validation pass."
-        ),
     }
+    if backtest_path.exists():
+        bt = json.loads(backtest_path.read_text())
+        out["backtest"] = {
+            "n_independent_climate_days": bt.get("n_independent_climate_days"),
+            "splits": bt.get("splits"),
+            "overall_test": bt.get("overall_test"),
+            "external_benchmark": bt.get("external_benchmark"),
+            "outperforms_established_nws_decision_time": (bt.get("overall_test") or {}).get(
+                "outperforms_established_nws_decision_time"
+            ),
+        }
+        out["nws_benchmark_comparison"] = (bt.get("overall_test") or {}).get(
+            "outperforms_established_nws_reason"
+        )
+    else:
+        out["nws_benchmark_comparison"] = "Run weather-obs-backtest for decision-time metrics"
     if report_path.exists():
         out["last_train_report"] = json.loads(report_path.read_text())
         metrics = (out["last_train_report"] or {}).get("metrics") or {}
@@ -177,3 +190,25 @@ def weather_obs_validate(config: AppConfig) -> dict[str, Any]:
         "before setting models.weather.obs_engine_live_eligible=true"
     )
     return out
+
+
+def weather_obs_backtest(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.backtest import run_obs_backtest
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    archive_path = getattr(config.models.weather, "archive_path", None) or "data/weather_archive.db"
+    return run_obs_backtest(data_dir=data_dir, archive_path=archive_path, fetch_external_benchmark=True)
+
+
+def weather_obs_reconcile_labels(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.backtest import reconcile_cli_vs_ghcnd
+
+    archive_path = getattr(config.models.weather, "archive_path", None) or "data/weather_archive.db"
+    return reconcile_cli_vs_ghcnd(archive_path=archive_path)
+
+
+def weather_obs_predict_now(config: AppConfig) -> dict[str, Any]:
+    """Fresh research prediction — never places live orders."""
+    from kalshi_bot.models.weather.obs_engine.predict_now import research_predict_now
+
+    return research_predict_now(config)

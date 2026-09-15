@@ -31,10 +31,13 @@ PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-train
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-validate
 # Observation-driven NYC engine (research/paper; live blocked by default):
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-train
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-backtest
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-reconcile
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-validate
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-predict
 ```
 
-See `docs/OBS_ENGINE.md` for station identity, provenance, and live gates.
+See `docs/OBS_ENGINE.md` for station identity, multi-year backtests by decision hour, live gates, and claim reconciliation.
 
 ## Docs verified for this build
 

@@ -32,6 +32,7 @@ class ExecutionEngine:
         opportunity_id: str,
         correlation_keys: list[str] | None = None,
         mode: str | None = None,
+        model_live_eligible: bool | None = None,
     ) -> OrderRecord | None:
         with self._lock:
             state = self.store.get_state()
@@ -41,6 +42,16 @@ class ExecutionEngine:
                 return None
             if mode == "research":
                 self.store.audit("skip", "research mode — no orders")
+                return None
+
+            # Final order-submission boundary for live: require explicit eligibility.
+            # Default None/False blocks live (tests passing / config alone never suffice).
+            if mode == "live" and model_live_eligible is not True:
+                self.store.audit(
+                    "model_live_block",
+                    "live submit blocked at execution boundary: model_live_eligible is not True",
+                    details={"opportunity_id": opportunity_id, "model_live_eligible": model_live_eligible},
+                )
                 return None
 
             risk = self.risk.check_purchase(

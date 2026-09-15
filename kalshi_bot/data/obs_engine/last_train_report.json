@@ -1,9 +1,9 @@
 {
-  "model_version": "weather.obs_nyc.v1.0-research",
-  "n_hourly_obs": 7125,
+  "model_version": "weather.obs_nyc.v1.1-research",
+  "n_hourly_obs": 41424,
   "n_label_days_available": 2448,
-  "n_training_rows": 687,
-  "n_unique_days_in_rows": 229,
+  "n_training_rows": 4981,
+  "n_unique_days_in_rows": 1661,
   "feature_names": [
     "hour_local",
     "doy",
@@ -21,41 +21,41 @@
   ],
   "label_provenance": "GHCND USW00094728 TMAX (\u00b0F). Settlement is CLI; GHCND is same station climate record.",
   "forecast_features_used": false,
-  "n_train_rows": 513,
-  "n_hold_rows": 174,
-  "n_train_days": 171,
-  "n_hold_days": 58,
+  "n_train_rows": 3733,
+  "n_hold_rows": 1248,
+  "n_train_days": 1245,
+  "n_hold_days": 416,
   "baselines_holdout": {
-    "climatology_mae": 3.5577905491698596,
-    "persistence_mae": 3.4482758620689653,
-    "continuation_max_so_far_mae": 3.544827586206896,
-    "n": 174
+    "climatology_mae": 6.722134964224761,
+    "persistence_mae": 5.319711538461538,
+    "continuation_max_so_far_mae": 5.231089743589743,
+    "n": 1248
   },
   "artifact_path": "data/obs_engine/models/obs_nyc_q50.joblib",
   "ok": true,
   "metrics": {
     "baselines_holdout": {
-      "climatology_mae": 3.5577905491698596,
-      "persistence_mae": 3.4482758620689653,
-      "continuation_max_so_far_mae": 3.544827586206896,
-      "n": 174
+      "climatology_mae": 6.722134964224761,
+      "persistence_mae": 5.319711538461538,
+      "continuation_max_so_far_mae": 5.231089743589743,
+      "n": 1248
     },
     "quantiles": {
       "q10": {
         "alpha": 0.1,
-        "hold_pinball": 0.38056617414675237
+        "hold_pinball": 0.533878205128205
       },
       "q50": {
         "alpha": 0.5,
-        "hold_pinball": 0.6810262758504564,
-        "hold_final_mae": 1.3620525517009143
+        "hold_pinball": 1.1117543062227477,
+        "hold_final_mae": 2.2235086124454955
       },
       "q90": {
         "alpha": 0.9,
-        "hold_pinball": 0.36235002960838547
+        "hold_pinball": 0.5736730353454238
       }
     },
-    "hold_final_mae_q50": 1.3620525517009143,
+    "hold_final_mae_q50": 2.2235086124454955,
     "beats_climatology": true,
     "beats_continuation": true
   },

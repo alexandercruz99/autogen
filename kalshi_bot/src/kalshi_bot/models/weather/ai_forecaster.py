@@ -197,6 +197,9 @@ class AIWeatherForecaster(ProbabilityModel):
                 "trained": trained,
                 "feature_times": feature_times,
                 "p_yes_high": str(p_yes),
+                "model_live_eligible": False,
+                "engine": "ai_cli",
+                "validation_status": "PARTIALLY_FITTED" if trained else "UNVALIDATED",
             },
         )
 
@@ -213,4 +216,5 @@ class AIWeatherForecaster(ProbabilityModel):
             as_of=now,
             supported=False,
             skip_reason=reason,
+            details={"model_live_eligible": False, "engine": "ai_cli"},
         )

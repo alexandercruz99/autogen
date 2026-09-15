@@ -33,11 +33,11 @@ class NycCentralParkTarget:
     settlement_source: str = "NWS Daily Climate Report (CLI) for Central Park"
     series_prefixes: tuple[str, ...] = ("KXHIGHNY", "HIGHNY")
     # Fixed research decision hours (local civil time); LST climate-day caveat documented.
-    decision_hours_local: tuple[int, ...] = (10, 13, 16)
+    decision_hours_local: tuple[int, ...] = (8, 11, 14)
     neighbor_asos: tuple[str, ...] = ("LGA",)  # optional spatial features when present
 
 
 NYC_TARGET = NycCentralParkTarget()
 
-MODEL_VERSION = "weather.obs_nyc.v1.0-research"
+MODEL_VERSION = "weather.obs_nyc.v1.1-research"
 ARTIFACT_NAME = "obs_nyc_remaining_rise_v1"

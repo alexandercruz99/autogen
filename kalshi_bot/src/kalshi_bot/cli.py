@@ -113,6 +113,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-validate", help="Walk-forward style validation report (honest gaps)")
     sub.add_parser("weather-obs-train", help="Train observation-driven NYC remaining-rise model")
     sub.add_parser("weather-obs-validate", help="Summarize obs-engine holdout metrics (research only)")
+    sub.add_parser("weather-obs-backtest", help="Chronological backtest by decision hour vs baselines")
+    sub.add_parser("weather-obs-reconcile", help="Reconcile CLI MAXIMUM vs GHCND TMAX labels")
+    sub.add_parser("weather-obs-predict", help="Fresh research prediction for open NYC markets (no live orders)")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -131,11 +134,17 @@ def main(argv: list[str] | None = None) -> int:
         "weather-validate",
         "weather-obs-train",
         "weather-obs-validate",
+        "weather-obs-backtest",
+        "weather-obs-reconcile",
+        "weather-obs-predict",
     )
     if args.cmd in weather_ops:
         config = load_config(cfg_path)
         from kalshi_bot.models.weather.ops import (
             weather_collect,
+            weather_obs_backtest,
+            weather_obs_predict_now,
+            weather_obs_reconcile_labels,
             weather_obs_train,
             weather_obs_validate,
             weather_train,
@@ -153,6 +162,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.cmd == "weather-obs-validate":
             print(json.dumps(weather_obs_validate(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-obs-backtest":
+            print(json.dumps(weather_obs_backtest(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-obs-reconcile":
+            print(json.dumps(weather_obs_reconcile_labels(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-obs-predict":
+            print(json.dumps(weather_obs_predict_now(config), indent=2, default=str))
             return 0
         print(json.dumps(weather_validate(config), indent=2, default=str))
         return 0

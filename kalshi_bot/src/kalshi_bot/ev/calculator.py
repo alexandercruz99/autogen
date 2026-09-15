@@ -139,6 +139,52 @@ def _eval_side(
     capital = price * use_qty + fees
     max_loss = capital  # hold to settlement; lose premium + fees if wrong (binary)
 
+    # Shrink size if fees push capital over the per-trade loss cap.
+    loss_cap = D(config.max_loss_per_trade_dollars)
+    guard = 0
+    while max_loss > loss_cap and use_qty >= D("0.01") and price > ZERO and guard < 8:
+        scale = (loss_cap / max_loss) * D("0.98")
+        if scale >= ONE:
+            scale = D("0.95")
+        use_qty = fp_count(use_qty * scale)
+        if use_qty < D("0.01"):
+            use_qty = ZERO
+            break
+        fees = estimate_net_fee(
+            use_qty,
+            price,
+            multiplier=config.fee_multiplier,
+            assume_taker=config.assume_taker,
+            balance_precision=config.balance_precision,
+        )
+        c = fee_per_contract(fees, use_qty)
+        est_ev = p - price - c
+        cons_ev = p_cons - price - c - config.uncertainty_buffer
+        breakeven = price + c
+        capital = price * use_qty + fees
+        max_loss = capital
+        guard += 1
+
+    if use_qty <= ZERO:
+        return EvResult(
+            side=side,
+            quantity=qty,
+            executable_price=price,
+            fillable_quantity=ZERO,
+            estimated_prob=p,
+            conservative_prob=p_cons,
+            uncertainty=prediction.uncertainty,
+            fees_total=ZERO,
+            fees_per_contract=ZERO,
+            estimated_ev=ZERO,
+            conservative_ev=ZERO,
+            breakeven_prob=ZERO,
+            max_loss=ZERO,
+            capital_required=ZERO,
+            qualifies=False,
+            reason="sized quantity below minimum after loss cap",
+        )
+
     qualifies = True
     reasons: list[str] = []
     if not prediction.supported:

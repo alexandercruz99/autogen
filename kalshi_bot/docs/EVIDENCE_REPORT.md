@@ -55,3 +55,13 @@ kalshi-bot --config config.yaml run
 ```
 
 Process runs on the host you start; SQLite at `data/kalshi_bot.db` recovers state after restart. Kill switch / pause prevent new purchases; completed `client_order_id`s are not replayed.
+
+## Latest paper scan (2026-09-15T19:12Z)
+
+- snapshots=49 (weather + CPI)
+- opportunities=124
+- paper orders=2 (weather; thresholds not relaxed)
+- CPI: model evaluated with BLS climatology; all skipped on conservative EV / depth (valid no-trade)
+- Combos: MVE eligibility check — weather events not in open collections
+- live_eligible_strategies=[]
+- pytest: 33 passed

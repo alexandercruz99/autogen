@@ -106,9 +106,17 @@ def parse_orderbook(payload: dict[str, Any]) -> ExecutableBook:
 
 
 def market_implied_yes_prob(book: ExecutableBook) -> Decimal | None:
-    """Midpoint of best YES bid/ask when both exist; else None (no fabrication)."""
+    """Market-implied YES probability from the book.
+
+    Prefer mid when both sides exist. If only the YES ask is visible (common on
+    one-sided longshot books), use the ask — do not invent a mid from nothing.
+    """
     bid = book.best_yes_bid
     ask = book.best_yes_ask
-    if bid is None or ask is None:
-        return None
-    return fp_price((bid + ask) / 2)
+    if bid is not None and ask is not None:
+        return fp_price((bid + ask) / 2)
+    if ask is not None:
+        return ask
+    if bid is not None:
+        return bid
+    return None

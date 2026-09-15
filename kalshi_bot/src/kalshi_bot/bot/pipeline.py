@@ -73,7 +73,7 @@ class TradingPipeline:
             "paper_only": [
                 {
                     "model": self.weather_model.version,
-                    "reason": "NWS proxy vs Weather Company CLINYC; σ unvalidated; holdout n insufficient",
+                    "reason": "NWS proxy vs Weather Company CLINYC; σ inflated + market shrink; holdout n insufficient",
                 },
                 {
                     "model": self.cpi_model.version,

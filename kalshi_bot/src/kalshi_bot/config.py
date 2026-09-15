@@ -48,6 +48,10 @@ class TradingConfig(BaseModel):
     min_net_edge: Decimal = Decimal("0.05")
     uncertainty_buffer: Decimal = Decimal("0.03")
     max_model_market_divergence: Decimal = Decimal("0.25")
+    # For UNVALIDATED models: blend this weight toward market-implied before EV (0=trust model, 1=full market).
+    unvalidated_market_shrink: Decimal = Decimal("0.65")
+    # Skip unvalidated buys when executable price is at/below this (favorite-longshot trap).
+    unvalidated_longshot_max_price: Decimal = Decimal("0.05")
     default_contract_quantity: Decimal = Decimal("1.00")
     max_contracts_per_order: Decimal = Decimal("5.00")
     # Target capital per individual trade (price×qty + fees), capped by max_loss_per_trade.
@@ -69,6 +73,8 @@ class TradingConfig(BaseModel):
         "min_net_edge",
         "uncertainty_buffer",
         "max_model_market_divergence",
+        "unvalidated_market_shrink",
+        "unvalidated_longshot_max_price",
         "default_contract_quantity",
         "max_contracts_per_order",
         "target_trade_dollars",
@@ -92,6 +98,8 @@ class WeatherModelConfig(BaseModel):
     enabled: bool = True
     forecast_error_sigma_f: float = 3.0
     min_sigma_f: float = 2.0
+    # Extra °F added to σ when forecast source ≠ Kalshi settlement source (NWS vs Weather Co).
+    proxy_sigma_extra_f: float = 1.5
     max_forecast_age_hours: float = 12.0
     cities: dict[str, WeatherCityConfig] = Field(default_factory=dict)
 

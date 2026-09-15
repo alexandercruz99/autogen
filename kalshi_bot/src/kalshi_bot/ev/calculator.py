@@ -81,6 +81,9 @@ def _eval_side(
     config: TradingConfig,
     base_qty: Decimal,
 ) -> EvResult:
+    unvalidated = "UNVALIDATED" in (prediction.validation_evidence or "")
+    implied_yes = market_implied_yes_prob(book)
+
     if side == "yes":
         ask = book.best_yes_ask
         fillable, vwap = (ZERO, ZERO)
@@ -92,6 +95,7 @@ def _eval_side(
         # One-sided haircut against the purchase (never inflate longshot probabilities).
         p_cons = min(prediction.p_yes_conservative, p) - prediction.uncertainty
         p_cons = clamp01(p_cons)
+        mkt_side = implied_yes
     else:
         ask = book.best_no_ask
         fillable, vwap = (ZERO, ZERO)
@@ -101,6 +105,14 @@ def _eval_side(
         p = prediction.p_no
         p_cons = min(prediction.p_no_conservative, p) - prediction.uncertainty
         p_cons = clamp01(p_cons)
+        mkt_side = (ONE - implied_yes) if implied_yes is not None else None
+
+    # Unvalidated models: shrink toward market so raw Gaussian/climatology cannot dominate 1¢ books.
+    shrink_w = D(config.unvalidated_market_shrink) if unvalidated else ZERO
+    if shrink_w > ZERO and mkt_side is not None:
+        shrink_w = min(max(shrink_w, ZERO), ONE)
+        p = clamp01((ONE - shrink_w) * p + shrink_w * mkt_side)
+        p_cons = clamp01((ONE - shrink_w) * p_cons + shrink_w * mkt_side)
 
     if ask is None or fillable <= ZERO:
         return EvResult(
@@ -201,16 +213,29 @@ def _eval_side(
     if use_qty < qty:
         reasons.append(f"partial depth only fillable={use_qty}")
 
-    implied = market_implied_yes_prob(book)
+    # Favorite-longshot trap: unvalidated models must not pile into ≤N¢ tickets.
+    longshot_cap = D(config.unvalidated_longshot_max_price)
+    if unvalidated and price <= longshot_cap:
+        qualifies = False
+        reasons.append(
+            f"unvalidated longshot guard: refuse buys at price ≤ {longshot_cap} "
+            f"(model overconfidence vs thin books)"
+        )
+
     max_div = D(config.max_model_market_divergence)
-    if implied is not None:
+    if implied_yes is not None:
+        # Compare raw model YES (pre-shrink) to market so shrink does not hide divergence.
         model_yes = prediction.p_yes
-        if abs(model_yes - implied) > max_div and "UNVALIDATED" in (prediction.validation_evidence or ""):
+        div = abs(model_yes - implied_yes)
+        if div > max_div and unvalidated:
             qualifies = False
             reasons.append(
-                f"model vs market mid divergence {abs(model_yes - implied)} > {max_div} "
-                f"while model unvalidated (mid={implied}, model={model_yes})"
+                f"model vs market divergence {div} > {max_div} "
+                f"while model unvalidated (market={implied_yes}, model={model_yes})"
             )
+
+    if unvalidated and shrink_w > ZERO and mkt_side is not None:
+        reasons.append(f"applied unvalidated market shrink w={shrink_w} toward {mkt_side}")
 
     if qualifies:
         reasons.append(
@@ -236,6 +261,8 @@ def _eval_side(
         reason="; ".join(reasons),
         details={
             "best_ask": str(ask),
+            "market_implied_yes": str(implied_yes) if implied_yes is not None else None,
+            "unvalidated_shrink": str(shrink_w),
             "market_implied_note": "Disagreement with market is not proof of edge",
         },
     )

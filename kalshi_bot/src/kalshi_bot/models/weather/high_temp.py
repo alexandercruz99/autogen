@@ -16,7 +16,7 @@ from kalshi_bot.money import D, clamp01
 
 logger = logging.getLogger(__name__)
 
-MODEL_VERSION = "weather.high_temp.v0.2-unvalidated"
+MODEL_VERSION = "weather.high_temp.v0.3-overconfidence-guards"
 
 
 class WeatherHighTempModel(ProbabilityModel):
@@ -156,18 +156,21 @@ class WeatherHighTempModel(ProbabilityModel):
                 return self._skip(ticker, now, "forecast period starts after decision time (leakage guard)")
 
         mu = float(forecast["temp_f"])
+        # Proxy vs Weather Company settlement: inflate σ so we do not treat NWS as truth.
         sigma = max(float(self.config.forecast_error_sigma_f), float(self.config.min_sigma_f))
+        sigma = sigma + float(self.config.proxy_sigma_extra_f)
         p = self._prob_yes(mu, sigma, contract)
         p_wide = self._prob_yes(mu, sigma * 1.5, contract)
         p_yes_low = min(p, p_wide)
         p_yes_high = max(p, p_wide)
-        uncertainty = max(abs(p - p_wide), 0.08)
+        # Floor uncertainty higher while settlement-misaligned (was 0.08).
+        uncertainty = max(abs(p - p_wide), 0.12)
 
         factors = [
             f"NWS forecast high {mu:.1f}°F for {city_name} on {target_day}",
-            f"Assumed forecast-error σ={sigma:.1f}°F (configurable prior; not walk-forward calibrated)",
+            f"Assumed forecast-error σ={sigma:.1f}°F (includes +proxy mismatch; not walk-forward calibrated)",
             f"Stress σ={sigma * 1.5:.1f}°F → p_yes {p_wide:.4f} (low={p_yes_low:.4f}, high={p_yes_high:.4f})",
-            f"Contract definition: {contract}",
+            f"Contract definition: {contract} (integer °F continuity correction on gt/lt)",
             settlement_note,
         ]
 
@@ -190,7 +193,8 @@ class WeatherHighTempModel(ProbabilityModel):
             factors=factors,
             validation_evidence=(
                 "UNVALIDATED: NWS proxy vs Weather Company CLINYC settlement; "
-                "no held-out chronological score vs Kalshi settlements yet. Paper only."
+                "no held-out chronological score vs Kalshi settlements yet. "
+                "Overconfidence guards: continuity correction, inflated σ, market shrink in EV."
             ),
             as_of=now,
             supported=True,
@@ -208,6 +212,11 @@ class WeatherHighTempModel(ProbabilityModel):
         )
 
     def _prob_yes(self, mu: float, sigma: float, contract: dict[str, Any]) -> float:
+        """Gaussian forecast-error model with integer-degree continuity correction.
+
+        Kalshi weather settles on whole °F. Strict 'greater than 82' means ≥83 observed,
+        so P(X>82) ≈ 1−Φ(82.5), not 1−Φ(82) (which wrongly gives 50% when μ=82).
+        """
         op = contract["op"]
         if op == "range":
             low, high = float(contract["low"]), float(contract["high"])
@@ -220,10 +229,12 @@ class WeatherHighTempModel(ProbabilityModel):
             )
         if op == "gt":
             thr = float(contract["low"])
-            return float(1.0 - norm.cdf(thr, loc=mu, scale=sigma))
+            # Strict greater-than on integer °F → mass above thr+0.5
+            return float(1.0 - norm.cdf(thr + 0.5, loc=mu, scale=sigma))
         if op == "lt":
             thr = float(contract["high"])
-            return float(norm.cdf(thr, loc=mu, scale=sigma))
+            # Strict less-than on integer °F → mass below thr-0.5
+            return float(norm.cdf(thr - 0.5, loc=mu, scale=sigma))
         raise ValueError(f"unknown op {op}")
 
     def _skip(self, ticker: str, now: datetime, reason: str) -> Prediction:

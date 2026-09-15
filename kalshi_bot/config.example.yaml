@@ -49,8 +49,10 @@ trading:
   max_daily_loss_dollars: 25.00
   max_drawdown_dollars: 25.00
   min_net_edge: 0.05              # Minimum EV after fees (dollars per contract)
-  uncertainty_buffer: 0.03        # Extra edge required vs conservative probability
-  max_model_market_divergence: 0.25  # Skip unvalidated models that diverge this much from mid
+  uncertainty_buffer: 0.05        # Extra edge required vs conservative probability
+  max_model_market_divergence: 0.12  # Skip unvalidated models that diverge this much from market
+  unvalidated_market_shrink: 0.65    # Blend weight toward market for UNVALIDATED models
+  unvalidated_longshot_max_price: 0.05  # Refuse unvalidated buys at/below this price
   default_contract_quantity: "1.00"
   max_contracts_per_order: "500.00"
   target_trade_dollars: 5.00      # Aim ~$5 notional per individual trade
@@ -66,6 +68,7 @@ models:
     # Until calibrated on held-out data, trading uses wide uncertainty and may skip often.
     forecast_error_sigma_f: 3.0
     min_sigma_f: 2.0
+    proxy_sigma_extra_f: 1.5      # Added when forecast source ≠ settlement source
     max_forecast_age_hours: 12
     cities:
       NYC:

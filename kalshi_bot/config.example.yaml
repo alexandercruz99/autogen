@@ -1,0 +1,103 @@
+# Example configuration — copy to config.yaml and fill in local paths.
+# NEVER put private keys or API secrets in this file or commit them.
+
+mode: paper  # research | paper | live
+environment: production  # production | demo
+
+api:
+  # Production: https://external-api.kalshi.com/trade-api/v2
+  # Demo:       https://external-api.demo.kalshi.co/trade-api/v2
+  base_url: https://external-api.kalshi.com/trade-api/v2
+  # Path to RSA private key file (created in Kalshi Account → API Keys).
+  # Leave empty for public market-data-only / research without auth.
+  private_key_path: ""
+  api_key_id: ""
+  request_timeout_seconds: 30
+  max_retries: 3
+  rate_limit_tokens_per_second: 8
+
+storage:
+  sqlite_path: data/kalshi_bot.db
+
+scan:
+  # Categories to discover. Evaluation only runs where a model is registered.
+  categories:
+    - Climate and Weather
+  series_tickers:
+    - KXHIGHNY
+    - HIGHNY
+    - KXHIGHLAX
+    - HIGHLAX
+    - KXHIGHTCHI
+    - HIGHCHI
+  max_markets_per_scan: 200
+  scan_interval_seconds: 120
+  orderbook_depth_levels: 10
+  max_data_age_seconds: 900
+
+trading:
+  budget_dollars: 100.00          # Cap on deployable capital; deposits do NOT raise this
+  min_cash_reserve_dollars: 25.00
+  max_loss_per_trade_dollars: 10.00
+  max_event_exposure_dollars: 25.00
+  max_portfolio_exposure_dollars: 75.00
+  max_combo_exposure_dollars: 20.00
+  max_daily_loss_dollars: 20.00
+  max_drawdown_dollars: 40.00
+  min_net_edge: 0.05              # Minimum EV after fees (dollars per contract)
+  uncertainty_buffer: 0.03        # Extra edge required vs conservative probability
+  max_model_market_divergence: 0.25  # Skip unvalidated models that diverge this much from mid
+  default_contract_quantity: "1.00"
+  max_contracts_per_order: "5.00"
+  hold_to_settlement: true
+  fee_multiplier: 1.0             # Series M in fee formula; override per series when known
+  assume_taker: true              # Conservative: assume immediate match pays taker fee
+  balance_precision: "0.0001"     # Direct member default; use 0.01 for non-direct
+
+models:
+  weather:
+    enabled: true
+    # Historical NWS max-temp forecast error stdev (°F). Replace with walk-forward estimate.
+    # Until calibrated on held-out data, trading uses wide uncertainty and may skip often.
+    forecast_error_sigma_f: 3.0
+    min_sigma_f: 2.0
+    max_forecast_age_hours: 12
+    cities:
+      NYC:
+        series_prefixes: ["KXHIGHNY", "HIGHNY"]
+        lat: 40.7789
+        lon: -73.9692
+        station_note: "Central Park / OKX grid — verify against market settlement rules"
+      LAX:
+        series_prefixes: ["KXHIGHLAX", "HIGHLAX"]
+        lat: 34.0522
+        lon: -118.2437
+        station_note: "Verify settlement station against Kalshi market rules before live"
+      CHI:
+        series_prefixes: ["KXHIGHTCHI", "HIGHCHI", "KXHIGHCHI"]
+        lat: 41.8781
+        lon: -87.6298
+        station_note: "Verify settlement station against Kalshi market rules before live"
+
+combos:
+  enabled: true
+  max_legs: 3
+  max_candidates_per_scan: 20
+  require_joint_model: true
+  # Without a validated joint model, dependent legs are skipped (independence only if justified).
+  allow_independence_assumption: false
+  rfq_poll_seconds: 2
+  rfq_wait_seconds: 15
+
+dashboard:
+  host: 127.0.0.1
+  port: 8787
+
+alerts:
+  # Optional webhook (Slack/Discord/etc). Leave empty to disable.
+  webhook_url: ""
+
+live:
+  # Live trading is NEVER auto-enabled. Set enabled via dashboard after validation.
+  enabled: false
+  require_budget_and_limits: true

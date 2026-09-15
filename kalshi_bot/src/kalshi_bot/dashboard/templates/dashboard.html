@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalshi Bot</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1c2430;
+      --muted: #5b6573;
+      --line: #d5d0c4;
+      --panel: #fffdf8;
+      --good: #1f6f4a;
+      --warn: #8a5a00;
+      --bad: #8b1e1e;
+      --accent: #0b5fff;
+      --mode-research: #3d4f66;
+      --mode-paper: #0f5c4c;
+      --mode-live: #8b1e1e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #dfeaf7 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #efe2cf 0%, transparent 50%),
+        var(--bg);
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      backdrop-filter: blur(6px);
+    }
+    h1 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; }
+    .mode {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.35rem 0.7rem;
+      border-radius: 0.35rem;
+      color: white;
+    }
+    .mode.research { background: var(--mode-research); }
+    .mode.paper { background: var(--mode-paper); }
+    .mode.live { background: var(--mode-live); }
+    main { padding: 1.25rem 1.5rem 3rem; display: grid; gap: 1.25rem; }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0.6rem;
+      padding: 0.9rem 1rem;
+    }
+    .card .label { color: var(--muted); font-size: 0.8rem; }
+    .card .value { font-size: 1.15rem; font-weight: 600; margin-top: 0.25rem; }
+    .ok { color: var(--good); }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
+    button, .btn {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      padding: 0.45rem 0.75rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font: inherit;
+    }
+    button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    button.danger { background: var(--bad); color: white; border-color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
+    .scroll { overflow-x: auto; }
+    .muted { color: var(--muted); }
+    .live-box { border: 2px solid var(--bad); }
+    input, select {
+      font: inherit;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--line);
+      border-radius: 0.35rem;
+      background: white;
+    }
+    h2 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+    .note { font-size: 0.85rem; color: var(--muted); max-width: 70ch; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Kalshi research &amp; trading bot</h1>
+      <div class="muted">Evidence-based decisions · “no trade” is valid · no profit promises</div>
+    </div>
+    <div class="mode {{ state.mode }}">Mode: {{ state.mode }}</div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <div class="card">
+        <div class="label">Connection</div>
+        <div class="value {% if state.connection_ok %}ok{% else %}bad{% endif %}">
+          {% if state.connection_ok %}Healthy{% else %}Issue{% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Last scan</div>
+        <div class="value">{% if state.last_scan_at %}{{ state.last_scan_at }}{% else %}Never{% endif %}</div>
+        <div class="{% if state.last_scan_ok %}ok{% else %}bad{% endif %} muted">
+          {% if state.last_scan_ok %}Success{% elif state.last_error %}{{ state.last_error }}{% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Available cash</div>
+        <div class="value">${{ snap.available }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Reserved</div>
+        <div class="value">${{ snap.reserved }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Trading budget</div>
+        <div class="value">${{ snap.budget }}</div>
+        <div class="muted">Deposits do not auto-raise this</div>
+      </div>
+      <div class="card">
+        <div class="label">Portfolio exposure</div>
+        <div class="value">${{ snap.portfolio_exposure }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Realized PnL</div>
+        <div class="value">${{ snap.realized_pnl }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Drawdown</div>
+        <div class="value">${{ snap.drawdown }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Flags</div>
+        <div class="value">
+          {% if state.kill_switch %}<span class="bad">KILL</span>{% endif %}
+          {% if state.pause_buying %}<span class="warn">PAUSED</span>{% else %}<span class="ok">BUYING ON</span>{% endif %}
+          {% if state.live_enabled %}<span class="bad">LIVE ON</span>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Controls</h2>
+      <div class="controls">
+        <form method="post" action="/actions/scan"><button type="submit" class="primary">Scan now</button></form>
+        <form method="post" action="/actions/start-loop"><button type="submit">Start loop</button></form>
+        <form method="post" action="/actions/stop-loop"><button type="submit">Stop loop</button></form>
+        {% if state.pause_buying %}
+        <form method="post" action="/actions/resume"><button type="submit">Resume buying</button></form>
+        {% else %}
+        <form method="post" action="/actions/pause"><button type="submit">Pause buying</button></form>
+        {% endif %}
+        <form method="post" action="/actions/cancel-orders"><button type="submit">Cancel outstanding orders</button></form>
+        {% if state.kill_switch %}
+        <form method="post" action="/actions/unkill"><button type="submit">Clear kill switch</button></form>
+        {% else %}
+        <form method="post" action="/actions/kill"><button type="submit" class="danger">Kill switch</button></form>
+        {% endif %}
+        <form method="post" action="/actions/set-mode" class="controls">
+          <label>Mode
+            <select name="mode">
+              <option value="research" {% if state.mode=='research' %}selected{% endif %}>Research</option>
+              <option value="paper" {% if state.mode=='paper' %}selected{% endif %}>Paper</option>
+              <option value="live" {% if state.mode=='live' %}selected{% endif %}>Live</option>
+            </select>
+          </label>
+          <button type="submit">Set mode</button>
+        </form>
+        <form method="post" action="/actions/set-budget" class="controls">
+          <label>Budget $<input name="budget" value="{{ snap.budget }}" /></label>
+          <button type="submit">Update budget</button>
+        </form>
+      </div>
+      <p class="note">Closing positions is a separate action from pausing buys. Kill switch stops new purchases and cancels open orders; it does not protect existing positions from further mark-to-market losses.</p>
+    </section>
+
+    <section class="card live-box">
+      <h2>Enable live trading (one-time gate)</h2>
+      <p class="note">
+        Default is paper. Live never auto-enables. After enabling, the bot will buy qualifying contracts
+        without per-trade approval, within your budget and risk limits. The weather model is labeled
+        <strong>unvalidated</strong> — do not assume edge.
+      </p>
+      {% if state.live_enabled %}
+        <p class="bad">Live trading is ENABLED (acked {{ state.live_ack_at }}).</p>
+      {% else %}
+      <form method="post" action="/actions/enable-live" class="controls">
+        <label>Trading budget $<input name="budget" required placeholder="100.00" /></label>
+        <label>Max loss / trade $<input name="max_loss" required placeholder="10.00" /></label>
+        <label>Type ENABLE LIVE <input name="confirm" required placeholder="ENABLE LIVE" /></label>
+        <button type="submit" class="danger">Enable live trading</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Opportunities</h2>
+      <div class="scroll">
+        <table id="opp-table">
+          <thead>
+            <tr>
+              <th data-k="scanned_at">Time</th>
+              <th data-k="kind">Kind</th>
+              <th data-k="market_ticker">Market / legs</th>
+              <th data-k="side">Side</th>
+              <th data-k="quantity">Qty</th>
+              <th data-k="executable_price">Price</th>
+              <th data-k="estimated_prob">P</th>
+              <th data-k="conservative_prob">P cons</th>
+              <th data-k="uncertainty">Unc</th>
+              <th data-k="breakeven_prob">BE</th>
+              <th data-k="estimated_ev">EV</th>
+              <th data-k="conservative_ev">EV cons</th>
+              <th data-k="max_loss">Max loss</th>
+              <th data-k="data_freshness">Freshness</th>
+              <th data-k="decision">Decision</th>
+              <th data-k="reason">Explanation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in opps %}
+            <tr>
+              <td>{{ o.scanned_at }}</td>
+              <td>{{ o.kind }}</td>
+              <td>{{ o.market_ticker }}</td>
+              <td>{{ o.side }}</td>
+              <td>{{ o.quantity }}</td>
+              <td>{{ o.executable_price }}</td>
+              <td>{{ o.estimated_prob }}</td>
+              <td>{{ o.conservative_prob }}</td>
+              <td>{{ o.uncertainty }}</td>
+              <td>{{ o.breakeven_prob }}</td>
+              <td>{{ o.estimated_ev }}</td>
+              <td>{{ o.conservative_ev }}</td>
+              <td>{{ o.max_loss }}</td>
+              <td>{{ o.data_freshness }}</td>
+              <td class="{% if o.decision=='buy' %}ok{% else %}muted{% endif %}">{{ o.decision }}</td>
+              <td>{{ o.reason }}<div class="muted">{{ o.model_version }} · {{ o.validation_note }}</div></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="16" class="muted">No opportunities yet — run a scan.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card">
+        <h2>Open positions</h2>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Market</th><th>Side</th><th>Qty</th><th>Avg</th><th>Fees</th><th>Status</th><th>Mode</th></tr></thead>
+            <tbody>
+              {% for p in positions %}
+              <tr>
+                <td>{{ p.market_ticker }}</td><td>{{ p.side }}</td><td>{{ p.quantity }}</td>
+                <td>{{ p.avg_price }}</td><td>{{ p.fees_paid }}</td><td>{{ p.status }}</td><td>{{ p.mode }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="7" class="muted">None</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Orders</h2>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Time</th><th>Market</th><th>Side</th><th>Limit</th><th>Status</th><th>Mode</th></tr></thead>
+            <tbody>
+              {% for o in orders %}
+              <tr>
+                <td>{{ o.created_at }}</td><td>{{ o.market_ticker }}</td><td>{{ o.side }}</td>
+                <td>{{ o.limit_price }}</td><td>{{ o.status }}</td><td>{{ o.mode }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="muted">None</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Audit (recent)</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Level</th><th>Event</th><th>Message</th></tr></thead>
+          <tbody>
+            {% for a in audit %}
+            <tr><td>{{ a.ts }}</td><td>{{ a.level }}</td><td>{{ a.event }}</td><td>{{ a.message }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script>
+    // Simple column sort for opportunities table
+    const table = document.getElementById('opp-table');
+    if (table) {
+      table.querySelectorAll('th').forEach((th, idx) => {
+        th.addEventListener('click', () => {
+          const tbody = table.tBodies[0];
+          const rows = Array.from(tbody.rows);
+          const asc = th.dataset.asc !== 'true';
+          rows.sort((a, b) => {
+            const av = a.cells[idx].innerText.trim();
+            const bv = b.cells[idx].innerText.trim();
+            const an = parseFloat(av), bn = parseFloat(bv);
+            if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+            return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+          });
+          th.dataset.asc = asc ? 'true' : 'false';
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    }
+  </script>
+</body>
+</html>

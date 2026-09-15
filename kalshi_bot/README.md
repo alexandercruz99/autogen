@@ -9,7 +9,7 @@ Evidence-based Kalshi market scanner, probability models, EV/risk checks, paper 
 | Milestone | Status |
 | --- | --- |
 | Real market discovery + persistent storage | Implemented (Kalshi public Trade API) |
-| One category model → conservative EV | **Weather daily highs** via NWS (`api.weather.gov`) — labeled **unvalidated** |
+| One category model → conservative EV | **Weather daily highs** via NWS CLI settlement target + forecast archive (`weather.ai_cli.v1.0-collecting`) — **not live_eligible** yet |
 | Paper trading + risk + accounting | Implemented |
 | Combo discovery + joint/RFQ handling | Implemented (quotes required; no invented combo prices) |
 | Dashboard + autonomous loop + kill switch | Implemented |

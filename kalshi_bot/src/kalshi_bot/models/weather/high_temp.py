@@ -11,19 +11,23 @@ from kalshi_bot.config import WeatherModelConfig
 from kalshi_bot.data.store import Store
 from kalshi_bot.models.base import Prediction, ProbabilityModel
 from kalshi_bot.models.weather.nws_client import NWSClient, parse_market_date, parse_temp_contract
+from kalshi_bot.models.weather.settlement_rules import interval_from_market
 from kalshi_bot.money import D, clamp01
 
 logger = logging.getLogger(__name__)
 
-MODEL_VERSION = "weather.high_temp.v0.1-unvalidated"
+MODEL_VERSION = "weather.high_temp.v0.2-unvalidated"
 
 
 class WeatherHighTempModel(ProbabilityModel):
-    """Daily high-temperature binary markets using NWS forecast + Gaussian error model.
+    """Daily high-temperature binaries.
 
-    VALIDATION STATUS: Unvalidated for live edge. The forecast-error sigma is a
-    configurable prior, not a walk-forward calibrated estimate. Paper trading and
-    chronological validation must accumulate before treating EV as actionable for live.
+    Settlement (Kalshi rules): max temp at city CLINYC/... per **The Weather Company**,
+    not NWS. This model uses NWS daytime forecast highs as a **proxy** forecast with a
+    Gaussian error prior. LIVE TRADING BLOCKED until settlement-aligned source + walk-forward.
+
+    Decision-time discipline: only NWS periods whose start_time <= decision time are used;
+    forecast payload timestamps are stored.
     """
 
     name = "weather_high_temp"
@@ -73,12 +77,37 @@ class WeatherHighTempModel(ProbabilityModel):
         if target_day is None:
             return self._skip(ticker, now, "could not parse market date from ticker")
 
-        contract = parse_temp_contract(ticker, title)
-        if contract is None:
-            return self._skip(
-                ticker,
-                now,
-                "could not parse temperature threshold/bucket; refusing to invent definition",
+        contract_interval = interval_from_market(market)
+        contract: dict[str, Any] | None
+        if contract_interval is not None:
+            contract = {
+                "op": contract_interval.op,
+                "low": contract_interval.low,
+                "high": contract_interval.high,
+                "raw": contract_interval.source,
+                "rules_primary": contract_interval.rules_primary,
+            }
+        else:
+            parsed = parse_temp_contract(ticker, title)
+            if parsed is None:
+                return self._skip(
+                    ticker,
+                    now,
+                    "could not parse temperature threshold from market strikes/title; refusing to invent",
+                )
+            contract = parsed
+
+        # Settlement source audit from rules text when present.
+        rules = (market.get("rules_primary") or "") + " " + (market.get("rules_secondary") or "")
+        if "Weather Company" in rules or "CLINYC" in rules or "CLILA" in rules:
+            settlement_note = (
+                "Kalshi settles to The Weather Company station (e.g. CLINYC). "
+                "NWS grid forecast is a proxy only — not live_eligible."
+            )
+        else:
+            settlement_note = (
+                city_cfg.station_note
+                or "Verify settlement station matches forecast source before live trading"
             )
 
         cache_key = f"nws:{city_name}:{target_day.isoformat()}"
@@ -94,6 +123,12 @@ class WeatherHighTempModel(ProbabilityModel):
                     import json
 
                     forecast = json.loads(cached["payload_json"])
+                    # Leakage guard: period start must not be after decision time
+                    start = forecast.get("start_time")
+                    if start:
+                        start_dt = dt.fromisoformat(start.replace("Z", "+00:00"))
+                        if start_dt > now:
+                            forecast = None
 
         if forecast is None:
             try:
@@ -111,14 +146,21 @@ class WeatherHighTempModel(ProbabilityModel):
                 f"no NWS daytime high for {city_name} on {target_day} (refusing synthetic data)",
             )
 
+        # Leakage: do not use a forecast period that starts after decision time
+        start = forecast.get("start_time")
+        if start:
+            from datetime import datetime as dt
+
+            start_dt = dt.fromisoformat(start.replace("Z", "+00:00"))
+            if start_dt > now:
+                return self._skip(ticker, now, "forecast period starts after decision time (leakage guard)")
+
         mu = float(forecast["temp_f"])
         sigma = max(float(self.config.forecast_error_sigma_f), float(self.config.min_sigma_f))
         p = self._prob_yes(mu, sigma, contract)
-        # Wider-error stress test: recompute with inflated sigma (unvalidated model doubt).
         p_wide = self._prob_yes(mu, sigma * 1.5, contract)
-        p_yes_low = min(p, p_wide)   # conservative when buying YES
-        p_yes_high = max(p, p_wide)  # implies conservative NO = 1 - high
-        # Uncertainty floor acknowledges unvalidated σ and settlement-station mismatch risk.
+        p_yes_low = min(p, p_wide)
+        p_yes_high = max(p, p_wide)
         uncertainty = max(abs(p - p_wide), 0.08)
 
         factors = [
@@ -126,7 +168,7 @@ class WeatherHighTempModel(ProbabilityModel):
             f"Assumed forecast-error σ={sigma:.1f}°F (configurable prior; not walk-forward calibrated)",
             f"Stress σ={sigma * 1.5:.1f}°F → p_yes {p_wide:.4f} (low={p_yes_low:.4f}, high={p_yes_high:.4f})",
             f"Contract definition: {contract}",
-            city_cfg.station_note or "Verify settlement station matches NWS grid before live trading",
+            settlement_note,
         ]
 
         return Prediction(
@@ -142,12 +184,13 @@ class WeatherHighTempModel(ProbabilityModel):
                     "available_at": forecast.get("start_time"),
                     "url": forecast.get("forecast_url"),
                     "station": forecast.get("station_note"),
+                    "settlement_source_kalshi": "The Weather Company (see rules_primary)",
                 }
             ],
             factors=factors,
             validation_evidence=(
-                "UNVALIDATED: no held-out chronological score vs Kalshi settlements yet. "
-                "Compare to market-implied prices; disagreement ≠ edge. Use paper mode."
+                "UNVALIDATED: NWS proxy vs Weather Company CLINYC settlement; "
+                "no held-out chronological score vs Kalshi settlements yet. Paper only."
             ),
             as_of=now,
             supported=True,
@@ -159,6 +202,8 @@ class WeatherHighTempModel(ProbabilityModel):
                 "target_day": target_day.isoformat(),
                 "p_wide": p_wide,
                 "p_yes_high": p_yes_high,
+                "settlement_aligned": False,
+                "decision_time": now.isoformat(),
             },
         )
 
@@ -167,9 +212,14 @@ class WeatherHighTempModel(ProbabilityModel):
         if op == "range":
             low, high = float(contract["low"]), float(contract["high"])
             return float(norm.cdf(high, loc=mu, scale=sigma) - norm.cdf(low, loc=mu, scale=sigma))
+        if op == "range_inclusive":
+            low, high = float(contract["low"]), float(contract["high"])
+            # Inclusive integer degrees: approximate as [low-0.5, high+0.5]
+            return float(
+                norm.cdf(high + 0.5, loc=mu, scale=sigma) - norm.cdf(low - 0.5, loc=mu, scale=sigma)
+            )
         if op == "gt":
             thr = float(contract["low"])
-            # P(temp > thr) — for integer reported highs, approx P(T >= thr+epsilon)
             return float(1.0 - norm.cdf(thr, loc=mu, scale=sigma))
         if op == "lt":
             thr = float(contract["high"])

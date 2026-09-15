@@ -51,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("scan", help="Run one research/paper scan cycle")
+    sub.add_parser("reconcile", help="Reconcile settlements for open positions (no invented results)")
     sub.add_parser("dashboard", help="Start the dashboard (and optional loop)")
     p_run = sub.add_parser("run", help="Start autonomous loop + dashboard")
     p_run.add_argument("--no-dashboard", action="store_true")
@@ -72,6 +73,11 @@ def main(argv: list[str] | None = None) -> int:
             result = pipeline.run_scan_once()
             print(result)
             return 0 if result.get("ok") else 1
+
+        if args.cmd == "reconcile":
+            result = pipeline.settlement.reconcile_open_positions()
+            print(result)
+            return 0
 
         if args.cmd == "dashboard":
             app = create_app(config, store, pipeline, loop)

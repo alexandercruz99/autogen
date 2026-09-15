@@ -19,14 +19,19 @@ class ComboCandidate:
     legs: list[ComboLeg]
     dependence_model: dict[str, Any] | None
     skip_reason: str | None = None
+    eligible: bool = False
 
 
 class ComboDiscoverer:
     def __init__(self, client: KalshiClient, config: CombosConfig) -> None:
         self.client = client
         self.config = config
+        self._eligible_event_tickers: set[str] | None = None
+        self._collections_cache: list[dict[str, Any]] | None = None
 
     def list_collections(self) -> list[dict[str, Any]]:
+        if self._collections_cache is not None:
+            return self._collections_cache
         out: list[dict[str, Any]] = []
         cursor = None
         while True:
@@ -40,69 +45,140 @@ class ComboDiscoverer:
             cursor = payload.get("cursor") or None
             if not cursor or not batch:
                 break
+        self._collections_cache = out
         return out
+
+    def eligible_event_tickers(self) -> set[str]:
+        if self._eligible_event_tickers is not None:
+            return self._eligible_event_tickers
+        tickers: set[str] = set()
+        for c in self.list_collections():
+            for e in c.get("associated_events") or []:
+                if isinstance(e, dict) and e.get("ticker"):
+                    tickers.add(e["ticker"])
+            for t in c.get("associated_event_tickers") or []:
+                tickers.add(t)
+        self._eligible_event_tickers = tickers
+        return tickers
+
+    def collection_for_events(self, event_tickers: list[str]) -> dict[str, Any] | None:
+        needed = set(event_tickers)
+        for c in self.list_collections():
+            have = set(c.get("associated_event_tickers") or [])
+            for e in c.get("associated_events") or []:
+                if isinstance(e, dict) and e.get("ticker"):
+                    have.add(e["ticker"])
+            if needed.issubset(have):
+                size_min = c.get("size_min") or 2
+                size_max = c.get("size_max") or 0
+                n = len(needed)
+                if n < size_min:
+                    continue
+                if size_max and n > size_max:
+                    continue
+                return c
+        return None
 
     def build_candidates(
         self,
         predictions: list[Prediction],
         market_meta: dict[str, dict[str, Any]],
     ) -> list[ComboCandidate]:
-        """Bound search of 2–N leg candidates from supported predictions.
-
-        Only proposes independence across distinct weather cities when allowed.
-        Same-city / same-game dependent legs are skipped without a joint model.
-        """
         if not self.config.enabled:
             return []
 
+        eligible_events = self.eligible_event_tickers()
         supported = [p for p in predictions if p.supported]
         candidates: list[ComboCandidate] = []
 
-        # Group by city for weather independence heuristic
+        # Eligibility report for modeled markets
+        for p in supported:
+            meta = market_meta.get(p.market_ticker) or {}
+            et = meta.get("event_ticker") or ""
+            if et and et not in eligible_events:
+                candidates.append(
+                    ComboCandidate(
+                        collection_ticker="",
+                        legs=[
+                            ComboLeg(
+                                p.market_ticker,
+                                et,
+                                "yes",
+                                p.p_yes_conservative,
+                            )
+                        ],
+                        dependence_model=None,
+                        skip_reason=(
+                            f"event {et} not in any open MVE collection associated_events "
+                            "(verified via API — cannot form Kalshi combo)"
+                        ),
+                        eligible=False,
+                    )
+                )
+
         by_city: dict[str, list[Prediction]] = {}
         for p in supported:
             city = (p.details or {}).get("city") or "unknown"
             by_city.setdefault(str(city), []).append(p)
 
-        cities = list(by_city.keys())
+        cities = [c for c in by_city if c != "unknown"]
         for r in range(2, min(self.config.max_legs, len(cities)) + 1):
             for city_group in itertools.combinations(cities, r):
-                # Pick the single best-supported contract per city (highest |p-0.5| with lowest uncertainty)
                 picks: list[Prediction] = []
                 for c in city_group:
-                    ranked = sorted(
-                        by_city[c],
-                        key=lambda x: (x.uncertainty, -abs(float(x.p_yes - 1) + float(x.p_yes))),
-                    )
+                    ranked = sorted(by_city[c], key=lambda x: x.uncertainty)
                     picks.append(ranked[0])
                 legs = []
+                events = []
                 for p in picks:
                     meta = market_meta.get(p.market_ticker) or {}
+                    et = meta.get("event_ticker") or ""
+                    events.append(et)
                     legs.append(
                         ComboLeg(
                             market_ticker=p.market_ticker,
-                            event_ticker=meta.get("event_ticker") or "",
+                            event_ticker=et,
                             side="yes",
                             p_marginal=p.p_yes_conservative,
-                            settlement_rules_note="DNP/partial settlement follows underlying market rules; combos are product of leg values",
+                            settlement_rules_note=(
+                                "DNP/partial follows underlying; combo payout = product of leg values"
+                            ),
                         )
                     )
-                dependence = {
-                    "type": "independent_weather_cities",
-                    "cities": list(city_group),
-                    "note": "Independence is an assumption — disabled unless config.allow_independence_assumption",
-                }
-                candidates.append(
-                    ComboCandidate(
-                        collection_ticker="",  # resolved when matching an open MVE collection
-                        legs=legs,
-                        dependence_model=dependence,
+                coll = self.collection_for_events(events) if all(events) else None
+                if coll is None:
+                    candidates.append(
+                        ComboCandidate(
+                            collection_ticker="",
+                            legs=legs,
+                            dependence_model={
+                                "type": "independent_weather_cities",
+                                "cities": list(city_group),
+                            },
+                            skip_reason=(
+                                "weather city legs not jointly present in an open MVE collection; "
+                                "infrastructure ready but combo not exchange-eligible now"
+                            ),
+                            eligible=False,
+                        )
                     )
-                )
+                else:
+                    candidates.append(
+                        ComboCandidate(
+                            collection_ticker=coll.get("collection_ticker") or "",
+                            legs=legs,
+                            dependence_model={
+                                "type": "independent_weather_cities",
+                                "cities": list(city_group),
+                                "note": "Distinct cities — independence optional via config",
+                            },
+                            eligible=True,
+                        )
+                    )
                 if len(candidates) >= self.config.max_candidates_per_scan:
                     return candidates
 
-        # Explicitly record same-event multi-leg as unsupported without joint model
+        # Same-event dependent legs without joint model
         by_event: dict[str, list[Prediction]] = {}
         for p in supported:
             meta = market_meta.get(p.market_ticker) or {}
@@ -115,23 +191,15 @@ class ComboDiscoverer:
                     ComboCandidate(
                         collection_ticker="",
                         legs=[
-                            ComboLeg(
-                                preds[0].market_ticker,
-                                et,
-                                "yes",
-                                preds[0].p_yes_conservative,
-                            ),
-                            ComboLeg(
-                                preds[1].market_ticker,
-                                et,
-                                "yes",
-                                preds[1].p_yes_conservative,
-                            ),
+                            ComboLeg(preds[0].market_ticker, et, "yes", preds[0].p_yes_conservative),
+                            ComboLeg(preds[1].market_ticker, et, "yes", preds[1].p_yes_conservative),
                         ],
                         dependence_model=None,
                         skip_reason=(
-                            "same-event legs are dependent; no validated joint model — skip combo"
+                            "same-event legs are dependent/mutually exclusive risk; "
+                            "no validated joint model — skip combo"
                         ),
+                        eligible=False,
                     )
                 )
         return candidates[: self.config.max_candidates_per_scan]

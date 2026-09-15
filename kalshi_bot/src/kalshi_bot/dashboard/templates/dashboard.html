@@ -154,6 +154,20 @@
     </section>
 
     <section class="card">
+      <h2>Strategy validation status</h2>
+      <p class="note">Live-eligible strategies: {% if validation.live_eligible_strategies %}{{ validation.live_eligible_strategies }}{% else %}<span class="bad">none</span>{% endif %}</p>
+      <ul>
+        {% for p in validation.paper_only %}
+        <li><strong>{{ p.model }}</strong> — paper/research only: {{ p.reason }}</li>
+        {% endfor %}
+        {% for b in validation.blocked %}
+        <li class="muted">Blocked {{ b.strategy }}: {{ b.missing }}</li>
+        {% endfor %}
+      </ul>
+      <p class="muted">Promotion criteria: {{ validation.promotion_criteria }} · configs tried: {{ validation.configs_tried }}</p>
+    </section>
+
+    <section class="card">
       <h2>Controls</h2>
       <div class="controls">
         <form method="post" action="/actions/scan"><button type="submit" class="primary">Scan now</button></form>
@@ -264,15 +278,23 @@
         <h2>Open positions</h2>
         <div class="scroll">
           <table>
-            <thead><tr><th>Market</th><th>Side</th><th>Qty</th><th>Avg</th><th>Fees</th><th>Status</th><th>Mode</th></tr></thead>
+            <thead><tr><th>Market</th><th>Side</th><th>Qty</th><th>Avg</th><th>Fees</th><th>Status</th><th>Mode</th><th>Close</th></tr></thead>
             <tbody>
               {% for p in positions %}
               <tr>
                 <td>{{ p.market_ticker }}</td><td>{{ p.side }}</td><td>{{ p.quantity }}</td>
                 <td>{{ p.avg_price }}</td><td>{{ p.fees_paid }}</td><td>{{ p.status }}</td><td>{{ p.mode }}</td>
+                <td>
+                  {% if p.status == 'open' %}
+                  <form method="post" action="/actions/close-position">
+                    <input type="hidden" name="position_id" value="{{ p.id }}" />
+                    <button type="submit">Request close</button>
+                  </form>
+                  {% endif %}
+                </td>
               </tr>
               {% else %}
-              <tr><td colspan="7" class="muted">None</td></tr>
+              <tr><td colspan="8" class="muted">None</td></tr>
               {% endfor %}
             </tbody>
           </table>

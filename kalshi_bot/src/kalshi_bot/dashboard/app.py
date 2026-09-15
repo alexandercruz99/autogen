@@ -38,6 +38,7 @@ def create_app(
         orders = store.list_orders(limit=50)
         positions = store.list_positions()
         audit = store.list_audit(limit=30)
+        validation = pipeline.validation_status()
         return templates.TemplateResponse(
             request,
             "dashboard.html",
@@ -50,6 +51,7 @@ def create_app(
                 "audit": audit,
                 "config_mode": config.mode,
                 "live_config_enabled": config.live.enabled,
+                "validation": validation,
             },
         )
 
@@ -183,6 +185,29 @@ def create_app(
         config.trading.budget_dollars = b
         store.audit("budget", f"trading budget set to {b} (deposits do not auto-change this)")
         return RedirectResponse("/", status_code=303)
+
+    @app.post("/actions/close-position")
+    def close_position(position_id: str = Form(...)) -> RedirectResponse:
+        """Distinct from pause: mark intent to close; paper closes at mid if available else skip."""
+        positions = store.list_positions(status="open")
+        target = next((p for p in positions if p["id"] == position_id), None)
+        if not target:
+            store.audit("close_miss", f"position {position_id} not found")
+            return RedirectResponse("/", status_code=303)
+        # Closing is separate: we do not auto-flatten. Paper records a close request;
+        # without a reliable exit model we refuse to invent exit fills.
+        store.audit(
+            "close_requested",
+            f"Close requested for {target['market_ticker']} — "
+            "early exit requires separate validated exit model; hold-to-settlement is default. "
+            "Position left open.",
+            details={"position_id": position_id},
+        )
+        return RedirectResponse("/", status_code=303)
+
+    @app.get("/api/validation")
+    def api_validation() -> dict[str, Any]:
+        return pipeline.validation_status()
 
     @app.post("/actions/start-loop")
     def start_loop() -> RedirectResponse:

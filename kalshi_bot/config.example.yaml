@@ -23,6 +23,7 @@ scan:
   # Categories to discover. Evaluation only runs where a model is registered.
   categories:
     - Climate and Weather
+    - Economics
   series_tickers:
     - KXHIGHNY
     - HIGHNY
@@ -30,6 +31,7 @@ scan:
     - HIGHLAX
     - KXHIGHTCHI
     - HIGHCHI
+    - KXCPI
   max_markets_per_scan: 200
   scan_interval_seconds: 120
   orderbook_depth_levels: 10
@@ -67,17 +69,18 @@ models:
         series_prefixes: ["KXHIGHNY", "HIGHNY"]
         lat: 40.7789
         lon: -73.9692
-        station_note: "Central Park / OKX grid — verify against market settlement rules"
+        station_note: "PROXY ONLY — Kalshi settles CLINYC via The Weather Company, not NWS"
       LAX:
         series_prefixes: ["KXHIGHLAX", "HIGHLAX"]
         lat: 34.0522
         lon: -118.2437
-        station_note: "Verify settlement station against Kalshi market rules before live"
+        station_note: "PROXY ONLY — verify Weather Company station vs NWS grid"
       CHI:
         series_prefixes: ["KXHIGHTCHI", "HIGHCHI", "KXHIGHCHI"]
         lat: 41.8781
         lon: -87.6298
-        station_note: "Verify settlement station against Kalshi market rules before live"
+        station_note: "PROXY ONLY — verify Weather Company station vs NWS grid"
+  economics_cpi_enabled: true
 
 combos:
   enabled: true
@@ -88,6 +91,8 @@ combos:
   allow_independence_assumption: false
   rfq_poll_seconds: 2
   rfq_wait_seconds: 15
+  # Set only for labeled paper RFQ simulator tests — not profit evidence.
+  paper_fixture_yes_price: null
 
 dashboard:
   host: 127.0.0.1

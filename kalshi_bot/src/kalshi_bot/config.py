@@ -95,6 +95,7 @@ class WeatherModelConfig(BaseModel):
 
 class ModelsConfig(BaseModel):
     weather: WeatherModelConfig = Field(default_factory=WeatherModelConfig)
+    economics_cpi_enabled: bool = True
 
 
 class CombosConfig(BaseModel):
@@ -105,6 +106,15 @@ class CombosConfig(BaseModel):
     allow_independence_assumption: bool = False
     rfq_poll_seconds: float = 2.0
     rfq_wait_seconds: float = 15.0
+    # Labeled paper simulator only — never evidence of live profitability.
+    paper_fixture_yes_price: Decimal | None = None
+
+    @field_validator("paper_fixture_yes_price", mode="before")
+    @classmethod
+    def _opt_dec(cls, v: Any) -> Decimal | None:
+        if v is None or v == "":
+            return None
+        return Decimal(str(v))
 
 
 class DashboardConfig(BaseModel):

@@ -123,6 +123,8 @@ class MarketScanner:
     def _infer_category(self, series_ticker: str, market: dict[str, Any]) -> str:
         title = (market.get("title") or "") + " " + series_ticker
         upper = title.upper()
+        if series_ticker.upper().startswith("KXCPI") or "CPI" in upper:
+            return "Economics"
         if "HIGH" in upper or "TEMP" in upper or "RAIN" in upper or "SNOW" in upper:
             return "Climate and Weather"
         return market.get("category") or "unknown"

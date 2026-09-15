@@ -96,9 +96,12 @@ class WeatherCityConfig(BaseModel):
 
 class WeatherModelConfig(BaseModel):
     enabled: bool = True
+    # Prefer CLI-aligned AI forecaster when true; legacy Gaussian kept as fallback registry entry.
+    use_ai_forecaster: bool = True
+    archive_path: str = "data/weather_archive.db"
     forecast_error_sigma_f: float = 3.0
     min_sigma_f: float = 2.0
-    # Extra °F added to σ when forecast source ≠ Kalshi settlement source (NWS vs Weather Co).
+    # Extra °F for legacy model when treating grid as settlement (legacy path only).
     proxy_sigma_extra_f: float = 1.5
     max_forecast_age_hours: float = 12.0
     cities: dict[str, WeatherCityConfig] = Field(default_factory=dict)

@@ -32,7 +32,7 @@
 | Capability | Status | Code | Tests | Evidence / blocker |
 | --- | --- | --- | --- | --- |
 | Market discovery | implemented_tested, connected_real_data | `discovery/scanner.py`, `api/client.py` | `tests/test_scanner_smoke.py` | DB markets/snapshots from open series |
-| Weather model | implemented_tested, connected_real_data, forward_paper_obs | `models/weather/*` | parse + leakage + settlement mapping tests | **Not statistically_validated**; settlement source is Weather Company CLINYC — NWS is forecast *proxy* → **not live_eligible** |
+| Weather model | implemented_tested, connected_real_data, forward_paper_obs | `models/weather/*` | parse + leakage + settlement + AI guards | **Daily max target = NWS CLI** (not Weather Co hourly). AI module `weather.ai_cli.v1.0-collecting` with empirical residuals; **not** statistically_validated / **not** live_eligible; decision-time forecast archive still thin |
 | Economics CPI model | implemented_tested, connected_real_data | `models/economics/cpi.py` | CPI parse + BLS mom tests | Prior from BLS history; **not statistically_validated**; **not live_eligible** |
 | Sports / props | blocked | — | — | Need licensed lineup/odds feeds; no free reliable end-to-end source wired |
 | Individual EV/fees/book | implemented_tested, connected_real_data | `api/orderbook.py`, `api/fees.py`, `ev/calculator.py` | fees, orderbook, EV tests | — |

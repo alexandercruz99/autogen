@@ -21,6 +21,7 @@ from kalshi_bot.execution.rfq import ComboRFQExecutor
 from kalshi_bot.execution.rfq_fsm import PaperRfqFsm, RfqState
 from kalshi_bot.models.economics.cpi import CpiMomModel
 from kalshi_bot.models.registry import ModelRegistry
+from kalshi_bot.models.weather.ai_forecaster import AIWeatherForecaster
 from kalshi_bot.models.weather.high_temp import WeatherHighTempModel
 from kalshi_bot.money import D
 
@@ -34,8 +35,11 @@ class TradingPipeline:
         self.client = client
         self.scanner = MarketScanner(client, store, config.scan)
         self.registry = ModelRegistry()
+        self.ai_weather = AIWeatherForecaster(config.models.weather, store=store)
         self.weather_model = WeatherHighTempModel(config.models.weather, store=store)
         self.cpi_model = CpiMomModel(store=store)
+        if config.models.weather.use_ai_forecaster:
+            self.registry.register(self.ai_weather)
         self.registry.register(self.weather_model)
         if config.models.economics_cpi_enabled:
             self.registry.register(self.cpi_model)
@@ -48,11 +52,12 @@ class TradingPipeline:
         )
         self.settlement = SettlementReconciler(client, store)
         self.model_configs_tried: list[str] = [
-            self.weather_model.version,
+            self.ai_weather.version if config.models.weather.use_ai_forecaster else self.weather_model.version,
             self.cpi_model.version,
         ]
 
     def close(self) -> None:
+        self.ai_weather.close()
         self.weather_model.close()
         self.cpi_model.close()
 
@@ -67,13 +72,21 @@ class TradingPipeline:
             return {"ok": False, "error": str(exc)}
 
     def validation_status(self) -> dict[str, Any]:
+        weather_val = None
+        try:
+            weather_val = self.ai_weather.archive.latest_validation()
+        except Exception:
+            weather_val = None
         return {
             "promotion_criteria": "docs/PROMOTION_CRITERIA.md",
             "live_eligible_strategies": [],
             "paper_only": [
                 {
-                    "model": self.weather_model.version,
-                    "reason": "NWS proxy vs Weather Company CLINYC; σ inflated + market shrink; holdout n insufficient",
+                    "model": self.ai_weather.version,
+                    "reason": (
+                        "CLI-aligned target; empirical residuals when trained. "
+                        "Need holdout ≥100 Kalshi settlements + executable-price paper PnL"
+                    ),
                 },
                 {
                     "model": self.cpi_model.version,
@@ -91,6 +104,7 @@ class TradingPipeline:
                 },
             ],
             "configs_tried": self.model_configs_tried,
+            "weather_validation_report": weather_val.get("report") if weather_val else None,
         }
 
     def sync_live_cash(self) -> str | None:

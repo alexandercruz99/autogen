@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
@@ -107,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("dashboard", help="Start the dashboard (and optional loop)")
     p_run = sub.add_parser("run", help="Start autonomous loop + dashboard")
     p_run.add_argument("--no-dashboard", action="store_true")
+    sub.add_parser("weather-collect", help="Collect NWS CLI outcomes + forecast snapshots into archive")
+    sub.add_parser("weather-train", help="Train station empirical/quantile models from archive")
+    sub.add_parser("weather-validate", help="Walk-forward style validation report (honest gaps)")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -117,6 +121,20 @@ def main(argv: list[str] | None = None) -> int:
         cfg_path = "config.yaml"
     elif cfg_path is None and Path("config.example.yaml").exists():
         cfg_path = "config.example.yaml"
+
+    # Weather ops can run without starting the trading loop / live boot side effects.
+    if args.cmd in ("weather-collect", "weather-train", "weather-validate"):
+        config = load_config(cfg_path)
+        from kalshi_bot.models.weather.ops import weather_collect, weather_train, weather_validate
+
+        if args.cmd == "weather-collect":
+            print(json.dumps(weather_collect(config), indent=2, default=str))
+            return 0
+        if args.cmd == "weather-train":
+            print(json.dumps(weather_train(config), indent=2, default=str))
+            return 0
+        print(json.dumps(weather_validate(config), indent=2, default=str))
+        return 0
 
     config, store, client, pipeline, loop = build_runtime(cfg_path)
 

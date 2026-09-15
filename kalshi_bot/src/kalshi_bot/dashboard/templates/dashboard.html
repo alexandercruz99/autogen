@@ -165,6 +165,9 @@
         {% endfor %}
       </ul>
       <p class="muted">Promotion criteria: {{ validation.promotion_criteria }} · configs tried: {{ validation.configs_tried }}</p>
+      {% if validation.weather_validation_report %}
+      <p class="note">Weather validate: trading PnL {{ validation.weather_validation_report.trading_profitability }} · meets promotion: {{ validation.weather_validation_report.meets_live_promotion }}</p>
+      {% endif %}
     </section>
 
     <section class="card">

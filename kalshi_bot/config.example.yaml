@@ -64,28 +64,29 @@ trading:
 models:
   weather:
     enabled: true
-    # Historical NWS max-temp forecast error stdev (°F). Replace with walk-forward estimate.
-    # Until calibrated on held-out data, trading uses wide uncertainty and may skip often.
+    use_ai_forecaster: true
+    archive_path: data/weather_archive.db
+    # Legacy Gaussian σ (fallback model only)
     forecast_error_sigma_f: 3.0
     min_sigma_f: 2.0
-    proxy_sigma_extra_f: 1.5      # Added when forecast source ≠ settlement source
+    proxy_sigma_extra_f: 1.5
     max_forecast_age_hours: 12
     cities:
       NYC:
         series_prefixes: ["KXHIGHNY", "HIGHNY"]
         lat: 40.7789
         lon: -73.9692
-        station_note: "PROXY ONLY — Kalshi settles CLINYC via The Weather Company, not NWS"
+        station_note: "Daily max → NWS CLI Central Park (NYC)"
       LAX:
         series_prefixes: ["KXHIGHLAX", "HIGHLAX"]
         lat: 34.0522
         lon: -118.2437
-        station_note: "PROXY ONLY — verify Weather Company station vs NWS grid"
+        station_note: "Daily max → NWS CLI LAX — verify rules_primary"
       CHI:
         series_prefixes: ["KXHIGHTCHI", "HIGHCHI", "KXHIGHCHI"]
-        lat: 41.8781
-        lon: -87.6298
-        station_note: "PROXY ONLY — verify Weather Company station vs NWS grid"
+        lat: 41.7868
+        lon: -87.7522
+        station_note: "Daily max → NWS CLI Midway (MDW)"
   economics_cpi_enabled: true
 
 combos:

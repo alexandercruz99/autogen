@@ -1,5 +1,9 @@
 # Bot Audit Report
 
+> **Corrections addendum (2026-09-16):** Implementation fixes and corrected trade reconciliation are in  
+> [`docs/BOT_AUDIT_ADDENDUM.md`](BOT_AUDIT_ADDENDUM.md) and [`docs/TRADE_RECONCILIATION_CORRECTED.md`](TRADE_RECONCILIATION_CORRECTED.md).  
+> This report is preserved as the original audit narrative; several F-findings below are **superseded** by the addendum (notably F2 live bypass, F5 NO prices, F6 settlements, F7 LAX PnL).
+
 **Run ID:** `audit-20260916T204915Z`  
 **Generated (UTC):** 2026-09-16 (audit session)  
 **Repository:** `alexandercruz99/autogen`  

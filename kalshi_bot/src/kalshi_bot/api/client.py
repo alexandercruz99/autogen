@@ -276,6 +276,26 @@ class KalshiClient:
     def get_fills(self, **params: Any) -> dict[str, Any]:
         return self.get("/portfolio/fills", params=params or None, auth=True)
 
+    def get_settlements(self, **params: Any) -> dict[str, Any]:
+        """GET /portfolio/settlements — paginate with cursor when the API returns one."""
+        return self.get("/portfolio/settlements", params=params or None, auth=True)
+
+    def iter_settlements(self, **params: Any) -> list[dict[str, Any]]:
+        """Fetch all settlement pages (best-effort)."""
+        out: list[dict[str, Any]] = []
+        cursor: str | None = None
+        for _ in range(50):
+            p = dict(params)
+            if cursor:
+                p["cursor"] = cursor
+            payload = self.get_settlements(**p)
+            batch = payload.get("settlements") or []
+            out.extend(batch)
+            cursor = payload.get("cursor") or payload.get("next_cursor")
+            if not cursor or not batch:
+                break
+        return out
+
     def create_order_v2(self, body: dict[str, Any]) -> dict[str, Any]:
         if "client_order_id" not in body:
             body = {**body, "client_order_id": str(uuid.uuid4())}

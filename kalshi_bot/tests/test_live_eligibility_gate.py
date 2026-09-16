@@ -48,6 +48,7 @@ def test_live_submit_blocked_without_model_live_eligible(tmp_path):
         model_live_eligible=False,
     )
     assert order is None
+    client.create_order_v2.assert_not_called()
     client.create_order.assert_not_called()
 
 
@@ -67,7 +68,7 @@ def test_live_submit_blocked_when_eligibility_missing(tmp_path):
         model_live_eligible=None,
     )
     assert order is None
-    client.create_order.assert_not_called()
+    client.create_order_v2.assert_not_called()
 
 
 def test_paper_allowed_when_not_live_eligible(tmp_path):
@@ -85,8 +86,6 @@ def test_paper_allowed_when_not_live_eligible(tmp_path):
         mode="paper",
         model_live_eligible=False,
     )
-    # Paper path may fill or risk-block; must not call live create_order
-    client.create_order.assert_not_called()
-    # If risk allowed, order should exist as paper fill
+    client.create_order_v2.assert_not_called()
     if order is not None:
         assert order.mode == "paper"

@@ -179,11 +179,19 @@ def place_capped_live_bet(
     dollars: float = 5.0,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Submit one live order sized to ``dollars`` (default $5).
+    """Size a candidate and optionally submit via ExecutionEngine (never direct create_order).
 
-    Explicit user-requested capped bet off the TWC point forecast. Enforces dollar
-    cap + live config arming; does not require obs_engine_live_eligible promotion.
+    Live requires the same gates as scan: mode+live_enabled, model_live_eligible=True,
+    RiskManager, and EV requalified at the refreshed executable price. A dollar cap or
+    user_requested flag does not bypass eligibility. force_decision must not be used to
+    invent a live-eligible decision hour — callers must pass an already-valid forecast.
     """
+    from datetime import datetime as _dt
+
+    from kalshi_bot.ev.calculator import EvResult, evaluate_binary_contract
+    from kalshi_bot.execution.engine import ExecutionEngine
+    from kalshi_bot.models.base import Prediction
+
     dollars_d = D(str(dollars))
     if dollars_d <= ZERO or dollars_d > D("25"):
         return {"ok": False, "error": "dollars must be in (0, 25]"}
@@ -198,18 +206,28 @@ def place_capped_live_bet(
             "reason": result.get("reason"),
         }
 
+    # Live path: unsupported / forced decision hours are research-only.
+    if result.get("force_decision") or result.get("status") == "unsupported_decision_time":
+        if not dry_run:
+            return {
+                "ok": False,
+                "error": (
+                    "force_decision / unsupported_decision_time is research-only; "
+                    "refusing live execution"
+                ),
+                "callout": callout,
+                "live_order_submitted": False,
+            }
+
     candidate = _best_live_candidate(result, dollars=dollars_d)
     if candidate is None:
         return {
             "ok": False,
-            "error": (
-                "no high-confidence data pick with edge "
-                f"(need model_p≥{MIN_MODEL_P}, strike within {MAX_STRIKE_DISTANCE_F}°F of median, "
-                "positive EV); refusing lottery / cheapest-ask fallback"
-            ),
+            "error": "no candidate after selection filters (see selection_rejected)",
             "callout": callout,
             "paper_decision": result.get("paper_decision"),
             "selection_rejected": result.get("live_selection_rejected"),
+            "live_order_submitted": False,
         }
 
     out: dict[str, Any] = {
@@ -218,10 +236,29 @@ def place_capped_live_bet(
         "candidate": candidate,
         "live_order_submitted": False,
         "dry_run": dry_run,
+        "execution_path": "ExecutionEngine.place_individual",
     }
     if dry_run:
-        out["decision"] = "dry_run_would_submit"
+        out["decision"] = "dry_run_would_submit_via_execution_engine"
+        out["note"] = (
+            "Dry-run only. Live still requires model_live_eligible=True and RiskManager."
+        )
         return out
+
+    # Transfer / exploratory TWC models are not live-eligible unless explicitly promoted.
+    model_live_eligible = bool(result.get("model_live_eligible") is True)
+    if not model_live_eligible:
+        return {
+            **out,
+            "ok": False,
+            "error": (
+                "model_live_eligible is not True — refusing live submit. "
+                "user_requested / dollar cap cannot bypass promotion gates. "
+                "Paper/research forecasting remains available without --live."
+            ),
+            "model_origin": result.get("model_origin"),
+            "model_live_eligible": False,
+        }
 
     if config.mode != "live" or not config.live.enabled:
         return {
@@ -233,18 +270,24 @@ def place_capped_live_bet(
     store = Store(config.storage.sqlite_path)
     client = KalshiClient(config.api)
     try:
-        store.update_state(mode="live", live_enabled=True)
-        bal = client.get_balance()
-        bal_d = D(str(bal.get("balance_dollars") or "0"))
-        if bal_d < dollars_d:
-            return {**out, "ok": False, "error": f"balance ${bal_d} < ${dollars_d} cap", "balance": bal}
+        # Do not force-enable live here; require pre-armed state.
+        state = store.get_state()
+        if state.mode != "live" or not state.live_enabled:
+            return {
+                **out,
+                "ok": False,
+                "error": "store not armed for live (mode/live_enabled)",
+            }
 
-        ticker = candidate["ticker"]
-        side = candidate["side"]
+        ticker = str(candidate["ticker"])
+        side = str(candidate["side"])
         mraw = client.get_market(ticker)
         market = mraw.get("market") if isinstance(mraw, dict) else None
         if not isinstance(market, dict):
             market = {"ticker": ticker}
+        status = (market.get("status") or "").lower()
+        if status and status not in ("active", "open", "initialized", ""):
+            return {**out, "ok": False, "error": f"market status={status} not tradable"}
 
         raw_book = client.get_orderbook(ticker, depth=10)
         book = parse_orderbook(raw_book)
@@ -252,160 +295,128 @@ def place_capped_live_bet(
         if ask is None or ask <= ZERO or ask >= ONE:
             return {**out, "ok": False, "error": f"no executable {side} ask at submit time"}
 
-        qty = min(D(candidate["qty"]), fp_count(dollars_d / ask))
-        if qty < D("0.01"):
-            return {**out, "ok": False, "error": "qty below minimum after live ask resize"}
-        fees = estimate_net_fee(
-            qty,
-            ask,
-            multiplier=config.trading.fee_multiplier,
-            assume_taker=True,
-            balance_precision=D(config.trading.balance_precision),
-        )
-        capital = ask * qty + fees
-        while capital > dollars_d and qty > D("0.01"):
-            qty = fp_count(qty - D("0.01"))
-            fees = estimate_net_fee(
-                qty,
-                ask,
-                multiplier=config.trading.fee_multiplier,
-                assume_taker=True,
-                balance_precision=D(config.trading.balance_precision),
-            )
-            capital = ask * qty + fees
-        if capital > dollars_d:
-            return {**out, "ok": False, "error": f"cannot fit under ${dollars} at ask {ask}"}
-
-        client_order_id = f"twc-live-{uuid.uuid4()}"
+        # Immutable decision context → Prediction for EV requalify at refreshed ask.
+        p_side = D(str(candidate["p"]))
         if side == "yes":
-            book_side = "bid"
-            price = str(fp_price(ask))
+            p_yes = p_side
         else:
-            book_side = "ask"
-            price = str(fp_price(ONE - ask))
-
-        body = {
-            "ticker": ticker,
-            "client_order_id": client_order_id,
-            "side": book_side,
-            "count": str(fp_count(qty)),
-            "price": price,
-            "time_in_force": "good_till_canceled",
-            "self_trade_prevention_type": "taker_at_cross",
-            "post_only": False,
-        }
-        order_rec = OrderRecord(
-            client_order_id=client_order_id,
-            created_at=utcnow(),
-            mode="live",
-            kind="individual",
+            p_yes = ONE - p_side
+        # Conservative haircut: reuse uncertainty buffer as prediction uncertainty floor.
+        unc = D(config.trading.uncertainty_buffer)
+        pred = Prediction(
             market_ticker=ticker,
-            event_ticker=str(market.get("event_ticker") or ""),
-            side=side,
-            quantity=str(fp_count(qty)),
-            limit_price=str(fp_price(ask)),
-            status="pending",
-            reservation_id="",
-            opportunity_id=f"twc-user-live-{ticker}-{side}",
-            details_json=dumps(
-                {
-                    "callout": callout,
-                    "dollars_cap": str(dollars_d),
-                    "capital_required": str(fp_price(capital)),
-                    "model_origin": result.get("model_origin"),
-                    "point_median_f": result.get("point_median_f"),
-                    "user_requested": True,
-                }
+            p_yes=p_yes,
+            p_yes_conservative=max(ZERO, p_yes - unc),
+            uncertainty=unc,
+            model_version=str(result.get("model_version") or result.get("model_origin") or "twc"),
+            data_sources=[{"name": "twc_forecast_result"}],
+            factors=[callout or ""],
+            validation_evidence=str(
+                result.get("validation_evidence")
+                or "RESEARCH/TWC transfer — not settlement-calibrated for live"
             ),
-        )
-        store.save_order(order_rec)
-        store.audit(
-            "twc_live_submit",
-            f"submitting {side} {ticker} x{qty} @ {ask} (~${fp_price(capital)})",
-            details={"callout": callout, "client_order_id": client_order_id},
-        )
-
-        resp = client.create_order_v2(body)
-        order_payload = resp.get("order") if isinstance(resp.get("order"), dict) else resp
-        order_rec.exchange_order_id = str(
-            order_payload.get("order_id") or order_payload.get("id") or ""
-        )
-        filled = str(
-            order_payload.get("fill_count_fp")
-            or order_payload.get("fill_count")
-            or order_payload.get("filled_quantity")
-            or "0"
-        )
-        remaining = D(
-            str(
-                order_payload.get("remaining_count_fp")
-                or order_payload.get("remaining_count")
-                or qty
-            )
-        )
-        order_rec.filled_quantity = filled
-        if D(filled) > ZERO and remaining > ZERO:
-            order_rec.status = "partial"
-        elif remaining <= ZERO or D(filled) >= qty:
-            order_rec.status = "filled"
-        else:
-            order_rec.status = "resting"
-        if order_payload.get("avg_fill_price") or order_payload.get("average_fill_price"):
-            order_rec.avg_fill_price = str(
-                order_payload.get("avg_fill_price") or order_payload.get("average_fill_price")
-            )
-        if order_payload.get("fees_paid") or order_payload.get("average_fee_paid"):
-            order_rec.fees_paid = str(
-                order_payload.get("fees_paid") or order_payload.get("average_fee_paid")
-            )
-        prev = json.loads(order_rec.details_json or "{}")
-        prev["exchange_response_keys"] = list(resp.keys()) if isinstance(resp, dict) else []
-        prev["order_status_raw"] = order_payload.get("status")
-        order_rec.details_json = dumps(prev)
-        store.save_order(order_rec)
-
-        if order_rec.status in ("filled", "partial") and D(order_rec.filled_quantity or "0") > ZERO:
-            store.save_position(
-                PositionRecord(
-                    id=str(uuid.uuid4()),
-                    opened_at=utcnow(),
-                    mode="live",
-                    kind="individual",
-                    market_ticker=ticker,
-                    event_ticker=str(market.get("event_ticker") or ""),
-                    side=side,
-                    quantity=order_rec.filled_quantity,
-                    avg_price=order_rec.avg_fill_price or order_rec.limit_price,
-                    fees_paid=order_rec.fees_paid,
-                    status="open",
-                    details_json=dumps({"client_order_id": client_order_id, "callout": callout}),
-                )
-            )
-        store.audit(
-            "twc_live_result",
-            f"{order_rec.status} {ticker} {side}",
+            as_of=_dt.now(timezone.utc),
             details={
-                "exchange_order_id": order_rec.exchange_order_id,
-                "filled": order_rec.filled_quantity,
-                "status": order_rec.status,
+                "model_live_eligible": True,  # only reached if outer gate passed
+                "point_median_f": result.get("point_median_f"),
+                "model_origin": result.get("model_origin"),
+                "twc_capped_intent": True,
+                "dollars_cap": str(dollars_d),
             },
         )
-        out["live_order_submitted"] = True
+        # Size toward dollar cap at refreshed ask.
+        qty = min(D(candidate["qty"]), fp_count(dollars_d / ask))
+        evs = evaluate_binary_contract(pred, book, config.trading, quantity=qty)
+        ev = next((e for e in evs if e.side == side), None)
+        if ev is None or not ev.qualifies:
+            return {
+                **out,
+                "ok": False,
+                "error": "requalify_failed_at_refreshed_price",
+                "refreshed_ask": str(ask),
+                "ev": None if ev is None else {
+                    "conservative_ev": str(ev.conservative_ev),
+                    "executable_price": str(ev.executable_price),
+                    "reason": ev.reason,
+                    "qualifies": ev.qualifies,
+                },
+                "live_order_submitted": False,
+            }
+        if ev.capital_required > dollars_d:
+            return {
+                **out,
+                "ok": False,
+                "error": f"capital_required {ev.capital_required} exceeds dollars cap {dollars_d}",
+                "live_order_submitted": False,
+            }
+
+        # Cap quantity to dollar limit after EV sizing.
+        if ev.executable_price > ZERO:
+            max_qty = fp_count(dollars_d / ev.executable_price)
+            if ev.quantity > max_qty:
+                ev = EvResult(
+                    side=ev.side,
+                    quantity=max_qty,
+                    executable_price=ev.executable_price,
+                    fillable_quantity=min(ev.fillable_quantity, max_qty),
+                    estimated_prob=ev.estimated_prob,
+                    conservative_prob=ev.conservative_prob,
+                    uncertainty=ev.uncertainty,
+                    fees_total=ev.fees_total,
+                    fees_per_contract=ev.fees_per_contract,
+                    estimated_ev=ev.estimated_ev,
+                    conservative_ev=ev.conservative_ev,
+                    breakeven_prob=ev.breakeven_prob,
+                    max_loss=min(ev.max_loss, dollars_d),
+                    capital_required=min(ev.capital_required, dollars_d),
+                    qualifies=ev.qualifies,
+                    reason=ev.reason + f"; capped_qty={max_qty}",
+                    details=dict(ev.details or {}),
+                )
+
+        opp_id = f"twc-gated-{ticker}-{side}-{result.get('decision_hour_local')}"
+        engine = ExecutionEngine(client, store, config)
+        order = engine.place_individual(
+            market=market,
+            ev=ev,
+            opportunity_id=opp_id,
+            correlation_keys=[
+                f"series:{result.get('series_ticker') or market.get('event_ticker')}",
+                f"twc:{result.get('location_id')}",
+            ],
+            mode="live",
+            model_live_eligible=True,
+        )
+        if order is None:
+            return {
+                **out,
+                "ok": False,
+                "error": "ExecutionEngine rejected order (risk/eligibility/duplicate/price)",
+                "live_order_submitted": False,
+                "refreshed_ask": str(ask),
+                "conservative_ev": str(ev.conservative_ev),
+            }
+        out["live_order_submitted"] = order.status not in ("rejected", "error", "canceled")
         out["order"] = {
-            "client_order_id": order_rec.client_order_id,
-            "exchange_order_id": order_rec.exchange_order_id,
-            "status": order_rec.status,
+            "client_order_id": order.client_order_id,
+            "exchange_order_id": order.exchange_order_id,
+            "status": order.status,
             "ticker": ticker,
             "side": side,
-            "quantity": str(fp_count(qty)),
-            "limit_price": str(fp_price(ask)),
-            "filled_quantity": order_rec.filled_quantity,
-            "avg_fill_price": order_rec.avg_fill_price,
-            "fees_paid": order_rec.fees_paid,
-            "capital_required": str(fp_price(capital)),
+            "quantity": order.quantity,
+            "limit_price": order.limit_price,
+            "filled_quantity": order.filled_quantity,
+            "avg_fill_price": order.avg_fill_price,
+            "fees_paid": order.fees_paid,
+            "capital_required": str(ev.capital_required),
         }
-        out["balance_before"] = bal
-        out["decision"] = f"live_{order_rec.status}"
+        out["requalified_ev"] = {
+            "conservative_ev": str(ev.conservative_ev),
+            "executable_price": str(ev.executable_price),
+            "quantity": str(ev.quantity),
+            "reason": ev.reason,
+        }
+        out["decision"] = f"live_{order.status}"
         return out
     except Exception as exc:
         logger.exception("live bet failed")
@@ -413,7 +424,7 @@ def place_capped_live_bet(
             store.audit("twc_live_error", str(exc), level="error")
         except Exception:
             pass
-        return {**out, "ok": False, "error": str(exc)}
+        return {**out, "ok": False, "error": str(exc), "live_order_submitted": False}
     finally:
         client.close()
 
@@ -426,13 +437,24 @@ def weather_twc_bet(
     live: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """CLI entry: forecast callout, then optional capped live bet."""
+    """CLI entry: forecast callout, then optional gated live bet via ExecutionEngine."""
+    # force_decision is research/paper labeling only — never for live eligibility.
     forecast = run_twc_forecast(
         series_ticker,
         do_paper=True,
         collect=True,
-        force_decision=bool(live or dry_run),
+        force_decision=bool(dry_run) and not live,
     )
+    # Mark transfer models ineligible for live unless explicitly promoted upstream.
+    if forecast.get("model_live_eligible") is None:
+        origin = str(forecast.get("model_origin") or "")
+        forecast["model_live_eligible"] = False
+        if origin.startswith("same_icao_transfer") or "transfer" in origin:
+            forecast["validation_evidence"] = (
+                forecast.get("validation_evidence")
+                or "RESEARCH/TWC same-ICAO transfer — not live_eligible"
+            )
+
     payload: dict[str, Any] = {
         "callout": forecast.get("callout"),
         "human_forecast": forecast.get("human_forecast"),
@@ -444,15 +466,18 @@ def weather_twc_bet(
         "paper_decision": forecast.get("paper_decision"),
         "why_buy": (forecast.get("paper_decision") or {}).get("why_buy"),
         "model_origin": forecast.get("model_origin"),
+        "model_live_eligible": forecast.get("model_live_eligible"),
         "live_requested": live,
         "dollars": dollars,
         "report": forecast.get("report"),
+        "force_decision_used": bool(dry_run) and not live,
     }
     if not live:
         payload["live_order_submitted"] = False
         payload["note"] = (
-            "Pass --live to submit a capped live order (requires auth). "
-            "why_buy explains the weather story; we do not buy just because a ticket is cheap."
+            "Pass --live only after model_live_eligible promotion. "
+            "Dry-run uses ExecutionEngine gates without create_order. "
+            "force_decision is research-only and does not enable live."
         )
         return payload
 

@@ -1,50 +1,57 @@
-# Multi-location weather engine — run evidence
+# Multi-location weather engine — status
 
-Generated: 2026-09-16 (UTC). Live orders: **blocked**.
+Generated: 2026-09-16 (UTC). Live orders: **blocked** (`model_live_eligible` false for all weather paths after audit corrections).
 
-## Discovery (`weather-discover`)
+## Separate counts
 
 | Metric | Value |
 |--------|------:|
-| Climate/Weather series | 392 |
+| Climate/Weather series discovered | 392 |
 | Daily max temp series | 57 |
 | Daily min temp series | 54 |
-| Operating NWS CLI daily-max (verified mapping) | 8 |
-| Operating TWC daily-max (verified) | 7 |
-| Ambiguous (CLI issuedby, METAR unsettled) | 3 |
+| Verified NWS CLI daily-max mappings | 8 |
+| Verified TWC daily-max mappings | 7 |
+| Unique locations (aliases not double-counted) | see registry |
+| Collecting (feeds / multi) | NYC, CHI Midway, LAX |
+| Trained station_v2 | nyc_central_park, chi_midway, lax_airport |
+| Location-scoped calibration | same three (no NYC fallback) |
+| End-to-end paper demonstrated | NYC, CHI, LAX |
+| Live-eligible | **0** |
 
 Operating NWS CLI: `HIGHAUS`, `HIGHNY`, `HIGHCHI`, `HIGHMIA`, `KXDENHIGH`, `KXHIGHOU`, `KXHIGHHOU`, `KXHOUHIGH`.
 
 Operating TWC (weather.com/kalshi adapter): `KXHIGHNY`, `KXHIGHCHI`, `KXHIGHLAX`, `KXHIGHAUS`, `KXHIGHDEN`, `KXHIGHPHIL`, `KXHIGHMIA`.
 
-## TWC adapter
+Registry entry ≠ operating. Missing artifacts → documented prep (`weather-train-location`, calibration, eval), not a silent dead end.
 
-- Public portal JSON: `/kalshi/api/climate/primary`, `/kalshi/api/metar`.
-- Settlement floors from TWC climate reports (not NWS CLI).
-- Progressive max from TWC portal METAR; rich features from AviationWeather same ICAO.
-- Same-ICAO residual transfer (NYC/CHI/LAX) labeled exploratory; capped live via `weather-twc-bet --live`.
-- See `docs/TWC_ADAPTER.md`.
+## Prep workflow (repeatable)
 
-## LAX station model (2026-09-16)
+```bash
+# Backfill / collect observations for a location profile
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-feeds-run
 
-- Profile `lax_airport`: KLAX ASOS 2022–2026 + GHCND USW00023174 TMAX labels.
-- Train: `weather-train-location --location lax_airport` → artifact under `multi/artifacts/lax_airport__daily_max_temp_f/`.
-- TWC `KXHIGHLAX` transfers via `same_station_model_location_id=lax_airport`.
-- Holdout production median MAE ≈ 2.7°F (08h) / 1.2°F (11h) / 0.54°F (14h).
+# Train location model
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-train-location --location lax_airport
 
-## Live TWC preview (2026-09-16 ~18:30 UTC)
-
-Both NYC and CHI were off supported decision hours (14:30 EDT / 13:30 CDT). Collection succeeded (`aviationweather_metar`, `twc_climate`, `twc_metar`). AviationWeather max-so-far ~75°F at Central Park / Midway. Paper correctly blocked as `unsupported_decision_time`. Next actionable windows: local 8 / 11 / 14.
-
-## Tests run
-
-```text
-PYTHONPATH=src python3 -m pytest tests/test_multi_location.py tests/test_feeds_pipeline_fixes.py tests/test_feeds.py -q
-→ 33 passed
+# Calibrate (location-scoped; missing calib → probabilities_unavailable)
+# Evaluate production path (shares predict_station_v2)
+# Research / paper inference (no --live)
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-twc-bet --series KXHIGHLAX
 ```
+
+Daily lows / precip / snow must use their own model families — never daily-high models.
+
+## LAX
+
+- Settlement: TWC CLILAX / KLAX airport (`33.9425, -118.4081`), not downtown.
+- Profile `lax_airport`; GHCND USW00023174 labels; transfer to `KXHIGHLAX` labeled `same_icao_transfer`.
+
+## Corrections note
+
+`weather-twc-bet --live` no longer bypasses `ExecutionEngine`. See `docs/BOT_AUDIT_ADDENDUM.md`.
 
 ## Remaining limitations
 
-- TWC residual models not yet trained on TWC climate labels (exploratory same-ICAO transfer only for NYC/CHI).
-- Daily-min / rain / snow / international TWC still blocked or unmapped.
-- Accuracy / paper PnL claims require prospective evidence.
+- TWC residual models not trained on TWC climate labels (exploratory transfer).
+- MIA/AUS/DEN/HOU/PHL: mapped but not all trained+calibrated end-to-end in this environment.
+- Accuracy / paper PnL claims require prospective evidence; no reliable-win claim.

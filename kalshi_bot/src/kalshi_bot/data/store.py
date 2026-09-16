@@ -253,6 +253,21 @@ class Store:
                     source TEXT,
                     payload_json TEXT
                 );
+                CREATE TABLE IF NOT EXISTS reconcile_checkpoints (
+                    key TEXT PRIMARY KEY,
+                    updated_at TEXT NOT NULL,
+                    payload_json TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS order_intents (
+                    intent_id TEXT PRIMARY KEY,
+                    created_at TEXT NOT NULL,
+                    client_order_id TEXT,
+                    opportunity_id TEXT,
+                    market_ticker TEXT,
+                    side TEXT,
+                    status TEXT,
+                    details_json TEXT
+                );
                 """
             )
             row = conn.execute("SELECT payload FROM bot_state WHERE id=1").fetchone()
@@ -389,9 +404,67 @@ class Store:
     def list_open_orders(self) -> list[dict[str, Any]]:
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT * FROM orders WHERE status IN ('pending','submitted','partial','resting') ORDER BY created_at DESC"
+                """
+                SELECT * FROM orders
+                WHERE status IN ('pending','submitted','partial','resting','ambiguous')
+                ORDER BY created_at DESC
+                """
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def save_order_intent(
+        self,
+        intent_id: str,
+        *,
+        client_order_id: str,
+        opportunity_id: str,
+        market_ticker: str,
+        side: str,
+        status: str = "pending",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO order_intents (
+                    intent_id, created_at, client_order_id, opportunity_id,
+                    market_ticker, side, status, details_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(intent_id) DO UPDATE SET
+                    status=excluded.status,
+                    client_order_id=excluded.client_order_id,
+                    details_json=excluded.details_json
+                """,
+                (
+                    intent_id,
+                    utcnow(),
+                    client_order_id,
+                    opportunity_id,
+                    market_ticker,
+                    side,
+                    status,
+                    dumps(details or {}),
+                ),
+            )
+
+    def get_order_intent(self, intent_id: str) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM order_intents WHERE intent_id=?", (intent_id,)
+            ).fetchone()
+            return dict(row) if row else None
+
+    def get_order_intent_by_opportunity(self, opportunity_id: str) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM order_intents
+                WHERE opportunity_id=? AND status NOT IN ('rejected','canceled','failed')
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (opportunity_id,),
+            ).fetchone()
+            return dict(row) if row else None
 
     def save_position(self, pos: PositionRecord) -> None:
         with self._conn() as conn:

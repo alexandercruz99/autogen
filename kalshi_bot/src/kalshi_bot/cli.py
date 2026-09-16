@@ -124,6 +124,15 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-feeds-once", help="One full feed cycle: METAR/CLI/GOES/NEXRAD + research infer (no live)")
     sub.add_parser("weather-feeds-status", help="Collector heartbeat and feed checkpoints")
     sub.add_parser("weather-feeds-train", help="Train station-corrected operating model (baseline frozen)")
+    p_train_loc = sub.add_parser(
+        "weather-train-location",
+        help="Train location-specific station_v2 model (chi_midway, nyc_central_park)",
+    )
+    p_train_loc.add_argument(
+        "--location",
+        default="chi_midway",
+        help="location_id (default: chi_midway)",
+    )
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
@@ -167,6 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-feeds-once",
         "weather-feeds-status",
         "weather-feeds-train",
+        "weather-train-location",
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
@@ -192,8 +202,19 @@ def main(argv: list[str] | None = None) -> int:
             weather_obs_train,
             weather_obs_validate,
             weather_train,
+            weather_train_location,
             weather_validate,
         )
+
+        if args.cmd == "weather-train-location":
+            print(
+                json.dumps(
+                    weather_train_location(config, location_id=getattr(args, "location", "chi_midway")),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
 
         dispatch = {
             "weather-collect": weather_collect,

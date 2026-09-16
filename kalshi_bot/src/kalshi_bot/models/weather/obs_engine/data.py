@@ -69,6 +69,9 @@ def load_asos_csv(path: Path, station: str | None = None) -> list[HourlyObs]:
                 v = (row.get(key) or "").strip()
                 if v in ("", "M", "null", "None"):
                     return None
+                # IEM ASOS "T" = trace precip — known near-zero measurement, not missing
+                if key == "p01i" and v.upper() == "T":
+                    return 0.0
                 try:
                     return float(v)
                 except ValueError:
@@ -96,6 +99,20 @@ def load_nyc_hourly_bundle(data_dir: Path | None = None) -> list[HourlyObs]:
     rows: list[HourlyObs] = []
     for name in sorted(data_dir.glob("asos_NYC_*.csv")):
         rows.extend(load_asos_csv(name, station="NYC"))
+    rows.sort(key=lambda r: r.valid_utc)
+    return rows
+
+
+def load_hourly_asos_bundle(
+    data_dir: Path,
+    *,
+    glob_pattern: str,
+    station: str,
+) -> list[HourlyObs]:
+    """Load IEM ASOS hourly CSVs for an arbitrary station (e.g. MDW)."""
+    rows: list[HourlyObs] = []
+    for name in sorted(Path(data_dir).glob(glob_pattern)):
+        rows.extend(load_asos_csv(name, station=station))
     rows.sort(key=lambda r: r.valid_utc)
     return rows
 

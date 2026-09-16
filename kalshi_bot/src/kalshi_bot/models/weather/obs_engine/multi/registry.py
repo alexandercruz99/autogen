@@ -86,9 +86,9 @@ VERIFIED_NWS_CLI_DAILY_MAX: dict[str, dict[str, Any]] = {
         "elev_m": 189.0,
         "timezone": "America/Chicago",
         "mapping_status": "verified",
-        "validation_status": "needs_historical_backfill",
+        "validation_status": "operating_candidate",
         "model_family": "station_v2_nws_cli",
-        "notes": "CHIHIGH terms: Midway CLI — not O'Hare",
+        "notes": "CHIHIGH terms: Midway CLI — not O'Hare; GHCND USW00014819 labels for training",
     },
     "HIGHMIA": {
         "location_id": "mia_cli",

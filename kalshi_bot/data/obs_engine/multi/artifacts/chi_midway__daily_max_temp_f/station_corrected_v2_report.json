@@ -1,0 +1,113 @@
+{
+  "ok": true,
+  "location_id": "chi_midway",
+  "display_name": "Chicago Midway",
+  "series_ticker": "HIGHCHI",
+  "measurement": "daily_max_temp_f",
+  "model_version": "weather.obs_chi_midway.station_corrected.v1",
+  "feature_schema_version": "station_v2.1",
+  "feature_names": [
+    "hour_local",
+    "doy",
+    "tmpf",
+    "dwpf",
+    "sknt",
+    "alti",
+    "max_so_far",
+    "rise_from_min",
+    "dT_1h",
+    "dT_3h",
+    "solar_el",
+    "hours_to_20_local",
+    "precip_6h",
+    "time_since_max_h",
+    "d_dewpt_3h",
+    "d_alti_3h",
+    "d_sknt_3h",
+    "wind_dir_sin",
+    "wind_dir_cos",
+    "missing_sknt",
+    "missing_alti",
+    "missing_dwpf",
+    "missing_precip_6h",
+    "sky_code"
+  ],
+  "timezone": "America/Chicago",
+  "metar_id": "KMDW",
+  "ghcnd_id": "USW00014819",
+  "n_obs": 41153,
+  "n_labels": 1717,
+  "n_train_days": 1199,
+  "n_calib_days": 257,
+  "n_test_days": 257,
+  "n_train_rows": 3596,
+  "n_calib_rows": 771,
+  "n_test_rows": 770,
+  "negative_remain_labels_kept": 3,
+  "raw_q50_mae_test_reference_only": {
+    "8": 3.7937058033740585,
+    "11": 2.4174364765473184,
+    "14": 1.079584145941278
+  },
+  "production_distribution_eval_test": {
+    "8": {
+      "n_rows": 256,
+      "n_independent_days": 256,
+      "production_median_mae_f": 3.75390625,
+      "production_median_bias_f": -0.80078125,
+      "interval_80_coverage": 0.77734375,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "11": {
+      "n_rows": 257,
+      "n_independent_days": 257,
+      "production_median_mae_f": 2.4513618677042803,
+      "production_median_bias_f": -1.0194552529182879,
+      "interval_80_coverage": 0.7937743190661478,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "14": {
+      "n_rows": 257,
+      "n_independent_days": 257,
+      "production_median_mae_f": 1.0428015564202335,
+      "production_median_bias_f": -0.4591439688715953,
+      "interval_80_coverage": 0.8521400778210116,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    }
+  },
+  "calibration_path": "data/obs_engine/multi/artifacts/chi_midway__daily_max_temp_f/station_corrected_v2_calibration.json",
+  "calib_residual_counts": {
+    "8": 257,
+    "11": 257,
+    "14": 257,
+    "all": 771
+  },
+  "date_range": {
+    "obs_first_utc": "2022-01-01T00:53:00+00:00",
+    "obs_last_utc": "2026-09-16T07:53:00+00:00",
+    "label_first": "2022-01-01",
+    "label_last": "2026-09-13",
+    "train_days": [
+      "2022-01-01",
+      "2025-04-16"
+    ],
+    "test_days": [
+      "2025-12-30",
+      "2026-09-13"
+    ]
+  },
+  "live_eligible": false,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "noon_plan": {
+    "target_local_hour": 11,
+    "note": "Actionable decision hours are 08/11/14 local. For trading around noon, use the 11:00 local forecast window (closest validated hour)."
+  },
+  "generated_at_utc": "2026-09-16T08:15:20.807768+00:00",
+  "label_note": "GHCND USW00014819 Midway daily TMAX (\u00b0F rounded) is a documented proxy for NWS CLI MAXIMUM MDW when historical CLI text is incomplete; settlement remains CLI.",
+  "nyc_model_not_transferred": true,
+  "artifact": "data/obs_engine/multi/artifacts/chi_midway__daily_max_temp_f/station_corrected_v2.joblib"
+}

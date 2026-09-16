@@ -311,6 +311,36 @@ def weather_feeds_train(config: AppConfig) -> dict[str, Any]:
     return train_station_corrected(data_dir=data_dir)
 
 
+def weather_train_location(config: AppConfig, *, location_id: str = "chi_midway") -> dict[str, Any]:
+    """Train a location-specific station_v2 model (e.g. chi_midway, nyc_central_park)."""
+    from kalshi_bot.models.weather.obs_engine.feeds.train_operating import train_location_station_corrected
+    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    report = train_location_station_corrected(location_id, data_dir=data_dir)
+    if report.get("ok") and location_id == "chi_midway":
+        reg = LocationRegistry()
+        try:
+            for t in reg.list_targets(measurement="daily_max_temp_f"):
+                if t.get("location_id") == "chi_midway":
+                    row = dict(t)
+                    row["validation_status"] = "operating_candidate"
+                    row["data_availability"] = "public_metar_cli_ghcnd_backfilled"
+                    row["model_family"] = "station_v2_nws_cli"
+                    row["notes"] = (
+                        (row.get("notes") or "")
+                        + " | Midway station_v2 trained; GHCND USW00014819 labels; live still blocked"
+                    )
+                    # unwrap json fields expected by upsert
+                    row["metar_ids"] = row.get("metar_ids") or []
+                    row["neighbor_metar_ids"] = row.get("neighbor_metar_ids") or []
+                    reg.upsert_target(row)
+        finally:
+            reg.close()
+        report["registry_validation_status"] = "operating_candidate"
+    return report
+
+
 def weather_discover(config: AppConfig) -> dict[str, Any]:
     """Refresh Kalshi weather market discovery into the location registry."""
     from kalshi_bot.api.client import KalshiClient

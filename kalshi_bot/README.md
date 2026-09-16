@@ -37,7 +37,8 @@ PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-valida
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-obs-predict
 ```
 
-See `docs/OBS_ENGINE.md` for station identity, multi-year backtests by decision hour, live gates, and claim reconciliation.
+See `docs/OBS_ENGINE.md` and `docs/RESEARCH_PIPELINE.md` for multi-year backtests,
+feature experiments, prospective collection, and live gates.
 
 ## Docs verified for this build
 

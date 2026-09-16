@@ -1,7 +1,7 @@
 {
   "status": "ok",
-  "generation_time_utc": "2026-09-15T23:14:43.933906+00:00",
-  "generation_time_local": "2026-09-15T19:14:43.933906-04:00",
+  "generation_time_utc": "2026-09-16T00:01:53.485715+00:00",
+  "generation_time_local": "2026-09-15T20:01:53.485715-04:00",
   "timezone": "America/New_York",
   "station": {
     "display": "New York City Central Park",
@@ -21,10 +21,10 @@
   "n_open_nyc_daily_markets_found": 12,
   "target_date": "2026-09-15",
   "horizon": "same_day",
-  "training_cutoff": "2025-07-10",
+  "training_cutoff": "2024-10-25",
   "latest_observation": {
     "n_obs_used": 18,
-    "latest_obs_utc": "2026-09-15T22:51:00+00:00",
+    "latest_obs_utc": "2026-09-15T23:51:00+00:00",
     "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
     "station": "NYC",
     "source": "iem_asos_hourly"
@@ -36,15 +36,15 @@
     "q50": 74,
     "q90": 77
   },
-  "distribution_mean_f": 74.3088308792434,
+  "distribution_mean_f": 74.00099960015993,
   "distribution_method": "obs_nyc_remain_quantiles+same_day_floor+same_day_floor",
   "factors": [
     "Target: NWS Daily Climate Report (CLI) for Central Park (New York City Central Park)",
     "GHCND=USW00094728; METAR=KNYC; coords=(40.77898,-73.96925)",
     "Features: observations only (no third-party forecast inputs)",
     "CLI prelim max=72 issued=2026-09-15T20:38:00+00:00",
-    "max_so_far=71.1\u00b0F remain q10/50/90=0.0/0.8/3.4",
-    "dist mean=74.3 q10/50/90=72/74/77 method=obs_nyc_remain_quantiles+same_day_floor+same_day_floor"
+    "max_so_far=71.1\u00b0F remain q10/50/90=0.0/0.6/3.0",
+    "dist mean=74.0 q10/50/90=72/74/77 method=obs_nyc_remain_quantiles+same_day_floor+same_day_floor"
   ],
   "nws_benchmark": {
     "source": "nws_grid_daytime_benchmark_only",
@@ -53,7 +53,7 @@
   },
   "validation_evidence": "RESEARCH/PAPER ONLY \u2014 observation-driven NYC engine. Not live_eligible. NWS forecasts used only as benchmarks. Artifact loaded=True; joblib=True.",
   "model_live_eligible": false,
-  "bracket_prob_sum": "1.00000000",
+  "bracket_prob_sum": "0.99999999",
   "bracket_prob_sum_note": "Sum \u2248 1 only if the listed markets form an exhaustive partition of outcomes",
   "brackets": [
     {
@@ -72,7 +72,7 @@
       "uncertainty": "0.05",
       "yes_ask": "0.0100",
       "no_ask": null,
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:44.635922+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:54.213216+00:00",
       "estimated_fee_1_contract": "0.000600",
       "conservative_ev_yes_approx": "-0.06060000",
       "qualifies_as_validated_signal": false
@@ -88,12 +88,12 @@
         "low": 72.0,
         "high": 73.0
       },
-      "p_yes": "0.46142017",
-      "p_yes_conservative": "0.46142017",
+      "p_yes": "0.47988804",
+      "p_yes_conservative": "0.47988804",
       "uncertainty": "0.05",
       "yes_ask": null,
       "no_ask": "0.0100",
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:44.839146+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:54.536061+00:00",
       "estimated_fee_1_contract": null,
       "conservative_ev_yes_approx": null,
       "qualifies_as_validated_signal": false
@@ -109,14 +109,14 @@
         "low": 74.0,
         "high": 75.0
       },
-      "p_yes": "0.26919380",
-      "p_yes_conservative": "0.26919380",
-      "uncertainty": "0.05",
+      "p_yes": "0.27996801",
+      "p_yes_conservative": "0.21055401",
+      "uncertainty": "0.06941400",
       "yes_ask": "0.0100",
       "no_ask": null,
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.046809+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:54.747423+00:00",
       "estimated_fee_1_contract": "0.000600",
-      "conservative_ev_yes_approx": "0.20859380",
+      "conservative_ev_yes_approx": "0.14995401",
       "qualifies_as_validated_signal": false
     },
     {
@@ -130,14 +130,14 @@
         "low": 76.0,
         "high": 77.0
       },
-      "p_yes": "0.23074853",
-      "p_yes_conservative": "0.10005998",
-      "uncertainty": "0.13068855",
+      "p_yes": "0.20000000",
+      "p_yes_conservative": "0.15794181",
+      "uncertainty": "0.05",
       "yes_ask": "0.0100",
       "no_ask": null,
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.267068+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:54.945606+00:00",
       "estimated_fee_1_contract": "0.000600",
-      "conservative_ev_yes_approx": "0.03945998",
+      "conservative_ev_yes_approx": "0.09734181",
       "qualifies_as_validated_signal": false
     },
     {
@@ -151,14 +151,14 @@
         "low": 77.0,
         "high": null
       },
-      "p_yes": "0.03863750",
-      "p_yes_conservative": "0.00009996",
+      "p_yes": "0.04014394",
+      "p_yes_conservative": "0.00005261",
       "uncertainty": "0.05",
       "yes_ask": "0.0100",
       "no_ask": null,
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.443299+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:55.152255+00:00",
       "estimated_fee_1_contract": "0.000600",
-      "conservative_ev_yes_approx": "-0.06050004",
+      "conservative_ev_yes_approx": "-0.06054739",
       "qualifies_as_validated_signal": false
     },
     {
@@ -177,7 +177,7 @@
       "uncertainty": "0.05",
       "yes_ask": "0.0100",
       "no_ask": null,
-      "orderbook_retrieved_at_utc": "2026-09-15T23:14:45.624032+00:00",
+      "orderbook_retrieved_at_utc": "2026-09-16T00:01:55.345787+00:00",
       "estimated_fee_1_contract": "0.000600",
       "conservative_ev_yes_approx": "-0.06060000",
       "qualifies_as_validated_signal": false

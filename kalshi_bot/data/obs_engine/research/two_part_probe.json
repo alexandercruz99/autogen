@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "method": "two_part_p_rise_times_conditional_q50",
+  "rise_threshold_f": 0.5,
+  "n_train_days": 1328,
+  "n_test_days": 333,
+  "two_part_mae_by_hour": {
+    "8": 3.467129327078346,
+    "11": 2.4216165844815687,
+    "14": 1.0956921944800404
+  },
+  "baseline_quantile_mae_by_hour": {
+    "8": 3.4536517713644415,
+    "11": 2.3851530948727677,
+    "14": 1.0752478624849935
+  },
+  "improved": false,
+  "promoted": false,
+  "note": "Probe only; negative remains retained in training labels for classifier (rise=0).",
+  "generated_at_utc": "2026-09-16T00:01:39.818669+00:00"
+}

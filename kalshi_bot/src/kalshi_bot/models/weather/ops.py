@@ -212,3 +212,37 @@ def weather_obs_predict_now(config: AppConfig) -> dict[str, Any]:
     from kalshi_bot.models.weather.obs_engine.predict_now import research_predict_now
 
     return research_predict_now(config)
+
+
+def weather_obs_freeze(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.research.freeze import freeze_baseline
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return freeze_baseline(data_dir=data_dir, reproduce_backtest=True)
+
+
+def weather_obs_collect_once(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.research.collector import run_collect_once
+
+    return run_collect_once(config)
+
+
+def weather_obs_audit(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.research.audit import audit_measurement_settlement
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return audit_measurement_settlement(data_dir=data_dir)
+
+
+def weather_obs_diagnose(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.research.experiments import export_diagnostics
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return export_diagnostics(data_dir=data_dir, split="test")
+
+
+def weather_obs_experiment(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.research.experiments import run_feature_experiments
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return run_feature_experiments(data_dir=data_dir)

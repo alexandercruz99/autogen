@@ -116,6 +116,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-obs-backtest", help="Chronological backtest by decision hour vs baselines")
     sub.add_parser("weather-obs-reconcile", help="Reconcile CLI MAXIMUM vs GHCND TMAX labels")
     sub.add_parser("weather-obs-predict", help="Fresh research prediction for open NYC markets (no live orders)")
+    sub.add_parser("weather-obs-freeze", help="Freeze baseline artifacts and reproduce backtest metrics")
+    sub.add_parser("weather-obs-collect-once", help="One prospective collection cycle (append-only; no live orders)")
+    sub.add_parser("weather-obs-audit", help="Measurement/settlement data-quality audit")
+    sub.add_parser("weather-obs-diagnose", help="Export per decision-time error diagnostics")
+    sub.add_parser("weather-obs-experiment", help="Compare feature candidates chronologically")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -137,12 +142,22 @@ def main(argv: list[str] | None = None) -> int:
         "weather-obs-backtest",
         "weather-obs-reconcile",
         "weather-obs-predict",
+        "weather-obs-freeze",
+        "weather-obs-collect-once",
+        "weather-obs-audit",
+        "weather-obs-diagnose",
+        "weather-obs-experiment",
     )
     if args.cmd in weather_ops:
         config = load_config(cfg_path)
         from kalshi_bot.models.weather.ops import (
             weather_collect,
+            weather_obs_audit,
             weather_obs_backtest,
+            weather_obs_collect_once,
+            weather_obs_diagnose,
+            weather_obs_experiment,
+            weather_obs_freeze,
             weather_obs_predict_now,
             weather_obs_reconcile_labels,
             weather_obs_train,
@@ -151,28 +166,22 @@ def main(argv: list[str] | None = None) -> int:
             weather_validate,
         )
 
-        if args.cmd == "weather-collect":
-            print(json.dumps(weather_collect(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-train":
-            print(json.dumps(weather_train(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-obs-train":
-            print(json.dumps(weather_obs_train(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-obs-validate":
-            print(json.dumps(weather_obs_validate(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-obs-backtest":
-            print(json.dumps(weather_obs_backtest(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-obs-reconcile":
-            print(json.dumps(weather_obs_reconcile_labels(config), indent=2, default=str))
-            return 0
-        if args.cmd == "weather-obs-predict":
-            print(json.dumps(weather_obs_predict_now(config), indent=2, default=str))
-            return 0
-        print(json.dumps(weather_validate(config), indent=2, default=str))
+        dispatch = {
+            "weather-collect": weather_collect,
+            "weather-train": weather_train,
+            "weather-validate": weather_validate,
+            "weather-obs-train": weather_obs_train,
+            "weather-obs-validate": weather_obs_validate,
+            "weather-obs-backtest": weather_obs_backtest,
+            "weather-obs-reconcile": weather_obs_reconcile_labels,
+            "weather-obs-predict": weather_obs_predict_now,
+            "weather-obs-freeze": weather_obs_freeze,
+            "weather-obs-collect-once": weather_obs_collect_once,
+            "weather-obs-audit": weather_obs_audit,
+            "weather-obs-diagnose": weather_obs_diagnose,
+            "weather-obs-experiment": weather_obs_experiment,
+        }
+        print(json.dumps(dispatch[args.cmd](config), indent=2, default=str))
         return 0
 
     config, store, client, pipeline, loop = build_runtime(cfg_path)

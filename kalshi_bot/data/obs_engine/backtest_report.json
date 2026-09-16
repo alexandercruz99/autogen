@@ -1,6 +1,6 @@
 {
   "model_version": "weather.obs_nyc.v1.1-research",
-  "generated_at_utc": "2026-09-15T23:12:47.591660+00:00",
+  "generated_at_utc": "2026-09-15T23:46:52.714704+00:00",
   "n_hourly_obs": 41424,
   "n_independent_climate_days": 1661,
   "n_rows": 4981,
@@ -38,8 +38,8 @@
         "mae_climatology": 7.062746160075292,
         "mae_continuation_max_so_far": 8.717220543806647,
         "mae_persistence": 6.22356495468278,
-        "mae_open_meteo_hist_forecast": 1.1719033232628397,
-        "n_open_meteo": 331,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.8700906344410876,
         "mean_interval_width_f": 14.228301721501396,
         "brier_probe_eq_month_clim": 0.04882523271421321,
@@ -55,12 +55,7 @@
           "ci80_lo": -5.431430922283568,
           "ci80_hi": -4.7236712889779575
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 331.0,
-          "diff_mae": 2.455697409466981,
-          "ci80_lo": 2.2569495000597843,
-          "ci80_hi": 2.665593028732941
-        }
+        "bootstrap_model_minus_om_mae": null
       },
       "11": {
         "n_rows": 331,
@@ -70,8 +65,8 @@
         "mae_climatology": 7.062746160075292,
         "mae_continuation_max_so_far": 5.461027190332326,
         "mae_persistence": 6.22356495468278,
-        "mae_open_meteo_hist_forecast": 1.1719033232628397,
-        "n_open_meteo": 331,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.9003021148036254,
         "mean_interval_width_f": 9.896762747442205,
         "brier_probe_eq_month_clim": 0.04816069160100963,
@@ -87,12 +82,7 @@
           "ci80_lo": -3.242612964785168,
           "ci80_hi": -2.7542210159634
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 331.0,
-          "diff_mae": 1.2900296642376639,
-          "ci80_lo": 1.1500634135812424,
-          "ci80_hi": 1.4343777027411246
-        }
+        "bootstrap_model_minus_om_mae": null
       },
       "14": {
         "n_rows": 332,
@@ -102,8 +92,8 @@
         "mae_climatology": 7.075057165617235,
         "mae_continuation_max_so_far": 1.7096385542168675,
         "mae_persistence": 6.210843373493976,
-        "mae_open_meteo_hist_forecast": 1.1734939759036143,
-        "n_open_meteo": 332,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.8734939759036144,
         "mean_interval_width_f": 3.4897982570145967,
         "brier_probe_eq_month_clim": 0.039308390920180236,
@@ -119,12 +109,7 @@
           "ci80_lo": -0.6714345148129087,
           "ci80_hi": -0.5101159160998916
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 332.0,
-          "diff_mae": -0.055957853004479974,
-          "ci80_lo": -0.15857767667841147,
-          "ci80_hi": 0.042348905173394444
-        }
+        "bootstrap_model_minus_om_mae": null
       }
     },
     "test": {
@@ -136,8 +121,8 @@
         "mae_climatology": 7.4843872831092275,
         "mae_continuation_max_so_far": 8.358558558558558,
         "mae_persistence": 5.564564564564565,
-        "mae_open_meteo_hist_forecast": 1.4036036036036035,
-        "n_open_meteo": 333,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.8768768768768769,
         "mean_interval_width_f": 14.223531354342986,
         "brier_probe_eq_month_clim": 0.04389417102548867,
@@ -153,12 +138,7 @@
           "ci80_lo": -5.268614736634297,
           "ci80_hi": -4.480479402000656
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 333.0,
-          "diff_mae": 2.0489861375150613,
-          "ci80_lo": 1.8399437427464294,
-          "ci80_hi": 2.266481855244659
-        }
+        "bootstrap_model_minus_om_mae": null
       },
       "11": {
         "n_rows": 333,
@@ -168,8 +148,8 @@
         "mae_climatology": 7.4843872831092275,
         "mae_continuation_max_so_far": 5.057657657657658,
         "mae_persistence": 5.564564564564565,
-        "mae_open_meteo_hist_forecast": 1.4036036036036035,
-        "n_open_meteo": 333,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.9159159159159159,
         "mean_interval_width_f": 9.882391567182337,
         "brier_probe_eq_month_clim": 0.041430731175220316,
@@ -185,12 +165,7 @@
           "ci80_lo": -2.859364706691992,
           "ci80_hi": -2.3499519556851785
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 333.0,
-          "diff_mae": 1.0484815961055727,
-          "ci80_lo": 0.8892935921852526,
-          "ci80_hi": 1.226326428087401
-        }
+        "bootstrap_model_minus_om_mae": null
       },
       "14": {
         "n_rows": 333,
@@ -200,8 +175,8 @@
         "mae_climatology": 7.4843872831092275,
         "mae_continuation_max_so_far": 1.6432432432432433,
         "mae_persistence": 5.564564564564565,
-        "mae_open_meteo_hist_forecast": 1.4036036036036035,
-        "n_open_meteo": 333,
+        "mae_open_meteo_hist_forecast": null,
+        "n_open_meteo": 0,
         "interval_q10_q90_coverage": 0.9099099099099099,
         "mean_interval_width_f": 3.598712560519669,
         "brier_probe_eq_month_clim": 0.03864084392270198,
@@ -217,12 +192,7 @@
           "ci80_lo": -0.6423059803661569,
           "ci80_hi": -0.48338469608247914
         },
-        "bootstrap_model_minus_om_mae": {
-          "n_days": 333.0,
-          "diff_mae": -0.3229482086068671,
-          "ci80_lo": -0.43043500074321595,
-          "ci80_hi": -0.2175031489560184
-        }
+        "bootstrap_model_minus_om_mae": null
       }
     }
   },
@@ -243,7 +213,7 @@
     "name": "open_meteo_gfs_seamless_historical_forecast",
     "role": "point_error_benchmark_only",
     "provenance": "RETROSPECTIVE_FORECAST_ARCHIVE \u2014 not NWS CLI; not proven available at local decision hour",
-    "n_days": 1717,
+    "n_days": 0,
     "nws_decision_time_matched": false,
     "note": "True same-decision-time NWS grid snapshots require forward collection into weather_archive.db"
   },

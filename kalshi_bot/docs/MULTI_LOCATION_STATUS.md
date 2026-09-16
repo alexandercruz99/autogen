@@ -42,6 +42,8 @@ PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-twc-bet --
 
 Locations without `LOCATION_TRAIN_PROFILES` (MIA/AUS/DEN/HOU/PHL, …) need IEM ASOS + GHCND backfill before train — status output lists `prep_workflow` per row. Do not mark them operating or live_eligible until trained, calibrated, and evaluated.
 
+Daily lows / precip / snow must use their own model families — never daily-high models.
+
 ## LAX
 
 - Settlement: TWC CLILAX / KLAX airport (`33.9425, -118.4081`), not downtown.

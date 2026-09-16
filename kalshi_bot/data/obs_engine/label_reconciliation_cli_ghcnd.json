@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "n_pairs": 12,
+  "n_exact_match": 11,
+  "n_abs_diff_ge_1": 1,
+  "n_abs_diff_ge_2": 0,
+  "mean_diff": -0.08333333333333333,
+  "mae_diff": 0.08333333333333333,
+  "settlement_source_controls": "NWS CLI MAXIMUM (Kalshi daily high settlement)",
+  "training_label_source": "GHCND USW00094728 TMAX (same station climate record; proxy when historical CLI text unavailable)",
+  "pairs_sample": [
+    {
+      "climate_day": "2026-09-13",
+      "cli_max_f": 79,
+      "ghcnd_tmax_f": 79,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-14T06:22:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-13",
+      "cli_max_f": 78,
+      "ghcnd_tmax_f": 79,
+      "diff_cli_minus_ghcnd": -1,
+      "cli_preliminary": true,
+      "issuance": "2026-09-13T20:34:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-12",
+      "cli_max_f": 78,
+      "ghcnd_tmax_f": 78,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-13T06:34:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-12",
+      "cli_max_f": 78,
+      "ghcnd_tmax_f": 78,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": true,
+      "issuance": "2026-09-12T20:45:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-11",
+      "cli_max_f": 79,
+      "ghcnd_tmax_f": 79,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-12T06:26:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-11",
+      "cli_max_f": 79,
+      "ghcnd_tmax_f": 79,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": true,
+      "issuance": "2026-09-11T20:37:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-11",
+      "cli_max_f": 79,
+      "ghcnd_tmax_f": 79,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": true,
+      "issuance": "2026-09-11T20:33:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-10",
+      "cli_max_f": 84,
+      "ghcnd_tmax_f": 84,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-11T06:19:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-10",
+      "cli_max_f": 84,
+      "ghcnd_tmax_f": 84,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": true,
+      "issuance": "2026-09-10T20:32:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-09",
+      "cli_max_f": 82,
+      "ghcnd_tmax_f": 82,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-10T06:55:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-09",
+      "cli_max_f": 82,
+      "ghcnd_tmax_f": 82,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": true,
+      "issuance": "2026-09-09T20:38:00+00:00"
+    },
+    {
+      "climate_day": "2026-09-08",
+      "cli_max_f": 80,
+      "ghcnd_tmax_f": 80,
+      "diff_cli_minus_ghcnd": 0,
+      "cli_preliminary": false,
+      "issuance": "2026-09-09T06:32:00+00:00"
+    }
+  ],
+  "note": "Mismatches can arise from preliminary vs final CLI, rounding, or rare revisions. Kalshi settles on final CLI; GHCND is used for multi-year labels."
+}

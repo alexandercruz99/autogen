@@ -1,0 +1,290 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from decimal import Decimal
+from typing import Any, Literal
+
+from kalshi_bot.api.fees import estimate_net_fee, fee_per_contract
+from kalshi_bot.api.orderbook import ExecutableBook, market_implied_yes_prob
+from kalshi_bot.config import TradingConfig
+from kalshi_bot.models.base import Prediction
+from kalshi_bot.money import D, ONE, ZERO, clamp01, floor_to, fp_count, fp_price
+
+
+Side = Literal["yes", "no"]
+
+
+@dataclass
+class EvResult:
+    side: Side
+    quantity: Decimal
+    executable_price: Decimal
+    fillable_quantity: Decimal
+    estimated_prob: Decimal
+    conservative_prob: Decimal
+    uncertainty: Decimal
+    fees_total: Decimal
+    fees_per_contract: Decimal
+    estimated_ev: Decimal
+    conservative_ev: Decimal
+    breakeven_prob: Decimal
+    max_loss: Decimal
+    capital_required: Decimal
+    qualifies: bool
+    reason: str
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+def evaluate_binary_contract(
+    prediction: Prediction,
+    book: ExecutableBook,
+    config: TradingConfig,
+    quantity: Decimal | None = None,
+) -> list[EvResult]:
+    """Evaluate YES and NO purchases; return both with qualify flags.
+
+    EV_yes = p - a_yes - c_yes
+    EV_no  = (1-p) - a_no - c_no
+    Uses conservative probability and uncertainty buffer for qualification.
+    """
+    base_qty = fp_count(quantity or config.default_contract_quantity)
+    base_qty = min(base_qty, fp_count(config.max_contracts_per_order))
+    results: list[EvResult] = []
+
+    for side in ("yes", "no"):
+        results.append(_eval_side(side, prediction, book, config, base_qty))
+    return results
+
+
+def _target_quantity(ask: Decimal, config: TradingConfig, base_qty: Decimal) -> Decimal:
+    """Size toward target_trade_dollars (and max_loss), never above max_contracts."""
+    qty = base_qty
+    target = D(config.target_trade_dollars)
+    if target > ZERO and ask > ZERO:
+        # Leave a small fee cushion so capital ≈ target.
+        raw = target / ask
+        qty = fp_count(min(raw, D(config.max_contracts_per_order)))
+        loss_cap = D(config.max_loss_per_trade_dollars)
+        if ask > ZERO and loss_cap > ZERO:
+            by_loss = fp_count(floor_to(loss_cap / ask, D("0.01")))
+            if by_loss > ZERO:
+                qty = min(qty, by_loss)
+        if qty < D("0.01"):
+            qty = min(base_qty, fp_count(config.max_contracts_per_order))
+    return qty
+
+
+def _eval_side(
+    side: Side,
+    prediction: Prediction,
+    book: ExecutableBook,
+    config: TradingConfig,
+    base_qty: Decimal,
+) -> EvResult:
+    unvalidated = "UNVALIDATED" in (prediction.validation_evidence or "")
+    research_only = "RESEARCH" in (prediction.validation_evidence or "")
+    # Research/obs engines get the same market-shrink guards as UNVALIDATED until promoted.
+    if research_only:
+        unvalidated = True
+    # Explicit model live flag (obs engine sets False) — do not treat missing as research.
+    model_live_eligible = (prediction.details or {}).get("model_live_eligible")
+    implied_yes = market_implied_yes_prob(book)
+
+    if side == "yes":
+        ask = book.best_yes_ask
+        fillable, vwap = (ZERO, ZERO)
+        qty = _target_quantity(ask, config, base_qty) if ask is not None else base_qty
+        if ask is not None:
+            # Cap at ask + small slip only within available depth at/under a max limit later.
+            fillable, vwap = book.fillable_yes(qty, max_price=ask)
+        p = prediction.p_yes
+        # One-sided haircut against the purchase (never inflate longshot probabilities).
+        p_cons = min(prediction.p_yes_conservative, p) - prediction.uncertainty
+        p_cons = clamp01(p_cons)
+        mkt_side = implied_yes
+    else:
+        ask = book.best_no_ask
+        fillable, vwap = (ZERO, ZERO)
+        qty = _target_quantity(ask, config, base_qty) if ask is not None else base_qty
+        if ask is not None:
+            fillable, vwap = book.fillable_no(qty, max_price=ask)
+        p = prediction.p_no
+        p_cons = min(prediction.p_no_conservative, p) - prediction.uncertainty
+        p_cons = clamp01(p_cons)
+        mkt_side = (ONE - implied_yes) if implied_yes is not None else None
+
+    # Unvalidated models: shrink toward market so raw Gaussian/climatology cannot dominate 1¢ books.
+    shrink_w = D(config.unvalidated_market_shrink) if unvalidated else ZERO
+    if shrink_w > ZERO and mkt_side is not None:
+        shrink_w = min(max(shrink_w, ZERO), ONE)
+        p = clamp01((ONE - shrink_w) * p + shrink_w * mkt_side)
+        p_cons = clamp01((ONE - shrink_w) * p_cons + shrink_w * mkt_side)
+
+    if ask is None or fillable <= ZERO:
+        return EvResult(
+            side=side,
+            quantity=qty,
+            executable_price=ZERO,
+            fillable_quantity=ZERO,
+            estimated_prob=p,
+            conservative_prob=p_cons,
+            uncertainty=prediction.uncertainty,
+            fees_total=ZERO,
+            fees_per_contract=ZERO,
+            estimated_ev=ZERO,
+            conservative_ev=ZERO,
+            breakeven_prob=ZERO,
+            max_loss=ZERO,
+            capital_required=ZERO,
+            qualifies=False,
+            reason="no executable ask / insufficient depth",
+        )
+
+    price = fp_price(vwap if vwap > ZERO else ask)
+    use_qty = fp_count(fillable)
+    fees = estimate_net_fee(
+        use_qty,
+        price,
+        multiplier=config.fee_multiplier,
+        assume_taker=config.assume_taker,
+        balance_precision=config.balance_precision,
+    )
+    c = fee_per_contract(fees, use_qty)
+    est_ev = p - price - c
+    # Conservative EV uses shrunk probability and extra uncertainty buffer.
+    cons_ev = p_cons - price - c - config.uncertainty_buffer
+    breakeven = price + c
+    capital = price * use_qty + fees
+    max_loss = capital  # hold to settlement; lose premium + fees if wrong (binary)
+
+    # Shrink size if fees push capital over the per-trade loss cap.
+    loss_cap = D(config.max_loss_per_trade_dollars)
+    guard = 0
+    while max_loss > loss_cap and use_qty >= D("0.01") and price > ZERO and guard < 8:
+        scale = (loss_cap / max_loss) * D("0.98")
+        if scale >= ONE:
+            scale = D("0.95")
+        use_qty = fp_count(use_qty * scale)
+        if use_qty < D("0.01"):
+            use_qty = ZERO
+            break
+        fees = estimate_net_fee(
+            use_qty,
+            price,
+            multiplier=config.fee_multiplier,
+            assume_taker=config.assume_taker,
+            balance_precision=config.balance_precision,
+        )
+        c = fee_per_contract(fees, use_qty)
+        est_ev = p - price - c
+        cons_ev = p_cons - price - c - config.uncertainty_buffer
+        breakeven = price + c
+        capital = price * use_qty + fees
+        max_loss = capital
+        guard += 1
+
+    if use_qty <= ZERO:
+        return EvResult(
+            side=side,
+            quantity=qty,
+            executable_price=price,
+            fillable_quantity=ZERO,
+            estimated_prob=p,
+            conservative_prob=p_cons,
+            uncertainty=prediction.uncertainty,
+            fees_total=ZERO,
+            fees_per_contract=ZERO,
+            estimated_ev=ZERO,
+            conservative_ev=ZERO,
+            breakeven_prob=ZERO,
+            max_loss=ZERO,
+            capital_required=ZERO,
+            qualifies=False,
+            reason="sized quantity below minimum after loss cap",
+        )
+
+    qualifies = True
+    reasons: list[str] = []
+    if not prediction.supported:
+        qualifies = False
+        reasons.append(prediction.skip_reason or "model unsupported")
+    if cons_ev < config.min_net_edge:
+        qualifies = False
+        reasons.append(
+            f"conservative EV {cons_ev} < min_net_edge {config.min_net_edge}"
+        )
+    if max_loss > config.max_loss_per_trade_dollars:
+        qualifies = False
+        reasons.append("max loss exceeds per-trade limit")
+    if use_qty < qty:
+        reasons.append(f"partial depth only fillable={use_qty}")
+
+    # Favorite-longshot trap: unvalidated models must not pile into ≤N¢ tickets.
+    longshot_cap = D(config.unvalidated_longshot_max_price)
+    if unvalidated and price <= longshot_cap:
+        qualifies = False
+        reasons.append(
+            f"unvalidated longshot guard: refuse buys at price ≤ {longshot_cap} "
+            f"(model overconfidence vs thin books)"
+        )
+
+    max_div = D(config.max_model_market_divergence)
+    if implied_yes is not None:
+        # Compare raw model YES (pre-shrink) to market so shrink does not hide divergence.
+        model_yes = prediction.p_yes
+        div = abs(model_yes - implied_yes)
+        if div > max_div and unvalidated:
+            qualifies = False
+            reasons.append(
+                f"model vs market divergence {div} > {max_div} "
+                f"while model unvalidated (market={implied_yes}, model={model_yes})"
+            )
+
+    if unvalidated and shrink_w > ZERO and mkt_side is not None:
+        reasons.append(f"applied unvalidated market shrink w={shrink_w} toward {mkt_side}")
+
+    if research_only or model_live_eligible is False:
+        reasons.append("RESEARCH/paper engine — live execution blocked at pipeline gate")
+
+    if qualifies:
+        reasons.append(
+            f"conservative EV {cons_ev} meets min edge; model={prediction.model_version}"
+        )
+
+    return EvResult(
+        side=side,
+        quantity=use_qty,
+        executable_price=price,
+        fillable_quantity=use_qty,
+        estimated_prob=p,
+        conservative_prob=p_cons,
+        uncertainty=prediction.uncertainty,
+        fees_total=fees,
+        fees_per_contract=c,
+        estimated_ev=est_ev,
+        conservative_ev=cons_ev,
+        breakeven_prob=clamp01(breakeven),
+        max_loss=max_loss,
+        capital_required=capital,
+        qualifies=qualifies,
+        reason="; ".join(reasons),
+        details={
+            "best_ask": str(ask),
+            "market_implied_yes": str(implied_yes) if implied_yes is not None else None,
+            "unvalidated_shrink": str(shrink_w),
+            "market_implied_note": "Disagreement with market is not proof of edge",
+        },
+    )
+
+
+def max_limit_price(
+    conservative_prob: Decimal,
+    fee_per_ct: Decimal,
+    min_edge: Decimal,
+    uncertainty_buffer: Decimal,
+) -> Decimal:
+    """Highest purchase price that still preserves required conservative edge."""
+    # cons_ev = p_cons - price - fee - buffer >= min_edge
+    # price <= p_cons - fee - buffer - min_edge
+    limit = D(conservative_prob) - D(fee_per_ct) - D(uncertainty_buffer) - D(min_edge)
+    return fp_price(max(limit, ZERO))

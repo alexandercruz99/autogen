@@ -1,0 +1,15 @@
+[
+  "hour_local",
+  "doy",
+  "tmpf",
+  "dwpf",
+  "sknt",
+  "alti",
+  "max_so_far",
+  "rise_from_min",
+  "dT_1h",
+  "dT_3h",
+  "solar_el",
+  "hours_to_20_local",
+  "precip_6h"
+]

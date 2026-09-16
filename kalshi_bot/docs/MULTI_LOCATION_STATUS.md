@@ -22,8 +22,15 @@ Operating TWC (weather.com/kalshi adapter): `KXHIGHNY`, `KXHIGHCHI`, `KXHIGHLAX`
 - Public portal JSON: `/kalshi/api/climate/primary`, `/kalshi/api/metar`.
 - Settlement floors from TWC climate reports (not NWS CLI).
 - Progressive max from TWC portal METAR; rich features from AviationWeather same ICAO.
-- Same-ICAO residual transfer (NYC/CHI) labeled exploratory; live blocked.
+- Same-ICAO residual transfer (NYC/CHI/LAX) labeled exploratory; capped live via `weather-twc-bet --live`.
 - See `docs/TWC_ADAPTER.md`.
+
+## LAX station model (2026-09-16)
+
+- Profile `lax_airport`: KLAX ASOS 2022–2026 + GHCND USW00023174 TMAX labels.
+- Train: `weather-train-location --location lax_airport` → artifact under `multi/artifacts/lax_airport__daily_max_temp_f/`.
+- TWC `KXHIGHLAX` transfers via `same_station_model_location_id=lax_airport`.
+- Holdout production median MAE ≈ 2.7°F (08h) / 1.2°F (11h) / 0.54°F (14h).
 
 ## Live TWC preview (2026-09-16 ~18:30 UTC)
 

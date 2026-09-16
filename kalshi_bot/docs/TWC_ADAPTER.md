@@ -37,3 +37,15 @@ PYTHONPATH=src python3 -m kalshi_bot.cli weather-discover
 PYTHONPATH=src python3 -m kalshi_bot.cli weather-multi-once
 PYTHONPATH=src python3 -m kalshi_bot.cli weather-multi-status
 ```
+
+## Forecast callout + capped live bet
+
+```bash
+# Show: "today's high will be about XX°F (already seen YY°F)"
+PYTHONPATH=src python3 -m kalshi_bot.cli weather-twc-bet --series KXHIGHNY --dollars 5
+
+# Explicit user-requested live order capped at $5
+PYTHONPATH=src python3 -m kalshi_bot.cli weather-twc-bet --series KXHIGHNY --dollars 5 --live
+```
+
+Snaps to the latest trained hour (8/11/14) if you request live off-window. Live still requires `mode: live` + `live.enabled` + working API credentials.

@@ -139,6 +139,14 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-discover", help="Discover Kalshi weather markets → location/settlement registry")
     sub.add_parser("weather-multi-once", help="Multi-location collect/infer/paper cycle (live blocked)")
     sub.add_parser("weather-multi-status", help="Per-location mapping, coverage, forecast, paper status")
+    p_twc_bet = sub.add_parser(
+        "weather-twc-bet",
+        help="TWC forecast callout ('today's high ~X°F') + optional capped live bet",
+    )
+    p_twc_bet.add_argument("--series", default="KXHIGHNY", help="TWC series ticker (default KXHIGHNY)")
+    p_twc_bet.add_argument("--dollars", type=float, default=5.0, help="Max capital for live bet (default 5)")
+    p_twc_bet.add_argument("--live", action="store_true", help="Submit capped live order (requires auth)")
+    p_twc_bet.add_argument("--dry-run", action="store_true", help="With --live, size/select but do not submit")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -180,6 +188,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
+        "weather-twc-bet",
     )
     if args.cmd in weather_ops:
         config = load_config(cfg_path)
@@ -203,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             weather_obs_validate,
             weather_train,
             weather_train_location,
+            weather_twc_bet,
             weather_validate,
         )
 
@@ -210,6 +220,22 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     weather_train_location(config, location_id=getattr(args, "location", "chi_midway")),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if args.cmd == "weather-twc-bet":
+            print(
+                json.dumps(
+                    weather_twc_bet(
+                        config,
+                        series_ticker=getattr(args, "series", "KXHIGHNY"),
+                        dollars=float(getattr(args, "dollars", 5.0)),
+                        live=bool(getattr(args, "live", False)),
+                        dry_run=bool(getattr(args, "dry_run", False)),
+                    ),
                     indent=2,
                     default=str,
                 )

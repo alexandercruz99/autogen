@@ -57,8 +57,13 @@ def process_location(
     now: datetime | None = None,
     do_paper: bool = True,
     collect: bool = True,
+    force_decision: bool = False,
 ) -> dict[str, Any]:
-    """Run one location end-to-end. Never raises for expected blocked states."""
+    """Run one location end-to-end. Never raises for expected blocked states.
+
+    ``force_decision``: if off supported hours, snap to the latest trained hour
+    already passed today and continue (used for explicit user-requested bets).
+    """
     now = now or datetime.now(timezone.utc)
     location_id = target["location_id"]
     measurement = target["measurement"]
@@ -83,6 +88,7 @@ def process_location(
         "generated_at_utc": now.isoformat(),
         "live_order_submitted": False,
         "ok": False,
+        "force_decision": force_decision,
     }
 
     if measurement != "daily_max_temp_f":
@@ -98,7 +104,13 @@ def process_location(
         return out
     if family == "weather_company":
         return _process_twc_location(
-            target, store, out=out, now=now, do_paper=do_paper, collect=collect
+            target,
+            store,
+            out=out,
+            now=now,
+            do_paper=do_paper,
+            collect=collect,
+            force_decision=force_decision,
         )
     if family != "nws_cli":
         out.update(
@@ -380,6 +392,7 @@ def _process_twc_location(
     now: datetime,
     do_paper: bool,
     collect: bool,
+    force_decision: bool = False,
 ) -> dict[str, Any]:
     """TWC settlement path — never applies NWS CLI floors."""
     location_id = target["location_id"]
@@ -470,6 +483,16 @@ def _process_twc_location(
 
     local = civil_local(now, tz)
     supported, decision_hour = is_supported_decision_time(now, tz_name=tz)
+    snapped = False
+    if not supported and force_decision:
+        # Use latest trained hour already reached today (8/11/14); after 14 use 14.
+        mins = local.hour * 60 + local.minute
+        past = [h for h in SUPPORTED_DECISION_HOURS_LOCAL if h * 60 <= mins]
+        if past:
+            decision_hour = past[-1]
+            supported = True
+            snapped = True
+            out["decision_hour_snapped"] = True
     climate_day = date.fromisoformat(features["climate_day"])
     ctx = ForecastContext(
         location_id=location_id,
@@ -490,7 +513,7 @@ def _process_twc_location(
         lon=target.get("lon"),
         elev_m=target.get("elev_m"),
         mode="RESEARCH",
-        extras={"model_family": "twc_daily_max_v1"},
+        extras={"model_family": "twc_daily_max_v1", "decision_hour_snapped": snapped},
     )
     out["forecast_context"] = ctx.as_dict()
     out["decision_hour_local"] = decision_hour

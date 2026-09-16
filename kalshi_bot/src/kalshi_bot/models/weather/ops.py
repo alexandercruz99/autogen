@@ -457,3 +457,23 @@ def weather_multi_status(config: AppConfig) -> dict[str, Any]:
         }
     finally:
         registry.close()
+
+
+def weather_twc_bet(
+    config: AppConfig,
+    *,
+    series_ticker: str = "KXHIGHNY",
+    dollars: float = 5.0,
+    live: bool = False,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """TWC daily-max callout + optional user-requested capped live bet."""
+    from kalshi_bot.models.weather.obs_engine.multi.live_bet import weather_twc_bet as _run
+
+    return _run(
+        config,
+        series_ticker=series_ticker,
+        dollars=dollars,
+        live=live,
+        dry_run=dry_run,
+    )

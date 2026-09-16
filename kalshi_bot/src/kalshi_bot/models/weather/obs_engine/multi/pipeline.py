@@ -340,6 +340,7 @@ def process_location(
             climate_day=climate_day,
             decision_hour=decision_hour,
             location_id=location_id,
+            max_so_far=features.get("max_so_far"),
         )
         out["paper_decision"] = paper.get("paper_decision")
         out["brackets"] = paper.get("brackets")
@@ -651,6 +652,7 @@ def _process_twc_location(
             climate_day=climate_day,
             decision_hour=decision_hour,
             location_id=location_id,
+            max_so_far=features.get("max_so_far"),
         )
         out["paper_decision"] = paper.get("paper_decision")
         out["brackets"] = paper.get("brackets")
@@ -683,11 +685,18 @@ def _paper_evaluate(
     climate_day: date,
     decision_hour: int | None,
     location_id: str,
+    max_so_far: float | None = None,
 ) -> dict[str, Any]:
     from kalshi_bot.api.client import KalshiClient
     from kalshi_bot.api.fees import estimate_net_fee
     from kalshi_bot.api.orderbook import parse_orderbook
     from kalshi_bot.config import load_config
+    from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
+        MAX_STRIKE_DISTANCE_F,
+        MIN_MODEL_P,
+        format_bet_rationale,
+        select_forecast_consistent,
+    )
 
     cfg = load_config("config.yaml" if Path("config.yaml").exists() else "config.example.yaml")
     client = KalshiClient(cfg.api)
@@ -728,6 +737,7 @@ def _paper_evaluate(
             iv = interval_from_market(m)
             if iv is None:
                 continue
+            interval = {"op": iv.op, "low": iv.low, "high": iv.high}
             p_yes = dist.p_interval(iv)
             p_no = ONE - p_yes
             ticker = m.get("ticker")
@@ -755,7 +765,7 @@ def _paper_evaluate(
                     "yes_ask_size": yes_depth,
                     "no_ask_size": no_depth,
                     "quote_ts_utc": quote_ts,
-                    "interval": {"op": iv.op, "low": iv.low, "high": iv.high},
+                    "interval": interval,
                 }
             )
             for side, p, ask, depth_s in (
@@ -770,6 +780,7 @@ def _paper_evaluate(
                             "decision": "blocked_unavailable_prices",
                             "reason": f"no executable {side} ask",
                             "p": str(p),
+                            "interval": interval,
                         }
                     )
                     continue
@@ -782,6 +793,7 @@ def _paper_evaluate(
                             "reason": f"{side} ask depth < 1",
                             "p": str(p),
                             "ask": str(ask),
+                            "interval": interval,
                         }
                     )
                     continue
@@ -808,19 +820,41 @@ def _paper_evaluate(
                         "ev": str(ev),
                         "qty": str(qty),
                         "quote_ts_utc": quote_ts,
+                        "interval": interval,
                     }
                 )
 
-        positive = [e for e in evaluations if e.get("ev") is not None and D(e["ev"]) > ZERO]
         for e in evaluations:
             if e.get("ev") is not None and D(e["ev"]) <= ZERO:
                 e["decision"] = "paper_skip_negative_ev"
                 e["reason"] = f"EV={e['ev']} ≤ 0 after fees/buffer"
 
+        median_f = float(pred.point_median_f) if getattr(pred, "point_median_f", None) is not None else None
+        if median_f is None and hasattr(pred, "distribution"):
+            # fallback: some predictors expose median elsewhere
+            median_f = getattr(pred, "median_f", None)
+            median_f = float(median_f) if median_f is not None else None
+
         paper_decision: dict[str, Any]
-        if positive:
-            best = max(positive, key=lambda e: D(e["ev"]))
+        best = None
+        rejected: list[dict[str, Any]] = []
+        if median_f is not None:
+            best, rejected = select_forecast_consistent(
+                evaluations, median_f=median_f, brackets=brackets
+            )
+        out["selection_rejected"] = rejected
+
+        if best is not None and median_f is not None:
             oid = f"paper-{location_id}-{best['ticker']}-{best['side']}-{climate_day.isoformat()}-{decision_hour}"
+            why = format_bet_rationale(
+                point_median_f=median_f,
+                max_so_far=max_so_far,
+                ticker=str(best["ticker"]),
+                side=str(best["side"]),
+                p=best["p"],
+                ask=best["ask"],
+                interval=best.get("interval"),
+            )
             sim = ledger.try_simulate_fill(
                 client_order_id=oid,
                 ticker=best["ticker"],
@@ -829,7 +863,7 @@ def _paper_evaluate(
                 price=D(best["ask"]),
                 fees=D(best["fees"]),
                 decision_reason="paper_sim_fill_unvalidated",
-                details=best,
+                details={**best, "why_buy": why},
                 location_id=location_id,
                 series_ticker=series_ticker,
                 quote_ts_utc=quote_ts,
@@ -840,6 +874,11 @@ def _paper_evaluate(
                     **best,
                     "decision": "paper_sim_fill_unvalidated",
                     "reason": "Simulated taker fill; live order NOT submitted",
+                    "why_buy": why,
+                    "selection_rule": (
+                        f"forecast-consistent (≤{MAX_STRIKE_DISTANCE_F}°F from median), "
+                        f"model_p≥{MIN_MODEL_P}, then max EV — not cheapest ask"
+                    ),
                     "sim": sim,
                     "live_blocked": True,
                     "live_order_submitted": False,
@@ -849,12 +888,23 @@ def _paper_evaluate(
                     **best,
                     "decision": f"paper_skip_{sim.get('reason') or 'rejected'}",
                     "reason": sim.get("reason"),
+                    "why_buy": why,
                     "sim": sim,
                     "live_blocked": True,
                     "live_order_submitted": False,
                 }
         elif evaluations:
-            paper_decision = {**evaluations[0], "live_blocked": True, "live_order_submitted": False}
+            # No forecast-consistent +EV row — do not fall back to raw max-EV cheap tickets.
+            paper_decision = {
+                "decision": "paper_skip_no_forecast_consistent_ev",
+                "reason": (
+                    "No +EV contract within the forecast band after min model_p filter; "
+                    "refusing cheapest-ask fallback"
+                ),
+                "selection_rejected": rejected,
+                "live_blocked": True,
+                "live_order_submitted": False,
+            }
         else:
             paper_decision = {
                 "decision": "paper_skip_no_brackets",

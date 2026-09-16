@@ -29,6 +29,7 @@ def collect_cli(store: FeedStore, limit: int = 8) -> dict[str, Any]:
                 "min_temp_f": getattr(rep, "min_temp_f", None),
                 "is_preliminary": bool(rep.is_preliminary),
                 "product_id": getattr(rep, "product_id", None),
+                "station_id": NYC_TARGET.cli_location_id,
                 "settlement_note": "Kalshi daily high settles on FINAL CLI; prelim is revisable evidence only",
             }
             res = store.upsert_sample(

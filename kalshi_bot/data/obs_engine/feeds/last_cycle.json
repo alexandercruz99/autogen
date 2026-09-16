@@ -1,28 +1,33 @@
 {
-  "cycle_started_utc": "2026-09-16T03:13:27.483835+00:00",
+  "cycle_started_utc": "2026-09-16T05:16:07.405663+00:00",
   "metar": {
     "feed": "metar",
     "stations": {
       "KNYC": {
         "ok": true,
-        "n_fetched": 6,
+        "n_fetched": 30,
         "n_new": 0,
-        "latest_key": "KNYC:2026-09-15T21:51:00+00:00"
+        "latest_key": "KNYC:2026-09-14T23:51:00+00:00",
+        "usable": true
       },
       "KLGA": {
         "ok": true,
-        "n_fetched": 6,
+        "n_fetched": 31,
         "n_new": 0,
-        "latest_key": "KLGA:2026-09-15T21:51:00+00:00"
+        "latest_key": "KLGA:2026-09-14T23:51:00+00:00",
+        "usable": true
       },
       "KJFK": {
         "ok": true,
-        "n_fetched": 6,
+        "n_fetched": 30,
         "n_new": 0,
-        "latest_key": "KJFK:2026-09-15T21:51:00+00:00"
+        "latest_key": "KJFK:2026-09-14T23:51:00+00:00",
+        "usable": true
       }
     },
-    "ok": true
+    "hours_requested": 30,
+    "ok": true,
+    "usable": true
   },
   "cli": {
     "ok": true,
@@ -32,17 +37,17 @@
   },
   "goes": {
     "ok": true,
-    "source_key": "ABI-L2-ACMC/2026/259/03/OR_ABI-L2-ACMC-M6_G19_s20262590306170_e20262590308543_c20262590309279.nc",
+    "source_key": "ABI-L2-ACMC/2026/259/05/OR_ABI-L2-ACMC-M6_G19_s20262590511170_e20262590513543_c20262590514249.nc",
     "features": {
-      "cloud_frac_bcm": 0.0034602076124567475,
-      "cloudy_or_probably_frac_acm": 0.0034602076124567475,
+      "cloud_frac_bcm": 0.0,
+      "cloudy_or_probably_frac_acm": 0.0,
       "acm_center": 0.0,
       "pixel_iy_ix": [
         315,
         1851
       ],
       "window": 8,
-      "valid_utc": "2026-09-16T03:07:35.691463+00:00",
+      "valid_utc": "2026-09-16T05:12:35.702995+00:00",
       "dqf_nonzero_frac": 0.0,
       "provenance": {
         "product": "ABI-L2-ACMC",
@@ -51,23 +56,23 @@
         "note": "Clear Sky Mask uses spectral tests + RTM BT comparisons; not an NWS temp forecast"
       }
     },
-    "local_path": "data/obs_engine/feeds/goes_samples/OR_ABI-L2-ACMC-M6_G19_s20262590306170_e20262590308543_c20262590309279.nc"
+    "local_path": "data/obs_engine/feeds/goes_samples/OR_ABI-L2-ACMC-M6_G19_s20262590511170_e20262590513543_c20262590514249.nc"
   },
   "nexrad": {
     "ok": true,
-    "source_key": "OKX_N0B_2026_09_16_03_09_04",
+    "source_key": "OKX_N0B_2026_09_16_05_11_09",
     "features": {
-      "n_gates_in_nyc_radius": 11462,
-      "precip_gate_frac": 0.0033153027394870007,
-      "mean_dbz_if_any": -1.7113941720467631,
-      "max_dbz_if_any": 32.5,
-      "mean_level_if_any": -1.7113941720467631,
-      "max_level_if_any": 32.5,
+      "n_gates_in_nyc_radius": 11388,
+      "precip_gate_frac": 0.0028099754127151387,
+      "mean_dbz_if_any": -2.5036002809975413,
+      "max_dbz_if_any": 34.0,
+      "mean_level_if_any": -2.5036002809975413,
+      "max_level_if_any": 34.0,
       "radar_lat": 40.865,
       "radar_lon": -72.864,
       "radius_km": 100.0,
-      "valid_utc": "2026-09-16T03:09:04+00:00",
-      "product_max_code": 36,
+      "valid_utc": "2026-09-16T05:11:09+00:00",
+      "product_max_code": 34,
       "missing_scan": false,
       "geometry_miss": false,
       "provenance": {
@@ -78,7 +83,7 @@
         "forecast_model_inputs": false
       }
     },
-    "local_path": "data/obs_engine/feeds/nexrad_samples/OKX_N0B_2026_09_16_03_09_04"
+    "local_path": "data/obs_engine/feeds/nexrad_samples/OKX_N0B_2026_09_16_05_11_09"
   },
   "features": {
     "feature_names": [
@@ -104,102 +109,65 @@
       "missing_sknt",
       "missing_alti",
       "missing_dwpf",
-      "sky_code",
-      "goes_cloud_frac_bcm",
-      "goes_cloudyish_acm",
-      "goes_available",
-      "radar_precip_frac",
-      "radar_mean_level",
-      "radar_available"
+      "missing_precip_6h",
+      "sky_code"
     ],
+    "feature_schema_version": "station_v2.1",
     "features": {
-      "hour_local": 23.216666666666665,
-      "doy": 258.0,
-      "tmpf": 64.04,
-      "dwpf": 55.04,
-      "sknt": 0.0,
-      "alti": 30.0,
-      "max_so_far": 69.08,
-      "rise_from_min": 5.039999999999992,
-      "dT_1h": -0.8999999999999915,
-      "dT_3h": 0.0,
-      "solar_el": -41.391459361668204,
-      "hours_to_20_local": 0.0,
-      "precip_6h": 0.0,
-      "time_since_max_h": 6.374848268055555,
-      "d_dewpt_3h": 1.0799999999999983,
-      "d_alti_3h": 0.0,
-      "d_sknt_3h": -3.0,
-      "wind_dir_sin": 0.0,
-      "wind_dir_cos": 1.0,
-      "missing_sknt": 0.0,
-      "missing_alti": 1.0,
-      "missing_dwpf": 0.0,
-      "sky_code": 0.0,
-      "goes_cloud_frac_bcm": 0.0034602076124567475,
-      "goes_cloudyish_acm": 0.0034602076124567475,
+      "hour_local": null,
+      "doy": null,
+      "tmpf": null,
+      "dwpf": null,
+      "sknt": null,
+      "alti": null,
+      "max_so_far": null,
+      "rise_from_min": null,
+      "dT_1h": null,
+      "dT_3h": null,
+      "solar_el": null,
+      "hours_to_20_local": null,
+      "precip_6h": null,
+      "time_since_max_h": null,
+      "d_dewpt_3h": null,
+      "d_alti_3h": null,
+      "d_sknt_3h": null,
+      "wind_dir_sin": null,
+      "wind_dir_cos": null,
+      "missing_sknt": null,
+      "missing_alti": null,
+      "missing_dwpf": null,
+      "missing_precip_6h": null,
+      "sky_code": null,
+      "goes_cloud_frac_bcm": 0.0,
+      "goes_cloudyish_acm": 0.0,
       "goes_available": 1.0,
-      "radar_precip_frac": 0.0033153027394870007,
-      "radar_mean_level": -1.7113941720467631,
+      "radar_precip_frac": 0.0028099754127151387,
+      "radar_mean_level": -2.5036002809975413,
       "radar_available": 1.0
     },
-    "vector": [
-      23.216666666666665,
-      258.0,
-      64.04,
-      55.04,
-      0.0,
-      30.0,
-      69.08,
-      5.039999999999992,
-      -0.8999999999999915,
-      0.0,
-      -41.391459361668204,
-      0.0,
-      0.0,
-      6.374848268055555,
-      1.0799999999999983,
-      0.0,
-      -3.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0034602076124567475,
-      0.0034602076124567475,
-      1.0,
-      0.0033153027394870007,
-      -1.7113941720467631,
-      1.0
-    ],
-    "missing": {},
+    "missing": {
+      "station_obs": true,
+      "essential_coverage": true
+    },
     "provenance": {
-      "built_at_utc": "2026-09-16T03:13:29.453765+00:00",
-      "feeds_used": [
-        "metar_KNYC",
-        "goes19_acmc",
-        "nexrad_okx_n0b",
-        "cli_nyc"
-      ],
-      "local_v2": {
-        "n_obs_used": 7,
-        "latest_obs_utc": "2026-09-16T02:51:00+00:00",
-        "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
-        "station": "NYC",
-        "source": "iem_asos_hourly",
-        "feature_set": "local_v2"
+      "built_at_utc": "2026-09-16T05:16:09.282868+00:00",
+      "feature_schema_version": "station_v2.1",
+      "climate_day_basis": "LST_UTC-5",
+      "target_climate_day": "2026-09-16",
+      "coverage": {
+        "adequate": false,
+        "max_so_far_status": "insufficient",
+        "notes": [
+          "No KNYC temperature observations in LST climate-day window"
+        ]
       },
-      "max_so_far": 69.08,
-      "climate_day": "2026-09-15",
       "goes": {
         "product": "ABI-L2-ACMC",
         "bucket": "noaa-goes19",
         "includes_rtm_model_assist": true,
         "note": "Clear Sky Mask uses spectral tests + RTM BT comparisons; not an NWS temp forecast"
       },
-      "goes_age_hours": 0.0982673061111111,
+      "goes_age_hours": 0.059327742499999996,
       "radar": {
         "product": "N0B",
         "bucket": "unidata-nexrad-level3",
@@ -207,215 +175,170 @@
         "units_note": "MetPy map_data reflectivity (dBZ); precip_gate_frac uses >=20 dBZ",
         "forecast_model_inputs": false
       },
-      "radar_age_hours": 0.07373715694444444,
-      "cli": {
-        "max_temp_f": 79,
-        "is_preliminary": false,
-        "climate_day": "2026-09-11",
-        "issuance_utc": "2026-09-12T06:26:00+00:00"
+      "radar_age_hours": 0.08341190777777778,
+      "cli_selection": {
+        "applied": null,
+        "excluded": [
+          {
+            "climate_day": "2026-09-15",
+            "max_temp_f": 72,
+            "is_preliminary": true,
+            "issuance_utc": "2026-09-15T20:38:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.602434+00:00",
+            "source_key": "CLI:NYC:2026-09-15:2026-09-15T20:38:00+00:00:P",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-14",
+            "max_temp_f": 75,
+            "is_preliminary": false,
+            "issuance_utc": "2026-09-15T06:23:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.604702+00:00",
+            "source_key": "CLI:NYC:2026-09-14:2026-09-15T06:23:00+00:00:F",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-14",
+            "max_temp_f": 75,
+            "is_preliminary": true,
+            "issuance_utc": "2026-09-14T20:32:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.606353+00:00",
+            "source_key": "CLI:NYC:2026-09-14:2026-09-14T20:32:00+00:00:P",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-13",
+            "max_temp_f": 79,
+            "is_preliminary": false,
+            "issuance_utc": "2026-09-14T06:22:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.608350+00:00",
+            "source_key": "CLI:NYC:2026-09-13:2026-09-14T06:22:00+00:00:F",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-13",
+            "max_temp_f": 78,
+            "is_preliminary": true,
+            "issuance_utc": "2026-09-13T20:34:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.609598+00:00",
+            "source_key": "CLI:NYC:2026-09-13:2026-09-13T20:34:00+00:00:P",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-12",
+            "max_temp_f": 78,
+            "is_preliminary": false,
+            "issuance_utc": "2026-09-13T06:34:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.611241+00:00",
+            "source_key": "CLI:NYC:2026-09-12:2026-09-13T06:34:00+00:00:F",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-12",
+            "max_temp_f": 78,
+            "is_preliminary": true,
+            "issuance_utc": "2026-09-12T20:45:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.612413+00:00",
+            "source_key": "CLI:NYC:2026-09-12:2026-09-12T20:45:00+00:00:P",
+            "exclude_reason": "wrong_climate_day"
+          },
+          {
+            "climate_day": "2026-09-11",
+            "max_temp_f": 79,
+            "is_preliminary": false,
+            "issuance_utc": "2026-09-12T06:26:00+00:00",
+            "first_seen_utc": "2026-09-16T02:47:26.613095+00:00",
+            "source_key": "CLI:NYC:2026-09-11:2026-09-12T06:26:00+00:00:F",
+            "exclude_reason": "wrong_climate_day"
+          }
+        ],
+        "n_candidates": 0
+      },
+      "cli": null,
+      "cli_note": "No same-day CLI available at decision time; wrong-day reports excluded",
+      "attribution": {
+        "feeds_collected": [
+          "metar_KNYC",
+          "goes19_acmc",
+          "nexrad_okx_n0b",
+          "cli_nyc"
+        ],
+        "feeds_quality_ok": [
+          "goes19_acmc",
+          "nexrad_okx_n0b"
+        ],
+        "features_consumed_by_model": [],
+        "settlement_constraints_applied": []
       }
     },
-    "max_so_far": 69.08
+    "max_so_far": null,
+    "coverage": null,
+    "cli_applied": null,
+    "attribution": {
+      "feeds_collected": [
+        "metar_KNYC",
+        "goes19_acmc",
+        "nexrad_okx_n0b",
+        "cli_nyc"
+      ],
+      "feeds_quality_ok": [
+        "goes19_acmc",
+        "nexrad_okx_n0b"
+      ],
+      "features_consumed_by_model": [],
+      "settlement_constraints_applied": []
+    },
+    "climate_day": "2026-09-16",
+    "decision_time_utc": "2026-09-16T05:16:09.282868+00:00"
   },
   "infer_paper": {
-    "ok": true,
+    "ok": false,
     "mode": "RESEARCH",
     "live_orders": false,
-    "model_artifact": "data/obs_engine/feeds/models/station_corrected_v1.joblib",
-    "feature_set": "local_v2",
-    "missing": {},
-    "feeds_contributed": [
-      "metar_KNYC",
-      "goes19_acmc",
-      "nexrad_okx_n0b",
-      "cli_nyc"
-    ],
-    "max_so_far": 69.08,
-    "remain_q10_q50_q90": [
-      0.6087179365297333,
-      1.3202868142328315,
-      3.2390554921836263
-    ],
-    "distribution": {
-      "method": "station_corrected_remain+same_day_floor",
-      "mean_f": 72.6144885840343,
-      "q10": 70,
-      "q50": 72,
-      "q90": 76,
-      "support": [
-        [
-          70,
-          0.228059
-        ],
-        [
-          71,
-          0.251449
-        ],
-        [
-          72,
-          0.169583
-        ],
-        [
-          73,
-          0.087717
-        ],
-        [
-          74,
-          0.076022
-        ],
-        [
-          75,
-          0.04386
-        ],
-        [
-          76,
-          0.04386
-        ],
-        [
-          77,
-          0.023393
-        ],
-        [
-          78,
-          0.02047
-        ],
-        [
-          79,
-          0.011698
-        ],
-        [
-          80,
-          0.005851
-        ],
-        [
-          81,
-          0.02047
-        ],
-        [
-          82,
-          0.002927
-        ],
-        [
-          83,
-          0.002927
-        ],
-        [
-          84,
-          0.005851
-        ],
-        [
-          85,
-          3e-06
-        ],
-        [
-          86,
-          3e-06
-        ],
-        [
-          87,
-          0.002927
-        ],
-        [
-          88,
-          0.002927
-        ],
-        [
-          89,
-          3e-06
-        ],
-        [
-          90,
-          3e-06
-        ]
+    "live_order_submitted": false,
+    "generated_at_utc": "2026-09-16T05:16:09.287191+00:00",
+    "generated_at_local": "2026-09-16T01:16:09.287191-04:00",
+    "target_climate_day": "2026-09-16",
+    "feature_schema_version": "station_v2.1",
+    "coverage": null,
+    "attribution": {
+      "feeds_collected": [
+        "metar_KNYC",
+        "goes19_acmc",
+        "nexrad_okx_n0b",
+        "cli_nyc"
       ],
-      "details": {
-        "n_residuals_raw": 500,
-        "n_samples_effective": 500,
-        "point_forecast_f": 70.40028681423283,
-        "resid_mean": 0.7107820565088389,
-        "resid_std": 3.528408621103255,
-        "variance_floor_std": null,
-        "same_day_floor_f": 69.08,
-        "same_day_floor_int": 70,
-        "same_day_reason": "observed max_so_far"
-      }
+      "feeds_quality_ok": [
+        "goes19_acmc",
+        "nexrad_okx_n0b"
+      ],
+      "features_consumed_by_model": [],
+      "settlement_constraints_applied": []
     },
-    "generated_at_utc": "2026-09-16T03:13:29.456202+00:00",
-    "target_date": "2026-09-15",
-    "horizon": "same_day",
-    "brackets": [
-      {
-        "ticker": "KXHIGHNY-26SEP15-B70.5",
-        "p_yes": "0.47950857",
-        "yes_ask": "0.0100",
-        "interval": {
-          "op": "range_inclusive",
-          "low": 70.0,
-          "high": 71.0
-        }
-      },
-      {
-        "ticker": "KXHIGHNY-26SEP15-B72.5",
-        "p_yes": "0.25729999",
-        "yes_ask": null,
-        "interval": {
-          "op": "range_inclusive",
-          "low": 72.0,
-          "high": 73.0
-        }
-      },
-      {
-        "ticker": "KXHIGHNY-26SEP15-B74.5",
-        "p_yes": "0.11988153",
-        "yes_ask": "0.0100",
-        "interval": {
-          "op": "range_inclusive",
-          "low": 74.0,
-          "high": 75.0
-        }
-      },
-      {
-        "ticker": "KXHIGHNY-26SEP15-B76.5",
-        "p_yes": "0.06725318",
-        "yes_ask": "0.0100",
-        "interval": {
-          "op": "range_inclusive",
-          "low": 76.0,
-          "high": 77.0
-        }
-      },
-      {
-        "ticker": "KXHIGHNY-26SEP15-T77",
-        "p_yes": "0.07605673",
-        "yes_ask": "0.0100",
-        "interval": {
-          "op": "gt",
-          "low": 77.0,
-          "high": null
-        }
-      },
-      {
-        "ticker": "KXHIGHNY-26SEP15-T70",
-        "p_yes": "0E-8",
-        "yes_ask": "0.0100",
-        "interval": {
-          "op": "lt",
-          "low": null,
-          "high": 70.0
-        }
-      }
-    ],
+    "calibration_status": null,
+    "probabilities_available": false,
     "paper_decision": {
-      "ticker": "KXHIGHNY-26SEP15-B70.5",
-      "decision": "paper_skip_no_edge",
-      "reason": "no bracket met research paper criteria \u2014 cycle recorded; live orders blocked"
-    }
+      "decision": "blocked_unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+      "live_blocked": true
+    },
+    "decision_hour_local": null,
+    "supported_decision_hours_local": [
+      8,
+      11,
+      14
+    ],
+    "status": "unsupported_decision_time",
+    "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+    "next_supported_run_utc": "2026-09-16T12:00:00+00:00",
+    "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+    "historical_replay_ok": true
   },
   "checkpoints": [
     {
       "feed": "cli_nyc",
-      "last_success_utc": "2026-09-16T03:13:29.020304+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:29.020304+00:00",
+      "last_success_utc": "2026-09-16T05:16:08.050028+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:08.050028+00:00",
       "last_error": null,
       "last_source_key": "CLI:NYC:2026-09-11:2026-09-12T06:26:00+00:00:F",
       "consecutive_failures": 0,
@@ -423,49 +346,74 @@
     },
     {
       "feed": "goes19_acmc",
-      "last_success_utc": "2026-09-16T03:13:29.126322+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:29.126322+00:00",
+      "last_success_utc": "2026-09-16T05:16:08.268708+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:08.268708+00:00",
       "last_error": null,
-      "last_source_key": "ABI-L2-ACMC/2026/259/03/OR_ABI-L2-ACMC-M6_G19_s20262590306170_e20262590308543_c20262590309279.nc",
+      "last_source_key": "ABI-L2-ACMC/2026/259/05/OR_ABI-L2-ACMC-M6_G19_s20262590511170_e20262590513543_c20262590514249.nc",
       "consecutive_failures": 0,
-      "meta_json": "{\"cloud_frac_bcm\": 0.0034602076124567475}"
+      "meta_json": "{\"cloud_frac_bcm\": 0.0}"
     },
     {
       "feed": "metar_KJFK",
-      "last_success_utc": "2026-09-16T03:13:28.222790+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:28.222790+00:00",
+      "last_success_utc": "2026-09-16T05:16:07.814050+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:07.814050+00:00",
       "last_error": null,
-      "last_source_key": "KJFK:2026-09-15T21:51:00+00:00",
+      "last_source_key": "KJFK:2026-09-14T23:51:00+00:00",
       "consecutive_failures": 0,
-      "meta_json": "{\"n_fetched\": 6, \"n_new\": 0}"
+      "meta_json": "{\"n_fetched\": 30, \"n_new\": 0, \"hours\": 30}"
     },
     {
       "feed": "metar_KLGA",
-      "last_success_utc": "2026-09-16T03:13:28.057467+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:28.057467+00:00",
+      "last_success_utc": "2026-09-16T05:16:07.673556+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:07.673556+00:00",
       "last_error": null,
-      "last_source_key": "KLGA:2026-09-15T21:51:00+00:00",
+      "last_source_key": "KLGA:2026-09-14T23:51:00+00:00",
       "consecutive_failures": 0,
-      "meta_json": "{\"n_fetched\": 6, \"n_new\": 0}"
+      "meta_json": "{\"n_fetched\": 31, \"n_new\": 0, \"hours\": 30}"
     },
     {
       "feed": "metar_KNYC",
-      "last_success_utc": "2026-09-16T03:13:27.885349+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:27.885349+00:00",
+      "last_success_utc": "2026-09-16T05:16:07.542649+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:07.542649+00:00",
       "last_error": null,
-      "last_source_key": "KNYC:2026-09-15T21:51:00+00:00",
+      "last_source_key": "KNYC:2026-09-14T23:51:00+00:00",
       "consecutive_failures": 0,
-      "meta_json": "{\"n_fetched\": 6, \"n_new\": 0}"
+      "meta_json": "{\"n_fetched\": 30, \"n_new\": 0, \"hours\": 30}"
     },
     {
       "feed": "nexrad_okx_n0b",
-      "last_success_utc": "2026-09-16T03:13:29.451036+00:00",
-      "last_attempt_utc": "2026-09-16T03:13:29.451036+00:00",
+      "last_success_utc": "2026-09-16T05:16:09.280693+00:00",
+      "last_attempt_utc": "2026-09-16T05:16:09.280693+00:00",
       "last_error": null,
-      "last_source_key": "OKX_N0B_2026_09_16_03_09_04",
+      "last_source_key": "OKX_N0B_2026_09_16_05_11_09",
       "consecutive_failures": 0,
-      "meta_json": "{\"precip_gate_frac\": 0.0033153027394870007, \"mean_level\": -1.7113941720467631}"
+      "meta_json": "{\"precip_gate_frac\": 0.0028099754127151387, \"mean_level\": -2.5036002809975413}"
     }
   ],
+  "health": "degraded_blocked_forecast",
+  "health_detail": {
+    "feeds": {
+      "metar": {
+        "http_or_fetch_ok": true,
+        "usable": true
+      },
+      "cli": {
+        "http_or_fetch_ok": true,
+        "usable": true
+      },
+      "goes": {
+        "http_or_fetch_ok": true,
+        "usable": true
+      },
+      "nexrad": {
+        "http_or_fetch_ok": true,
+        "usable": true
+      }
+    },
+    "inference_status": "unsupported_decision_time",
+    "coverage_adequate": false,
+    "probabilities_available": false,
+    "paper_decision": "blocked_unsupported_decision_time"
+  },
   "ok": true
 }

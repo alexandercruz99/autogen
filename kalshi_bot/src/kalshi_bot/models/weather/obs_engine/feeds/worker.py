@@ -21,7 +21,6 @@ from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
 
 logger = logging.getLogger(__name__)
 
-# Source-appropriate polling (seconds). Freshness limits enforced in features_live.
 DEFAULT_INTERVALS = {
     "metar": 300,
     "cli": 900,
@@ -48,11 +47,44 @@ def _with_retry(fn: Callable[[], dict[str, Any]], *, name: str, attempts: int = 
     return last
 
 
+def _health_from_cycle(summary: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Distinguish HTTP success vs usable fresh data vs successful inference."""
+    feeds = {}
+    for name in ("metar", "cli", "goes", "nexrad"):
+        block = summary.get(name) or {}
+        feeds[name] = {
+            "http_or_fetch_ok": bool(block.get("ok")),
+            "usable": bool(block.get("usable", block.get("ok"))),
+        }
+    infer = summary.get("infer_paper") or {}
+    infer_status = infer.get("status") or ("ok" if infer.get("ok") else "error")
+    cov = (summary.get("features") or {}).get("coverage") or {}
+    detail = {
+        "feeds": feeds,
+        "inference_status": infer_status,
+        "coverage_adequate": bool(cov.get("adequate")),
+        "probabilities_available": bool(infer.get("probabilities_available")),
+        "paper_decision": (infer.get("paper_decision") or {}).get("decision"),
+    }
+    # Healthy only if station METAR usable AND inference completed without hard error
+    # (unsupported_decision_time is a legitimate blocked outcome, still "degraded" not crash)
+    if not feeds["metar"]["usable"]:
+        return "unhealthy_stale_or_missing_metar", detail
+    if infer.get("ok") is False and infer_status in ("error", "model_unavailable", "schema_mismatch"):
+        return "unhealthy_inference_failed", detail
+    if infer_status in ("insufficient_data", "unsupported_decision_time", "unsupported_horizon", "probabilities_unavailable"):
+        return "degraded_blocked_forecast", detail
+    if infer.get("ok"):
+        return "ok", detail
+    return "degraded", detail
+
+
 def run_collect_cycle(store: FeedStore | None = None, *, do_infer: bool = True) -> dict[str, Any]:
     store = store or FeedStore()
     summary: dict[str, Any] = {"cycle_started_utc": datetime.now(timezone.utc).isoformat()}
     try:
-        summary["metar"] = _with_retry(lambda: collect_metar(store), name="metar")
+        # Backfill up to 30h METAR so LST climate-day window is available after restart
+        summary["metar"] = _with_retry(lambda: collect_metar(store, hours=30), name="metar")
         summary["cli"] = _with_retry(lambda: collect_cli(store), name="cli")
         summary["goes"] = _with_retry(lambda: collect_goes(store), name="goes")
         summary["nexrad"] = _with_retry(lambda: collect_nexrad(store), name="nexrad")
@@ -63,18 +95,16 @@ def run_collect_cycle(store: FeedStore | None = None, *, do_infer: bool = True) 
 
                 summary["infer_paper"] = run_infer_and_paper(store, summary["features"])
             except Exception as exc:
-                summary["infer_paper"] = {"ok": False, "error": str(exc)}
+                summary["infer_paper"] = {"ok": False, "status": "error", "error": str(exc)}
         summary["checkpoints"] = store.list_checkpoints()
-        summary["ok"] = True
-        store.heartbeat(
-            "ok",
-            {
-                "last_cycle": summary["cycle_started_utc"],
-                "feeds": {k: (summary.get(k) or {}).get("ok") for k in ("metar", "cli", "goes", "nexrad")},
-            },
-        )
+        health, health_detail = _health_from_cycle(summary)
+        summary["health"] = health
+        summary["health_detail"] = health_detail
+        summary["ok"] = health in ("ok", "degraded_blocked_forecast", "degraded")
+        store.heartbeat(health, {"last_cycle": summary["cycle_started_utc"], **health_detail})
     except Exception as exc:
         summary["ok"] = False
+        summary["health"] = "error"
         summary["error"] = str(exc)
         store.heartbeat("error", {"error": str(exc)})
         logger.exception("collect cycle failed")
@@ -86,11 +116,9 @@ def run_collect_cycle(store: FeedStore | None = None, *, do_infer: bool = True) 
 
 
 def worker_loop(interval_seconds: int = 300, pidfile: Path | None = None) -> None:
-    """Blocking loop with heartbeat + restart recovery via FeedStore checkpoints."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     store = FeedStore()
     stop = {"flag": False}
-    last_run: dict[str, float] = {}
 
     def _stop(*_args):
         stop["flag"] = True
@@ -102,7 +130,6 @@ def worker_loop(interval_seconds: int = 300, pidfile: Path | None = None) -> Non
     pidfile = pidfile or Path("data/obs_engine/feeds/collector.pid")
     pidfile.parent.mkdir(parents=True, exist_ok=True)
     pidfile.write_text(str(os.getpid()))
-    # Restart recovery: reload checkpoints so we do not re-fetch duplicates (UNIQUE source_key)
     cps = store.list_checkpoints()
     store.heartbeat(
         "starting",

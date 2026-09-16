@@ -8,8 +8,11 @@ from pathlib import Path
 
 import numpy as np
 
-from kalshi_bot.models.weather.obs_engine.feeds.features_live import SATRAD_FEATURES, build_operating_features
+from kalshi_bot.models.weather.obs_engine.feeds.features_live import SATRAD_EXTRA, build_operating_features
+from kalshi_bot.models.weather.obs_engine.feeds.feature_schema import STATION_V2_FEATURES
 from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
+
+SATRAD_FEATURES = list(STATION_V2_FEATURES) + list(SATRAD_EXTRA)
 
 
 def test_feed_store_duplicate_protection(tmp_path: Path):
@@ -50,7 +53,7 @@ def test_missing_radar_not_interpreted_as_dry(tmp_path: Path, monkeypatch):
     assert bundle["missing"].get("radar") is True
     assert "NOT interpreted as no precipitation" in (bundle["provenance"].get("radar_note") or "")
     assert bundle["features"]["goes_available"] == 0.0
-    assert len(bundle["feature_names"]) == len(SATRAD_FEATURES)
+    assert bundle["feature_names"] == list(STATION_V2_FEATURES)
     store.close()
 
 

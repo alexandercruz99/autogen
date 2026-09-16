@@ -1,87 +1,96 @@
 # Weather feeds pipeline (research / paper)
 
 Public observation adapters for the NYC Central Park daily-max research engine.
-**Live Kalshi orders stay disabled** on this path (`live_eligible=false`; paper decisions only).
+**Live Kalshi orders stay disabled** (`live_eligible=false`; paper simulation never
+calls live order submission).
 
-## Connections (verified endpoints)
+## Settlement day definition
 
-| Feed | Source | Product / notes |
-|------|--------|-----------------|
-| METAR | `aviationweather.gov/api/data/metar` | KNYC, KLGA, KJFK — public, no key |
-| CLI | NWS API climate reports | Prelim + final; settlement uses **final** CLI |
-| GOES | `s3://noaa-goes19` (GOES-East) | `ABI-L2-ACMC` CONUS Clear Sky Mask; NYC window extract |
-| NEXRAD | `s3://unidata-nexrad-level3` | OKX `N0B` base reflectivity; **not** deprecated `noaa-nexrad-level2` |
-| NYS Mesonet | — | **Optional / blocked** until permitted access |
+NWS CLI / Kalshi daily-max markets use **local standard time (LST, UTC−5)** for the
+climate day. During Eastern Daylight Time, civil midnight–00:59 is still the previous
+LST climate day. Operating code uses `lst_climate_day()` in
+`feeds/climate_day.py`. Historical ASOS archives expose observation `valid_utc` only;
+live FeedStore also records `first_seen_utc`. Historical tests disclose the assumption
+that archive `valid_utc` ≈ availability.
 
-Historical ACM fallback: `s3://noaa-goes16` when GOES-19 object missing.
+## Connections
 
-### Provenance disclosures
+| Feed | Source | Notes |
+|------|--------|-------|
+| METAR | aviationweather.gov | KNYC/KLGA/KJFK; `altim` hPa→inHg; precip often missing (explicit) |
+| CLI | NWS API | Matched by station + target LST day + decision-time availability |
+| GOES | `s3://noaa-goes19` | Collected; RTM model-assist disclosed; **not** consumed by station_v2 model |
+| NEXRAD | `s3://unidata-nexrad-level3` | Collected; **not** consumed by station_v2 model |
+| NYS Mesonet | — | Optional / blocked — not required for these fixes |
 
-- GOES ABI L2 ACM includes RTM brightness-temperature comparison fields (`includes_rtm_model_assist=true`). It is a satellite cloud product, **not** an NWS temperature forecast.
-- NEXRAD Level-III features use product level indices (relative intensity), not calibrated dBZ.
-- Missing wind / cloud / radar is **never** filled as calm / clear / dry.
+## Feature schema `station_v2.1`
 
-## Continuous collector
+Shared builder: `feeds/feature_schema.py` (`build_station_v2_features`).
+
+- Same path for training, historical replay, and live inference.
+- Missing wind / alti / dewpoint / precip are **never** invented as calm / 30.00 inHg / zero precip.
+- Coverage requirements: ≥4 temp obs, first obs by 10:00 LST, max gap ≤3.5h. Partial windows
+  set `max_so_far_status=partial_window` and **block** paper entry (`insufficient_data`).
+- Fractional METAR `max_so_far` (e.g. 69.08°F) is **not** treated as official floor 70°F.
+  Only whole-°F CLI values may apply an integer soft floor.
+
+## Supported decision times
+
+Actionable forecasts: local civil **08:00, 11:00, 14:00** only (validated hours).
+Other times return `unsupported_decision_time` with `next_supported_run_*`.
+Same-day distribution is **never** applied to another market day (`unsupported_horizon`).
+
+## Probability method
+
+**Calibrated empirical residual distribution by decision hour** (not three quantiles alone).
+
+1. Fit quantile GBM remain models on chronological train days.
+2. Fit residuals on a held-out **calibration** day set (excluded from train and test).
+3. Production shifts calibration residuals onto `max_so_far + q50`.
+4. If calibration `n < 40`, probabilities are **unavailable** and paper entry is blocked.
+5. No fabricated residual fallbacks.
+
+Production evaluation reports the **emitted distribution median MAE** and 80% interval
+coverage — not raw regressor MAE as a substitute.
+
+## Attribution
+
+Reports separately:
+
+- `feeds_collected`
+- `feeds_quality_ok`
+- `features_consumed_by_model` / `feeds_contributing_to_prediction` (station METAR for station_v2)
+- `settlement_constraints_applied` (same-day CLI only)
+
+GOES/NEXRAD must not appear as contributing to the station-only prediction.
+
+## Paper simulation
+
+- Evaluates YES and NO EV using executable asks, depth, Kalshi quadratic taker fees
+  (`fees = M * 0.07 * C * P * (1-P)` + conservative rounding; see `api/fees.py`),
+  and configured uncertainty buffer — **no 55% probability gate before EV**.
+- Distinct reasons: unsupported model/time/horizon, insufficient data, calibration
+  unavailable, unavailable prices, insufficient depth, negative EV, duplicate, cash/risk.
+- `PaperLedger` persists cash/fills/positions across restarts; duplicate `client_order_id` blocked.
+- Simulated fills labeled `unvalidated`; `live_order_submitted=false` always.
+
+## Commands
 
 ```bash
 cd kalshi_bot
+PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-train
+PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-once
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-feeds-run --interval 300
-# status / stop
 PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-status
 PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-stop
 ```
 
-Or module entrypoint:
+Worker health distinguishes fetch success, usable METAR, and inference outcomes
+(`ok` / `degraded_blocked_forecast` / `unhealthy_*`).
 
-```bash
-PYTHONPATH=src python3 -m kalshi_bot.models.weather.obs_engine.feeds.worker run --interval 300
-```
+## Artifacts
 
-State lives under `data/obs_engine/feeds/`:
-
-- `feeds.db` — samples, features, predictions, paper decisions, checkpoints, heartbeat
-- `collector.pid` — worker pidfile
-- `last_cycle.json` / `latest_prediction.json`
-
-Restart recovery: UNIQUE `(feed, source_key)` prevents duplicate inserts; checkpoints restore last success keys.
-
-Systemd (optional; only if you install the unit yourself — this file is **not** auto-deployed):
-
-```ini
-# /etc/systemd/system/kalshi-weather-feeds.service
-[Unit]
-Description=Kalshi weather feeds collector (research)
-After=network-online.target
-
-[Service]
-Type=simple
-WorkingDirectory=/path/to/kalshi_bot
-Environment=PYTHONPATH=src
-ExecStart=/usr/bin/python3 -m kalshi_bot.cli --config config.yaml weather-feeds-run --interval 300
-Restart=on-failure
-RestartSec=15
-
-[Install]
-WantedBy=multi-user.target
-```
-
-## Train / infer
-
-```bash
-PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-train   # station_corrected.v1 + satrad candidate eval
-PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-once    # one collect + research infer + paper record
-```
-
-- Frozen baseline: `data/obs_engine/research/baseline_freeze/obs_nyc_q50_baseline.joblib`
-- Operating fallback: `data/obs_engine/feeds/models/station_corrected_v1.joblib` (local_v2 / missing-wind indicators)
-- Sat/radar candidate is **not** attached to inference until evaluation supports promotion
-
-## CLI commands
-
-| Command | Purpose |
-|---------|---------|
-| `weather-feeds-once` | Full cycle METAR/CLI/GOES/NEXRAD + features + research infer |
-| `weather-feeds-run` | Persistent worker |
-| `weather-feeds-status` | Heartbeat + checkpoints |
-| `weather-feeds-stop` | SIGTERM worker |
-| `weather-feeds-train` | Train / compare models |
+- Operating model: `data/obs_engine/feeds/models/station_corrected_v2.joblib`
+- Calibration: `data/obs_engine/feeds/models/station_corrected_v2_calibration.json`
+- Frozen baseline (untouched): `data/obs_engine/research/baseline_freeze/obs_nyc_q50_baseline.joblib`
+- Paper ledger: `data/obs_engine/feeds/paper_ledger.db`

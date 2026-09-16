@@ -91,13 +91,17 @@ class FeedStore:
         valid_utc: str | None = None,
         product: str | None = None,
         local_path: str | None = None,
+        first_seen_utc: str | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(timezone.utc).isoformat()
         row = self._conn.execute(
             "SELECT first_seen_utc FROM feed_samples WHERE feed=? AND source_key=?",
             (feed, source_key),
         ).fetchone()
-        first = row["first_seen_utc"] if row else now
+        if row:
+            first = row["first_seen_utc"]
+        else:
+            first = first_seen_utc or now
         self._conn.execute(
             """INSERT INTO feed_samples(feed, retrieved_at_utc, valid_utc, first_seen_utc, source_key, product, payload_json, local_path)
                VALUES (?,?,?,?,?,?,?,?)

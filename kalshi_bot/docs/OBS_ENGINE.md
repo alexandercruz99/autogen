@@ -100,5 +100,6 @@ Never places live orders.
 
 ## Continuous public feeds
 
-See [FEEDS.md](FEEDS.md) for METAR / CLI / GOES-19 / NEXRAD adapters, the persistent
-collector worker, station-corrected operating model, and paper-loop wiring.
+See [FEEDS.md](FEEDS.md) for METAR / CLI / GOES-19 / NEXRAD adapters, LST climate-day
+handling, `station_v2.1` shared features, calibrated residual probabilities, supported
+decision hours (08/11/14), paper ledger, and worker health semantics.

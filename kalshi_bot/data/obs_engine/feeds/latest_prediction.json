@@ -1,194 +1,43 @@
 {
-  "ok": true,
+  "ok": false,
   "mode": "RESEARCH",
   "live_orders": false,
-  "model_artifact": "data/obs_engine/feeds/models/station_corrected_v1.joblib",
-  "feature_set": "local_v2",
-  "missing": {},
-  "feeds_contributed": [
-    "metar_KNYC",
-    "goes19_acmc",
-    "nexrad_okx_n0b",
-    "cli_nyc"
-  ],
-  "max_so_far": 69.08,
-  "remain_q10_q50_q90": [
-    0.6087179365297333,
-    1.3202868142328315,
-    3.2390554921836263
-  ],
-  "distribution": {
-    "method": "station_corrected_remain+same_day_floor",
-    "mean_f": 72.6144885840343,
-    "q10": 70,
-    "q50": 72,
-    "q90": 76,
-    "support": [
-      [
-        70,
-        0.228059
-      ],
-      [
-        71,
-        0.251449
-      ],
-      [
-        72,
-        0.169583
-      ],
-      [
-        73,
-        0.087717
-      ],
-      [
-        74,
-        0.076022
-      ],
-      [
-        75,
-        0.04386
-      ],
-      [
-        76,
-        0.04386
-      ],
-      [
-        77,
-        0.023393
-      ],
-      [
-        78,
-        0.02047
-      ],
-      [
-        79,
-        0.011698
-      ],
-      [
-        80,
-        0.005851
-      ],
-      [
-        81,
-        0.02047
-      ],
-      [
-        82,
-        0.002927
-      ],
-      [
-        83,
-        0.002927
-      ],
-      [
-        84,
-        0.005851
-      ],
-      [
-        85,
-        3e-06
-      ],
-      [
-        86,
-        3e-06
-      ],
-      [
-        87,
-        0.002927
-      ],
-      [
-        88,
-        0.002927
-      ],
-      [
-        89,
-        3e-06
-      ],
-      [
-        90,
-        3e-06
-      ]
+  "live_order_submitted": false,
+  "generated_at_utc": "2026-09-16T05:16:09.287191+00:00",
+  "generated_at_local": "2026-09-16T01:16:09.287191-04:00",
+  "target_climate_day": "2026-09-16",
+  "feature_schema_version": "station_v2.1",
+  "coverage": null,
+  "attribution": {
+    "feeds_collected": [
+      "metar_KNYC",
+      "goes19_acmc",
+      "nexrad_okx_n0b",
+      "cli_nyc"
     ],
-    "details": {
-      "n_residuals_raw": 500,
-      "n_samples_effective": 500,
-      "point_forecast_f": 70.40028681423283,
-      "resid_mean": 0.7107820565088389,
-      "resid_std": 3.528408621103255,
-      "variance_floor_std": null,
-      "same_day_floor_f": 69.08,
-      "same_day_floor_int": 70,
-      "same_day_reason": "observed max_so_far"
-    }
+    "feeds_quality_ok": [
+      "goes19_acmc",
+      "nexrad_okx_n0b"
+    ],
+    "features_consumed_by_model": [],
+    "settlement_constraints_applied": []
   },
-  "generated_at_utc": "2026-09-16T03:13:29.456202+00:00",
-  "target_date": "2026-09-15",
-  "horizon": "same_day",
-  "brackets": [
-    {
-      "ticker": "KXHIGHNY-26SEP15-B70.5",
-      "p_yes": "0.47950857",
-      "yes_ask": "0.0100",
-      "interval": {
-        "op": "range_inclusive",
-        "low": 70.0,
-        "high": 71.0
-      }
-    },
-    {
-      "ticker": "KXHIGHNY-26SEP15-B72.5",
-      "p_yes": "0.25729999",
-      "yes_ask": null,
-      "interval": {
-        "op": "range_inclusive",
-        "low": 72.0,
-        "high": 73.0
-      }
-    },
-    {
-      "ticker": "KXHIGHNY-26SEP15-B74.5",
-      "p_yes": "0.11988153",
-      "yes_ask": "0.0100",
-      "interval": {
-        "op": "range_inclusive",
-        "low": 74.0,
-        "high": 75.0
-      }
-    },
-    {
-      "ticker": "KXHIGHNY-26SEP15-B76.5",
-      "p_yes": "0.06725318",
-      "yes_ask": "0.0100",
-      "interval": {
-        "op": "range_inclusive",
-        "low": 76.0,
-        "high": 77.0
-      }
-    },
-    {
-      "ticker": "KXHIGHNY-26SEP15-T77",
-      "p_yes": "0.07605673",
-      "yes_ask": "0.0100",
-      "interval": {
-        "op": "gt",
-        "low": 77.0,
-        "high": null
-      }
-    },
-    {
-      "ticker": "KXHIGHNY-26SEP15-T70",
-      "p_yes": "0E-8",
-      "yes_ask": "0.0100",
-      "interval": {
-        "op": "lt",
-        "low": null,
-        "high": 70.0
-      }
-    }
-  ],
+  "calibration_status": null,
+  "probabilities_available": false,
   "paper_decision": {
-    "ticker": "KXHIGHNY-26SEP15-B70.5",
-    "decision": "paper_skip_no_edge",
-    "reason": "no bracket met research paper criteria \u2014 cycle recorded; live orders blocked"
-  }
+    "decision": "blocked_unsupported_decision_time",
+    "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+    "live_blocked": true
+  },
+  "decision_hour_local": null,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "status": "unsupported_decision_time",
+  "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+  "next_supported_run_utc": "2026-09-16T12:00:00+00:00",
+  "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+  "historical_replay_ok": true
 }

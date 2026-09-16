@@ -1,21 +1,74 @@
-"""Train station-corrected operating model + sat/radar candidate (baseline frozen)."""
+"""Train station_v2 operating model with chronological calib residuals (baseline frozen)."""
 
 from __future__ import annotations
 
 import json
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from kalshi_bot.models.weather.obs_engine import NYC_TARGET
 from kalshi_bot.models.weather.obs_engine.data import default_data_dir, load_ghcnd_tmax, load_nyc_hourly_bundle
-from kalshi_bot.models.weather.obs_engine.research.experiments import _enumerate
-from kalshi_bot.models.weather.obs_engine.research.features_v2 import LOCAL_V2_FEATURES, build_local_v2, build_baseline
-from kalshi_bot.models.weather.obs_engine.feeds.features_live import SATRAD_FEATURES
+from kalshi_bot.models.weather.obs_engine.feeds.calibration import (
+    chronological_day_splits,
+    residuals_by_hour,
+    save_calibration_artifact,
+)
+from kalshi_bot.models.weather.obs_engine.feeds.climate_day import SUPPORTED_DECISION_HOURS_LOCAL, lst_climate_day
+from kalshi_bot.models.weather.obs_engine.feeds.feature_schema import (
+    FEATURE_SCHEMA_VERSION,
+    STATION_V2_FEATURES,
+    build_station_v2_features,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _enumerate_station_v2(obs, labels: dict[date, float]) -> tuple[list[dict[str, Any]], int]:
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo(NYC_TARGET.timezone)
+    # Candidate days from LST climate day of observations
+    days = sorted({lst_climate_day(o.valid_utc) for o in obs})
+    out: list[dict[str, Any]] = []
+    neg_remain = 0
+    for day in days:
+        if day not in labels:
+            continue
+        label = float(labels[day])
+        for hour in SUPPORTED_DECISION_HOURS_LOCAL:
+            local_dt = datetime(day.year, day.month, day.day, hour, 0, tzinfo=tz)
+            decision_utc = local_dt.astimezone(timezone.utc)
+            # Note: hour is civil-local on the calendar date equal to LST day — disclosed approximation
+            bundle = build_station_v2_features(
+                obs,
+                decision_utc,
+                climate_day=day,
+                availability_assumption="archive_valid_utc_equals_availability_DISCLOSED",
+            )
+            if bundle is None or not bundle.coverage.adequate:
+                continue
+            remain = label - bundle.max_so_far
+            if remain < 0:
+                neg_remain += 1  # keep — do not clip
+            out.append(
+                {
+                    "climate_day": day.isoformat(),
+                    "decision_hour": hour,
+                    "decision_time_utc": decision_utc.isoformat(),
+                    "features": [float("nan") if v is None else float(v) for v in bundle.values],
+                    "feature_map": bundle.feature_map,
+                    "max_so_far": bundle.max_so_far,
+                    "label_tmax_f": label,
+                    "remain_f": remain,
+                    "coverage": bundle.coverage.as_dict(),
+                    "negative_remain": remain < 0,
+                }
+            )
+    return out, neg_remain
 
 
 def _fit_quantile_models(X: np.ndarray, y: np.ndarray):
@@ -28,153 +81,50 @@ def _fit_quantile_models(X: np.ndarray, y: np.ndarray):
         )
         m.fit(X, y)
         models[name] = m
-    resid = list((y - models["q50"].predict(X)).astype(float))[:500]
-    return models, resid
+    return models
 
 
-def _mae_by_hour(models, rows: list[dict], feature_key: str = "features") -> dict[str, float]:
-    by: dict[str, float] = {}
-    for hour in (8, 11, 14):
+def _eval_production_distribution(
+    rows: list[dict[str, Any]],
+    models: dict[str, Any],
+    residuals_by_h: dict[str, list[float]],
+) -> dict[str, Any]:
+    """Evaluate the same residual distribution path used in production (not raw q50 MAE alone)."""
+    from kalshi_bot.models.weather.distribution import from_empirical_residuals
+
+    by_hour: dict[str, Any] = {}
+    for hour in SUPPORTED_DECISION_HOURS_LOCAL:
         hrs = [r for r in rows if int(r["decision_hour"]) == hour]
         if not hrs:
             continue
-        X = np.nan_to_num(np.asarray([r[feature_key] for r in hrs], dtype=float), nan=-999.0)
-        rem = models["q50"].predict(X)
-        max_so = np.asarray([r["max_so_far"] for r in hrs], dtype=float)
-        y = np.asarray([r["label_tmax_f"] for r in hrs], dtype=float)
-        pred = np.maximum(max_so + rem, max_so)
-        by[str(hour)] = float(np.mean(np.abs(y - pred)))
-    return by
-
-
-def _bootstrap_mae_delta(y: np.ndarray, pred_a: np.ndarray, pred_b: np.ndarray, n_boot: int = 400) -> dict[str, float]:
-    """Uncertainty on MAE(A)-MAE(B); negative means A better."""
-    rng = np.random.default_rng(0)
-    n = len(y)
-    if n < 5:
-        return {"n": float(n), "delta_mae": float("nan"), "ci80_low": float("nan"), "ci80_high": float("nan")}
-    err_a = np.abs(y - pred_a)
-    err_b = np.abs(y - pred_b)
-    deltas = []
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, size=n)
-        deltas.append(float(err_a[idx].mean() - err_b[idx].mean()))
-    arr = np.asarray(deltas)
-    return {
-        "n": float(n),
-        "delta_mae": float(err_a.mean() - err_b.mean()),
-        "ci80_low": float(np.percentile(arr, 10)),
-        "ci80_high": float(np.percentile(arr, 90)),
-    }
-
-
-def _backfill_satrad_rows(
-    *,
-    obs,
-    labels: dict[date, float],
-    sample_days: list[date],
-    decision_hours_local: tuple[int, ...] = (8, 11, 14),
-    cache_dir: Path,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Geographically scoped historical GOES ACM + NEXRAD N0B features for candidate training."""
-    from zoneinfo import ZoneInfo
-
-    from kalshi_bot.models.weather.obs_engine.feeds.goes import _unsigned_s3, acmc_key_near, extract_nyc_cloud_features
-    from kalshi_bot.models.weather.obs_engine.feeds import NEXRAD_L3_BUCKET
-    from kalshi_bot.models.weather.obs_engine.feeds.nexrad import n0b_key_near, extract_precip_features
-    from kalshi_bot.models.weather.obs_engine import NYC_TARGET
-
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    goes_dir = cache_dir / "goes"
-    rad_dir = cache_dir / "nexrad"
-    goes_dir.mkdir(exist_ok=True)
-    rad_dir.mkdir(exist_ok=True)
-    s3 = _unsigned_s3()
-    tz = ZoneInfo(NYC_TARGET.timezone)
-    rows: list[dict[str, Any]] = []
-    cov = {"goes_ok": 0, "radar_ok": 0, "both_ok": 0, "attempted": 0, "station_only_skipped_satrad": 0}
-
-    for day in sample_days:
-        if day not in labels:
+        res = residuals_by_h.get(str(hour)) or residuals_by_h.get("all") or []
+        if len(res) < 10:
+            by_hour[str(hour)] = {"n": len(hrs), "status": "calib_thin"}
             continue
-        for hour in decision_hours_local:
-            local_dt = datetime(day.year, day.month, day.day, hour, 0, tzinfo=tz)
-            decision_utc = local_dt.astimezone(timezone.utc)
-            station = build_local_v2(obs, decision_utc, climate_day=day)
-            if station is None:
-                continue
-            cov["attempted"] += 1
-            goes_feat = None
-            radar_feat = None
-            try:
-                hit = acmc_key_near(s3, decision_utc)
-                if hit:
-                    bucket, key = hit
-                    local = goes_dir / f"{bucket}__{Path(key).name}"
-                    if not local.exists():
-                        s3.download_file(bucket, key, str(local))
-                    goes_feat = extract_nyc_cloud_features(local)
-                    cov["goes_ok"] += 1
-            except Exception as exc:
-                logger.debug("goes backfill %s: %s", day, exc)
-            try:
-                key = n0b_key_near(s3, decision_utc)
-                if key:
-                    local = rad_dir / key
-                    if not local.exists():
-                        s3.download_file(NEXRAD_L3_BUCKET, key, str(local))
-                    radar_feat = extract_precip_features(local)
-                    if radar_feat.get("precip_gate_frac") is not None:
-                        cov["radar_ok"] += 1
-            except Exception as exc:
-                logger.debug("radar backfill %s: %s", day, exc)
-
-            if goes_feat is None and radar_feat is None:
-                cov["station_only_skipped_satrad"] += 1
-                continue
-            if goes_feat is not None and radar_feat is not None and radar_feat.get("precip_gate_frac") is not None:
-                cov["both_ok"] += 1
-
-            feat_map = {name: float(v) for name, v in zip(LOCAL_V2_FEATURES, station.values)}
-            if goes_feat is not None:
-                feat_map["goes_cloud_frac_bcm"] = goes_feat.get("cloud_frac_bcm")
-                feat_map["goes_cloudyish_acm"] = goes_feat.get("cloudy_or_probably_frac_acm")
-                feat_map["goes_available"] = 1.0
-            else:
-                feat_map["goes_cloud_frac_bcm"] = None
-                feat_map["goes_cloudyish_acm"] = None
-                feat_map["goes_available"] = 0.0
-            if radar_feat is not None and radar_feat.get("precip_gate_frac") is not None:
-                feat_map["radar_precip_frac"] = radar_feat.get("precip_gate_frac")
-                feat_map["radar_mean_level"] = radar_feat.get("mean_level_if_any")
-                feat_map["radar_available"] = 1.0
-            else:
-                feat_map["radar_precip_frac"] = None
-                feat_map["radar_mean_level"] = None
-                feat_map["radar_available"] = 0.0
-
-            vec = [feat_map.get(k) for k in SATRAD_FEATURES]
-            # Require sat/radar availability flags present; leave missing as NaN (sentinel at fit)
-            if feat_map["goes_available"] < 0.5 and feat_map["radar_available"] < 0.5:
-                continue
-            rows.append(
-                {
-                    "climate_day": day.isoformat(),
-                    "decision_hour": hour,
-                    "features": vec,
-                    "station_features": list(station.values),
-                    "max_so_far": station.max_so_far,
-                    "label_tmax_f": float(labels[day]),
-                    "remain_f": float(labels[day]) - float(station.max_so_far),
-                    "goes_available": feat_map["goes_available"],
-                    "radar_available": feat_map["radar_available"],
-                }
-            )
-    return rows, cov
+        abs_err = []
+        hit80 = []
+        for r in hrs:
+            X = np.nan_to_num(np.asarray([r["features"]], dtype=float), nan=-999.0)
+            rem = float(models["q50"].predict(X)[0])
+            point = max(float(r["max_so_far"]) + rem, float(r["max_so_far"]))
+            dist = from_empirical_residuals(point, res, method="eval")
+            med = dist.quantile(0.5)
+            y = float(r["label_tmax_f"])
+            abs_err.append(abs(y - med))
+            q10, q90 = dist.quantile(0.1), dist.quantile(0.9)
+            hit80.append(1.0 if q10 <= y <= q90 else 0.0)
+        by_hour[str(hour)] = {
+            "n_rows": len(hrs),
+            "n_independent_days": len({r["climate_day"] for r in hrs}),
+            "production_median_mae_f": float(np.mean(abs_err)),
+            "interval_80_coverage": float(np.mean(hit80)),
+            "note": "MAE of production residual distribution median, not raw GBM q50 alone",
+        }
+    return by_hour
 
 
-def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: int = 60) -> dict[str, Any]:
-    """Retrain quantile GBM on local_v2; optionally train satrad candidate on scoped backfill."""
+def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: int = 0) -> dict[str, Any]:
+    """Train station_v2.1 GBM + chronological calibration; freeze baseline untouched."""
     import joblib
 
     data_dir = data_dir or default_data_dir()
@@ -183,160 +133,94 @@ def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: in
 
     obs = load_nyc_hourly_bundle(data_dir)
     labels = load_ghcnd_tmax(data_dir / "nyc_central_park_ghcnd_tmax_f.csv")
-    rows = _enumerate(build_local_v2, obs, [], labels)
-    base_rows = _enumerate(build_baseline, obs, [], labels)
+    rows, n_neg = _enumerate_station_v2(obs, labels)
     days = sorted({r["climate_day"] for r in rows})
-    i_tr = int(len(days) * 0.8)
-    train_days = set(days[:i_tr])
-    test_days = set(days[i_tr:])
-    train = [r for r in rows if r["climate_day"] in train_days]
-    test = [r for r in rows if r["climate_day"] in test_days]
-    base_train = [r for r in base_rows if r["climate_day"] in train_days]
-    base_test = [r for r in base_rows if r["climate_day"] in test_days]
+    splits = chronological_day_splits(days)
+    train = [r for r in rows if r["climate_day"] in splits["train"]]
+    calib = [r for r in rows if r["climate_day"] in splits["calib"]]
+    test = [r for r in rows if r["climate_day"] in splits["test"]]
 
-    def fit_models(tr, feat_key="features"):
-        X = np.nan_to_num(np.asarray([r[feat_key] for r in tr], dtype=float), nan=-999.0)
-        y = np.asarray([r["remain_f"] for r in tr], dtype=float)
-        return _fit_quantile_models(X, y)
+    Xtr = np.nan_to_num(np.asarray([r["features"] for r in train], dtype=float), nan=-999.0)
+    ytr = np.asarray([r["remain_f"] for r in train], dtype=float)
+    models = _fit_quantile_models(Xtr, ytr)
 
-    models, resid = fit_models(train)
-    base_models, _ = fit_models(base_train)
+    resid_map = residuals_by_hour(calib, models)
+    calib_path = out_dir / "station_corrected_v2_calibration.json"
+    save_calibration_artifact(
+        calib_path,
+        residuals_by_hour=resid_map,
+        meta={
+            "n_calib_days": len(splits["calib"]),
+            "n_calib_rows": len(calib),
+            "train_end_day": max(splits["train"]) if splits["train"] else None,
+            "calib_end_day": max(splits["calib"]) if splits["calib"] else None,
+            "availability_assumption": "archive_valid_utc_equals_availability_DISCLOSED",
+        },
+    )
+
+    prod_eval = _eval_production_distribution(test, models, resid_map)
+
+    # Raw q50 MAE for reference only (not claimed as production distribution validation)
+    def raw_mae(rows_):
+        by = {}
+        for hour in SUPPORTED_DECISION_HOURS_LOCAL:
+            hrs = [r for r in rows_ if int(r["decision_hour"]) == hour]
+            if not hrs:
+                continue
+            X = np.nan_to_num(np.asarray([r["features"] for r in hrs], dtype=float), nan=-999.0)
+            rem = models["q50"].predict(X)
+            pred = np.maximum(np.asarray([r["max_so_far"] for r in hrs]) + rem, np.asarray([r["max_so_far"] for r in hrs]))
+            y = np.asarray([r["label_tmax_f"] for r in hrs], dtype=float)
+            by[str(hour)] = float(np.mean(np.abs(y - pred)))
+        return by
+
     report: dict[str, Any] = {
         "ok": True,
-        "model_version": "weather.obs_nyc.station_corrected.v1",
-        "feature_set": "local_v2",
-        "feature_names": LOCAL_V2_FEATURES,
-        "train_end_day": max(train_days),
-        "n_train_days": len(train_days),
-        "n_test_days": len(test_days),
-        "test_mae_station_corrected": _mae_by_hour(models, test),
-        "test_mae_baseline_schema": _mae_by_hour(base_models, base_test),
+        "model_version": "weather.obs_nyc.station_corrected.v2",
+        "feature_schema_version": FEATURE_SCHEMA_VERSION,
+        "feature_names": STATION_V2_FEATURES,
+        "n_train_days": len(splits["train"]),
+        "n_calib_days": len(splits["calib"]),
+        "n_test_days": len(splits["test"]),
+        "n_train_rows": len(train),
+        "n_calib_rows": len(calib),
+        "n_test_rows": len(test),
+        "negative_remain_labels_kept": n_neg,
+        "raw_q50_mae_test_reference_only": raw_mae(test),
+        "production_distribution_eval_test": prod_eval,
         "frozen_baseline_path": "data/obs_engine/research/baseline_freeze/obs_nyc_q50_baseline.joblib",
+        "calibration_path": str(calib_path),
+        "calib_residual_counts": {k: len(v) for k, v in resid_map.items()},
         "live_eligible": False,
+        "supported_decision_hours_local": list(SUPPORTED_DECISION_HOURS_LOCAL),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "sat_radar_training": {
+            "status": "deferred",
+            "note": (
+                "Sat/radar candidate remains unpromoted. Future comparisons must use matched dates "
+                "and a station-only control trained on the same days; n=9 cannot establish improvement."
+            ),
+        },
     }
-    path = out_dir / "station_corrected_v1.joblib"
+
+    path = out_dir / "station_corrected_v2.joblib"
     joblib.dump(
         {
             "models": models,
-            "feature_names": LOCAL_V2_FEATURES,
-            "feature_set": "local_v2",
+            "feature_names": STATION_V2_FEATURES,
+            "feature_schema_version": FEATURE_SCHEMA_VERSION,
+            "feature_set": FEATURE_SCHEMA_VERSION,
             "model_version": report["model_version"],
-            "remain_residuals": resid,
-            "train_end_day": report["train_end_day"],
+            "calibration_path": str(calib_path),
+            # intentionally NO remain_residuals from train — use calibration file only
+            "train_end_day": max(splits["train"]) if splits["train"] else None,
             "promoted_for_inference": True,
             "live_eligible": False,
         },
         path,
     )
     report["artifact"] = str(path)
-
-    # --- Sat/radar candidate: scoped backfill on recent labeled days (GOES-19 era preferred) ---
-    satrad_report: dict[str, Any] = {
-        "status": "not_run",
-        "note": "Candidate trained only on days with retrieved sat/radar features; not attached to station-only artifact.",
-    }
-    try:
-        # Prefer recent days where GOES-19/16 + NEXRAD exist; cap downloads
-        day_objs = sorted({date.fromisoformat(d) if isinstance(d, str) else d for d in days})
-        # Focus on last satrad_max_days within labeled history that overlap GOES ACM availability
-        recent = [d for d in day_objs if d >= date(2024, 6, 1)][-satrad_max_days:]
-        cache = Path("data/obs_engine/feeds/satrad_backfill")
-        # Hour 14 local first (skill peak); expand prospectively via collector
-        sat_rows, cov = _backfill_satrad_rows(
-            obs=obs,
-            labels=labels,
-            sample_days=recent,
-            decision_hours_local=(14,),
-            cache_dir=cache,
-        )
-        satrad_report["coverage"] = cov
-        satrad_report["n_feature_rows"] = len(sat_rows)
-        if len(sat_rows) >= 20:
-            sat_days = sorted({r["climate_day"] for r in sat_rows})
-            cut = int(len(sat_days) * 0.7) or 1
-            tr_d, te_d = set(sat_days[:cut]), set(sat_days[cut:])
-            sat_train = [r for r in sat_rows if r["climate_day"] in tr_d]
-            sat_test = [r for r in sat_rows if r["climate_day"] in te_d]
-            # Matching-date station-corrected comparison on same decision hours
-            station_by_key = {
-                (r["climate_day"], int(r["decision_hour"])): r for r in rows if isinstance(r["climate_day"], str)
-            }
-            # normalize climate_day keys in rows from _enumerate
-            for r in rows:
-                station_by_key[(str(r["climate_day"]), int(r["decision_hour"]))] = r
-
-            Xtr = np.nan_to_num(np.asarray([r["features"] for r in sat_train], dtype=float), nan=-999.0)
-            ytr = np.asarray([r["remain_f"] for r in sat_train], dtype=float)
-            sat_models, sat_resid = _fit_quantile_models(Xtr, ytr)
-            # Compare on overlapping sat_test keys
-            matched = []
-            for r in sat_test:
-                st = station_by_key.get((str(r["climate_day"]), int(r["decision_hour"])))
-                if st is None:
-                    continue
-                matched.append((r, st))
-            if matched:
-                Xs = np.nan_to_num(np.asarray([a["features"] for a, _ in matched], dtype=float), nan=-999.0)
-                Xst = np.nan_to_num(np.asarray([b["features"] for _, b in matched], dtype=float), nan=-999.0)
-                y = np.asarray([a["label_tmax_f"] for a, _ in matched], dtype=float)
-                max_so = np.asarray([a["max_so_far"] for a, _ in matched], dtype=float)
-                pred_sat = np.maximum(max_so + sat_models["q50"].predict(Xs), max_so)
-                pred_st = np.maximum(max_so + models["q50"].predict(Xst), max_so)
-                mae_sat = float(np.mean(np.abs(y - pred_sat)))
-                mae_st = float(np.mean(np.abs(y - pred_st)))
-                # crude probability calibration proxy: residual sign balance
-                resid_sat = y - pred_sat
-                resid_st = y - pred_st
-                cal = {
-                    "satrad_mean_signed_error": float(np.mean(resid_sat)),
-                    "station_mean_signed_error": float(np.mean(resid_st)),
-                    "satrad_frac_over": float(np.mean(resid_sat > 0)),
-                    "station_frac_over": float(np.mean(resid_st > 0)),
-                }
-                delta = _bootstrap_mae_delta(y, pred_sat, pred_st)
-                satrad_report.update(
-                    {
-                        "status": "evaluated",
-                        "n_train_rows": len(sat_train),
-                        "n_test_rows": len(sat_test),
-                        "n_matched_compare": len(matched),
-                        "test_mae_satrad": mae_sat,
-                        "test_mae_station_corrected_same_dates": mae_st,
-                        "mae_delta_satrad_minus_station": delta,
-                        "calibration_proxy": cal,
-                        "promoted": False,
-                        "promotion_note": (
-                            "Not promoted: require CI excluding zero improvement and larger multi-year coverage. "
-                            "Operating inference uses station_corrected.v1; sat/radar features stored for prospective use."
-                        ),
-                    }
-                )
-                # Save candidate artifact (not for operating inference until promoted)
-                cand_path = out_dir / "satrad_candidate_v1.joblib"
-                joblib.dump(
-                    {
-                        "models": sat_models,
-                        "feature_names": SATRAD_FEATURES,
-                        "feature_set": "satrad_v1",
-                        "model_version": "weather.obs_nyc.satrad.candidate.v1",
-                        "remain_residuals": sat_resid,
-                        "promoted_for_inference": False,
-                        "live_eligible": False,
-                        "includes_rtm_model_assist_goes_acm": True,
-                    },
-                    cand_path,
-                )
-                satrad_report["artifact"] = str(cand_path)
-            else:
-                satrad_report["status"] = "insufficient_overlap"
-        else:
-            satrad_report["status"] = "insufficient_rows"
-            satrad_report["note"] = f"Only {len(sat_rows)} satrad rows (need >=20); keep collecting prospectively."
-    except Exception as exc:
-        logger.exception("satrad backfill/train failed")
-        satrad_report = {"status": "error", "error": str(exc)}
-
-    report["sat_radar_training"] = satrad_report
+    (out_dir / "station_corrected_v2_report.json").write_text(json.dumps(report, indent=2, default=str))
+    # Keep a pointer report name used by ops
     (out_dir / "station_corrected_report.json").write_text(json.dumps(report, indent=2, default=str))
     return report

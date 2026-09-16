@@ -1,0 +1,65 @@
+{
+  "audit_run_id": "audit-20260916T204915Z",
+  "audited_commits": {
+    "workspace_HEAD": "2a4ede86a93633746ddfc699f32274726b18fdc6",
+    "pr1_branch_HEAD": "2a4ede86a93633746ddfc699f32274726b18fdc6",
+    "origin_main": "c1646f21c062021e3a614f67499dc8fd50cb12c6"
+  },
+  "trading_registry_models": [
+    {
+      "id": "weather.high_temp",
+      "version_at_sep15_live": "weather.high_temp.v0.2-unvalidated",
+      "version_now": "weather.high_temp.v0.3-overconfidence-guards",
+      "live_eligible_now": false,
+      "algo": "Gaussian NWS grid proxy",
+      "settlement_aligned": false
+    },
+    {
+      "id": "weather.ai_cli",
+      "version": "weather.ai_cli.v1.0-collecting",
+      "live_eligible_now": false,
+      "algo": "empirical residual / unfitted normal"
+    },
+    {
+      "id": "weather.obs_nyc",
+      "version": "weather.obs_nyc.v1.1-research",
+      "live_eligible_now": false,
+      "config_obs_engine_live_eligible": false
+    },
+    {
+      "id": "economics.cpi_mom",
+      "version": "economics.cpi_mom.v0.1-unvalidated",
+      "live_eligible_now": false
+    }
+  ],
+  "station_v2_artifacts": {
+    "nyc_central_park": {
+      "calib": "feeds/models/station_corrected_v2_calibration.json",
+      "mae_14h": 1.112
+    },
+    "chi_midway": {
+      "artifact": "multi/artifacts/chi_midway__daily_max_temp_f/",
+      "mae_14h": 1.043
+    },
+    "lax_airport": {
+      "artifact": "multi/artifacts/lax_airport__daily_max_temp_f/",
+      "mae_14h": 0.541
+    }
+  },
+  "twc_live_path": {
+    "entry": "weather-twc-bet --live",
+    "bypasses_obs_engine_live_eligible": true,
+    "bypasses_RiskManager": true,
+    "uses_create_order_v2": true
+  },
+  "config_runtime_snapshot_redacted": {
+    "mode": "live",
+    "live.enabled": true,
+    "obs_engine_live_eligible": false,
+    "budget_dollars": 25,
+    "max_loss_per_trade_dollars": 5,
+    "uncertainty_buffer": 0.05,
+    "unvalidated_longshot_max_price": 0.05,
+    "unvalidated_market_shrink": 0.65
+  }
+}

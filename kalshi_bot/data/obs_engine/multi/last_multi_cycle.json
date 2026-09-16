@@ -1,0 +1,973 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+    "n_targets": 8,
+    "n_ok": 8,
+    "n_probabilities": 0,
+    "by_status": {
+      "unsupported_decision_time": 8
+    },
+    "live_order_submitted_any": false,
+    "locations": [
+      {
+        "location_id": "aus_cli",
+        "series_ticker": "HIGHAUS",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago"
+      },
+      {
+        "location_id": "chi_midway",
+        "series_ticker": "HIGHCHI",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago"
+      },
+      {
+        "location_id": "mia_cli",
+        "series_ticker": "HIGHMIA",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=02:06 EDT tz=America/New_York"
+      },
+      {
+        "location_id": "nyc_central_park",
+        "series_ticker": "HIGHNY",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=02:06 EDT tz=America/New_York"
+      },
+      {
+        "location_id": "den_cli",
+        "series_ticker": "KXDENHIGH",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=00:06 MDT tz=America/Denver"
+      },
+      {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHIGHHOU",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago"
+      },
+      {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHIGHOU",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago"
+      },
+      {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHOUHIGH",
+        "status": "unsupported_decision_time",
+        "mapping_status": "verified_cli_url",
+        "probabilities_available": null,
+        "paper_decision": "blocked_unsupported_decision_time",
+        "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago"
+      }
+    ]
+  },
+  "results": [
+    {
+      "location_id": "aus_cli",
+      "series_ticker": "HIGHAUS",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Austin (CLI AUS)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Chicago",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KAUS": {
+              "ok": true,
+              "n_fetched": 34,
+              "n_new": 34,
+              "latest_key": "KAUS:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 4,
+          "n_new": 4,
+          "latest_key": "CLI:AUS:2026-09-13:2026-09-14T07:28:00+00:00:F",
+          "feed": "cli_aus",
+          "cli_location_id": "AUS",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KAUS",
+        "metar_usable": true,
+        "cli_location_id": "AUS",
+        "notes": "AUSHIGH NWS CLI issuedby=AUS"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KAUS",
+            "cli_aus"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "aus_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "aus_cli",
+        "series_ticker": "HIGHAUS",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KAUS",
+        "cli_location_id": "AUS",
+        "lat": 30.1945,
+        "lon": -97.6699,
+        "elev_m": 165.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T01:06:08.541503-05:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago",
+      "next_supported_run_utc": "2026-09-16T13:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-05:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "chi_midway",
+      "series_ticker": "HIGHCHI",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Chicago Midway",
+      "mapping_status": "verified",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Chicago",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KMDW": {
+              "ok": true,
+              "n_fetched": 30,
+              "n_new": 30,
+              "latest_key": "KMDW:2026-09-15T00:53:00+00:00",
+              "usable": true
+            },
+            "KORD": {
+              "ok": true,
+              "n_fetched": 31,
+              "n_new": 31,
+              "latest_key": "KORD:2026-09-15T00:51:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 8,
+          "latest_key": "CLI:MDW:2026-09-11:2026-09-12T06:32:00+00:00:F",
+          "feed": "cli_mdw",
+          "cli_location_id": "MDW",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KMDW",
+        "metar_usable": true,
+        "cli_location_id": "MDW",
+        "notes": "CHIHIGH terms: Midway CLI \u2014 not O'Hare"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KMDW",
+            "cli_mdw"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "chi_midway"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "chi_midway",
+        "series_ticker": "HIGHCHI",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KMDW",
+        "cli_location_id": "MDW",
+        "lat": 41.7868,
+        "lon": -87.7522,
+        "elev_m": 189.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T01:06:08.541503-05:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago",
+      "next_supported_run_utc": "2026-09-16T13:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-05:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "mia_cli",
+      "series_ticker": "HIGHMIA",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Miami (CLI MIA)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/New_York",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KMIA": {
+              "ok": true,
+              "n_fetched": 32,
+              "n_new": 32,
+              "latest_key": "KMIA:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 8,
+          "latest_key": "CLI:MIA:2026-09-11:2026-09-12T08:34:00+00:00:F",
+          "feed": "cli_mia",
+          "cli_location_id": "MIA",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KMIA",
+        "metar_usable": true,
+        "cli_location_id": "MIA",
+        "notes": "CLI issuedby=MIA from series settlement_sources; confirm station name vs airport"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KMIA",
+            "cli_mia"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "mia_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "mia_cli",
+        "series_ticker": "HIGHMIA",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/New_York",
+        "uses_lst_climate_day": true,
+        "metar_id": "KMIA",
+        "cli_location_id": "MIA",
+        "lat": 25.7959,
+        "lon": -80.287,
+        "elev_m": 3.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T02:06:08.541503-04:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=02:06 EDT tz=America/New_York",
+      "next_supported_run_utc": "2026-09-16T12:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "nyc_central_park",
+      "series_ticker": "HIGHNY",
+      "measurement": "daily_max_temp_f",
+      "display_name": "New York City Central Park",
+      "mapping_status": "verified",
+      "validation_status": "operating_candidate",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/New_York",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KNYC": {
+              "ok": true,
+              "n_fetched": 30,
+              "n_new": 0,
+              "latest_key": "KNYC:2026-09-15T00:51:00+00:00",
+              "usable": true
+            },
+            "KLGA": {
+              "ok": true,
+              "n_fetched": 31,
+              "n_new": 0,
+              "latest_key": "KLGA:2026-09-15T00:51:00+00:00",
+              "usable": true
+            },
+            "KJFK": {
+              "ok": true,
+              "n_fetched": 30,
+              "n_new": 0,
+              "latest_key": "KJFK:2026-09-15T00:51:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 0,
+          "latest_key": "CLI:NYC:2026-09-11:2026-09-12T06:26:00+00:00:F",
+          "feed": "cli_nyc",
+          "cli_location_id": "NYC",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KNYC",
+        "metar_usable": true,
+        "cli_location_id": "NYC",
+        "notes": "Settlement: NWS CLI MAXIMUM Central Park; METAR KNYC same station progressive evidence"
+      },
+      "features_summary": {
+        "max_so_far": 64.04,
+        "coverage": {
+          "climate_day": "2026-09-16",
+          "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+          "n_temp_obs": 1,
+          "n_obs_total": 1,
+          "first_obs_utc": "2026-09-16T05:51:00+00:00",
+          "last_obs_utc": "2026-09-16T05:51:00+00:00",
+          "max_gap_hours": 0.0,
+          "start_gap_hours": 0.85,
+          "stale_hours": 0.25237263972222224,
+          "late_start": false,
+          "gaps_exceeded": false,
+          "start_gap_exceeded": false,
+          "stale_exceeded": false,
+          "adequate": false,
+          "max_so_far": 64.04,
+          "max_so_far_status": "partial_window",
+          "notes": [
+            "Only 1 temp obs (need \u22654)",
+            "max_so_far is NOT a verified full-day maximum"
+          ],
+          "requirements": {
+            "min_temp_obs": 4,
+            "max_gap_hours": 3.5,
+            "max_start_gap_hours": 4.0,
+            "max_stale_hours": 2.5,
+            "expected_cadence_hours": 1.0,
+            "climate_day_basis": "LST_fixed_offset_per_location",
+            "note": "Partial max_so_far is never treated as a verified full-day maximum"
+          }
+        },
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KNYC",
+            "goes19_acmc",
+            "nexrad_okx_n0b",
+            "cli_nyc"
+          ],
+          "feeds_quality_ok": [
+            "metar_KNYC",
+            "goes19_acmc",
+            "nexrad_okx_n0b"
+          ],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "nyc_central_park"
+        },
+        "missing": {
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "nyc_central_park",
+        "series_ticker": "HIGHNY",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/New_York",
+        "uses_lst_climate_day": true,
+        "metar_id": "KNYC",
+        "cli_location_id": "NYC",
+        "lat": 40.77898,
+        "lon": -73.96925,
+        "elev_m": 42.7,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T02:06:08.541503-04:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=02:06 EDT tz=America/New_York",
+      "next_supported_run_utc": "2026-09-16T12:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "den_cli",
+      "series_ticker": "KXDENHIGH",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Denver (CLI DEN)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Denver",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KDEN": {
+              "ok": true,
+              "n_fetched": 32,
+              "n_new": 32,
+              "latest_key": "KDEN:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 8,
+          "latest_key": "CLI:DEN:2026-09-13:2026-09-14T07:32:00+00:00:F",
+          "feed": "cli_den",
+          "cli_location_id": "DEN",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KDEN",
+        "metar_usable": true,
+        "cli_location_id": "DEN",
+        "notes": "CLI issuedby=DEN; confirm exact climate station vs airport"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KDEN",
+            "cli_den"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "den_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "den_cli",
+        "series_ticker": "KXDENHIGH",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-15",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Denver",
+        "uses_lst_climate_day": true,
+        "metar_id": "KDEN",
+        "cli_location_id": "DEN",
+        "lat": 39.8561,
+        "lon": -104.6737,
+        "elev_m": 1655.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T00:06:08.541503-06:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=00:06 MDT tz=America/Denver",
+      "next_supported_run_utc": "2026-09-16T14:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-06:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "series_ticker": "KXHIGHHOU",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Houston (CLI HOU)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Chicago",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KHOU": {
+              "ok": true,
+              "n_fetched": 35,
+              "n_new": 35,
+              "latest_key": "KHOU:2026-09-15T00:53:00+00:00",
+              "usable": true
+            },
+            "KIAH": {
+              "ok": true,
+              "n_fetched": 31,
+              "n_new": 31,
+              "latest_key": "KIAH:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 8,
+          "latest_key": "CLI:HOU:2026-09-11:2026-09-11T21:28:00+00:00:P",
+          "feed": "cli_hou",
+          "cli_location_id": "HOU",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KHOU",
+        "metar_usable": true,
+        "cli_location_id": "HOU",
+        "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KHOU",
+            "cli_hou"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "hou_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHIGHHOU",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KHOU",
+        "cli_location_id": "HOU",
+        "lat": 29.6454,
+        "lon": -95.2789,
+        "elev_m": 13.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T01:06:08.541503-05:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago",
+      "next_supported_run_utc": "2026-09-16T13:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-05:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "series_ticker": "KXHIGHOU",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Houston (CLI HOU)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Chicago",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KHOU": {
+              "ok": true,
+              "n_fetched": 35,
+              "n_new": 0,
+              "latest_key": "KHOU:2026-09-15T00:53:00+00:00",
+              "usable": true
+            },
+            "KIAH": {
+              "ok": true,
+              "n_fetched": 31,
+              "n_new": 0,
+              "latest_key": "KIAH:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 0,
+          "latest_key": "CLI:HOU:2026-09-11:2026-09-11T21:28:00+00:00:P",
+          "feed": "cli_hou",
+          "cli_location_id": "HOU",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KHOU",
+        "metar_usable": true,
+        "cli_location_id": "HOU",
+        "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KHOU",
+            "cli_hou"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "hou_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHIGHOU",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KHOU",
+        "cli_location_id": "HOU",
+        "lat": 29.6454,
+        "lon": -95.2789,
+        "elev_m": 13.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T01:06:08.541503-05:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago",
+      "next_supported_run_utc": "2026-09-16T13:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-05:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "series_ticker": "KXHOUHIGH",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Houston (CLI HOU)",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "settlement_source_family": "nws_cli",
+      "timezone": "America/Chicago",
+      "generated_at_utc": "2026-09-16T06:06:08.541503+00:00",
+      "live_order_submitted": false,
+      "ok": true,
+      "collection": {
+        "metar": {
+          "feed": "metar",
+          "stations": {
+            "KHOU": {
+              "ok": true,
+              "n_fetched": 35,
+              "n_new": 0,
+              "latest_key": "KHOU:2026-09-15T00:53:00+00:00",
+              "usable": true
+            },
+            "KIAH": {
+              "ok": true,
+              "n_fetched": 31,
+              "n_new": 0,
+              "latest_key": "KIAH:2026-09-15T00:53:00+00:00",
+              "usable": true
+            }
+          },
+          "hours_requested": 30,
+          "ok": true,
+          "usable": true
+        },
+        "cli": {
+          "ok": true,
+          "n_reports": 8,
+          "n_new": 0,
+          "latest_key": "CLI:HOU:2026-09-11:2026-09-11T21:28:00+00:00:P",
+          "feed": "cli_hou",
+          "cli_location_id": "HOU",
+          "usable": true
+        }
+      },
+      "data_availability": {
+        "metar_primary": "KHOU",
+        "metar_usable": true,
+        "cli_location_id": "HOU",
+        "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate"
+      },
+      "features_summary": {
+        "max_so_far": null,
+        "coverage": null,
+        "cli_applied": null,
+        "attribution": {
+          "feeds_collected": [
+            "metar_KHOU",
+            "cli_hou"
+          ],
+          "feeds_quality_ok": [],
+          "features_consumed_by_model": [],
+          "settlement_constraints_applied": [],
+          "location_id": "hou_cli"
+        },
+        "missing": {
+          "station_obs": true,
+          "essential_coverage": true
+        }
+      },
+      "forecast_context": {
+        "location_id": "hou_cli",
+        "series_ticker": "KXHOUHIGH",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-16",
+        "decision_time_utc": "2026-09-16T06:06:08.541503+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": null,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KHOU",
+        "cli_location_id": "HOU",
+        "lat": 29.6454,
+        "lon": -95.2789,
+        "elev_m": 13.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "decision_hour_local": null,
+      "supported_decision_hours_local": [
+        8,
+        11,
+        14
+      ],
+      "generated_at_local": "2026-09-16T01:06:08.541503-05:00",
+      "status": "unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:06 CDT tz=America/Chicago",
+      "next_supported_run_utc": "2026-09-16T13:00:00+00:00",
+      "next_supported_run_local": "2026-09-16T08:00:00-05:00",
+      "paper_decision": {
+        "decision": "blocked_unsupported_decision_time",
+        "reason": "off-hours \u2014 not an end-to-end forecast success",
+        "live_blocked": true
+      }
+    }
+  ]
+}

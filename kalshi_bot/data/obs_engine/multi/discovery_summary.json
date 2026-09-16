@@ -1,0 +1,332 @@
+{
+  "summary": {
+    "n_series": 392,
+    "n_weather_rows": 392,
+    "n_mapped": 8,
+    "n_ambiguous": 3,
+    "n_unsupported": 383,
+    "n_daily_max": 57,
+    "n_daily_min": 54,
+    "operating_nws_cli_daily_max": [
+      "HIGHAUS",
+      "HIGHNY",
+      "KXHOUHIGH",
+      "KXHIGHOU",
+      "KXHIGHHOU",
+      "KXDENHIGH",
+      "HIGHMIA",
+      "HIGHCHI"
+    ]
+  },
+  "operating": [
+    {
+      "location_id": "aus_cli",
+      "display_name": "Austin (CLI AUS)",
+      "cli_location_id": "AUS",
+      "wfo_office": "EWX",
+      "climate_station_name": "AUSTIN",
+      "metar_ids": [
+        "KAUS"
+      ],
+      "neighbor_metar_ids": [],
+      "lat": 30.1945,
+      "lon": -97.6699,
+      "elev_m": 165.0,
+      "timezone": "America/Chicago",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "AUSHIGH NWS CLI issuedby=AUS",
+      "series_ticker": "HIGHAUS",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "National Weather Service",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=EWX&product=CLI&issuedby=AUS",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/AUSHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/AUSHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in Austin",
+        "frequency": "daily"
+      }
+    },
+    {
+      "location_id": "nyc_central_park",
+      "display_name": "New York City Central Park",
+      "cli_location_id": "NYC",
+      "wfo_office": "OKX",
+      "climate_station_name": "CENTRAL PARK NY",
+      "metar_ids": [
+        "KNYC"
+      ],
+      "neighbor_metar_ids": [
+        "KLGA",
+        "KJFK"
+      ],
+      "lat": 40.77898,
+      "lon": -73.96925,
+      "elev_m": 42.7,
+      "timezone": "America/New_York",
+      "mapping_status": "verified",
+      "validation_status": "operating_candidate",
+      "model_family": "station_v2_nws_cli",
+      "notes": "Settlement: NWS CLI MAXIMUM Central Park; METAR KNYC same station progressive evidence",
+      "series_ticker": "HIGHNY",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "National Weather Service",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=OKX&product=CLI&issuedby=NYC",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/NHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/NHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in NYC",
+        "frequency": "daily"
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "display_name": "Houston (CLI HOU)",
+      "cli_location_id": "HOU",
+      "wfo_office": "HGX",
+      "climate_station_name": "HOUSTON",
+      "metar_ids": [
+        "KHOU"
+      ],
+      "neighbor_metar_ids": [
+        "KIAH"
+      ],
+      "lat": 29.6454,
+      "lon": -95.2789,
+      "elev_m": 13.0,
+      "timezone": "America/Chicago",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate",
+      "series_ticker": "KXHOUHIGH",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "NWS Climatological Report Houston",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=HGX&product=CLI&issuedby=HOU",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/HOUHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F CLI",
+      "data_availability": "public_metar_cli",
+      "details": {
+        "alias_of": "KXHIGHOU"
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "display_name": "Houston (CLI HOU)",
+      "cli_location_id": "HOU",
+      "wfo_office": "HGX",
+      "climate_station_name": "HOUSTON",
+      "metar_ids": [
+        "KHOU"
+      ],
+      "neighbor_metar_ids": [
+        "KIAH"
+      ],
+      "lat": 29.6454,
+      "lon": -95.2789,
+      "elev_m": 13.0,
+      "timezone": "America/Chicago",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate",
+      "series_ticker": "KXHIGHOU",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "NWS Climatological Report Houston",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=HGX&product=CLI&issuedby=HOU",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/HOUHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/HOUHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in Houston",
+        "frequency": "daily"
+      }
+    },
+    {
+      "location_id": "hou_cli",
+      "display_name": "Houston (CLI HOU)",
+      "cli_location_id": "HOU",
+      "wfo_office": "HGX",
+      "climate_station_name": "HOUSTON",
+      "metar_ids": [
+        "KHOU"
+      ],
+      "neighbor_metar_ids": [
+        "KIAH"
+      ],
+      "lat": 29.6454,
+      "lon": -95.2789,
+      "elev_m": 13.0,
+      "timezone": "America/Chicago",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "HOUHIGH NWS CLI; aliases KXHIGHHOU/KXHOUHIGH may duplicate",
+      "series_ticker": "KXHIGHHOU",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "NWS Climatological Report Houston",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=HGX&product=CLI&issuedby=HOU",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/HOUHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F CLI",
+      "data_availability": "public_metar_cli",
+      "details": {
+        "alias_of": "KXHIGHOU"
+      }
+    },
+    {
+      "location_id": "den_cli",
+      "display_name": "Denver (CLI DEN)",
+      "cli_location_id": "DEN",
+      "wfo_office": "BOU",
+      "climate_station_name": "DENVER",
+      "metar_ids": [
+        "KDEN"
+      ],
+      "neighbor_metar_ids": [],
+      "lat": 39.8561,
+      "lon": -104.6737,
+      "elev_m": 1655.0,
+      "timezone": "America/Denver",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "CLI issuedby=DEN; confirm exact climate station vs airport",
+      "series_ticker": "KXDENHIGH",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "NWS Climatological Report",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=BOU&product=CLI&issuedby=DEN",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/DENHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/DENHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in Denver",
+        "frequency": "daily"
+      }
+    },
+    {
+      "location_id": "mia_cli",
+      "display_name": "Miami (CLI MIA)",
+      "cli_location_id": "MIA",
+      "wfo_office": "MFL",
+      "climate_station_name": "MIAMI",
+      "metar_ids": [
+        "KMIA"
+      ],
+      "neighbor_metar_ids": [],
+      "lat": 25.7959,
+      "lon": -80.287,
+      "elev_m": 3.0,
+      "timezone": "America/New_York",
+      "mapping_status": "verified_cli_url",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "CLI issuedby=MIA from series settlement_sources; confirm station name vs airport",
+      "series_ticker": "HIGHMIA",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "National Weather Service",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=MFL&product=CLI&issuedby=MIA",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/MIAHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/MIAHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in Miami",
+        "frequency": "daily"
+      }
+    },
+    {
+      "location_id": "chi_midway",
+      "display_name": "Chicago Midway",
+      "cli_location_id": "MDW",
+      "wfo_office": "LOT",
+      "climate_station_name": "CHICAGO MIDWAY",
+      "metar_ids": [
+        "KMDW"
+      ],
+      "neighbor_metar_ids": [
+        "KORD"
+      ],
+      "lat": 41.7868,
+      "lon": -87.7522,
+      "elev_m": 189.0,
+      "timezone": "America/Chicago",
+      "mapping_status": "verified",
+      "validation_status": "needs_historical_backfill",
+      "model_family": "station_v2_nws_cli",
+      "notes": "CHIHIGH terms: Midway CLI \u2014 not O'Hare",
+      "series_ticker": "HIGHCHI",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "National Weather Service ",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=LOT&product=CLI&issuedby=MDW",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/CHIHIGH.pdf",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F as printed in CLI MAXIMUM/MINIMUM",
+      "data_availability": "public_metar_cli",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/CHIHIGH.pdf",
+      "details": {
+        "api_title": "Highest temperature in Chicago",
+        "frequency": "daily"
+      }
+    }
+  ],
+  "ambiguous_sample": [
+    {
+      "location_id": "cli_las",
+      "series_ticker": "KXDVHIGH",
+      "measurement": "daily_max_temp_f",
+      "display_name": "Death Valley temperature",
+      "settlement_source_family": "nws_cli",
+      "settlement_name": "National Weather Service",
+      "settlement_url": "https://forecast.weather.gov/product.php?site=VEF&product=CLI&issuedby=LAS",
+      "contract_url": "https://assets.kalshi.com/regulatory/product-certifications/DVTEMP.pdf",
+      "cli_location_id": "LAS",
+      "wfo_office": "VEF",
+      "metar_ids": [],
+      "neighbor_metar_ids": [],
+      "timezone": "America/New_York",
+      "uses_lst_climate_day": true,
+      "unit": "F",
+      "rounding_note": "Whole \u00b0F CLI",
+      "mapping_status": "ambiguous_needs_metar_station",
+      "data_availability": "cli_url_only",
+      "validation_status": "blocked_incomplete_mapping",
+      "model_family": "station_v2_nws_cli",
+      "notes": "CLI issuedby known from API; METAR/ICAO settlement station not verified \u2014 do not invent",
+      "rule_version": "https://assets.kalshi.com/regulatory/product-certifications/DVTEMP.pdf",
+      "details": {
+        "api_title": "Death Valley temperature"
+      }
+    }
+  ],
+  "n_twc_blocked": 140
+}

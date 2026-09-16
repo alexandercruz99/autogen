@@ -97,12 +97,26 @@ def collect_metar(
                 if parsed is None:
                     continue
                 key, payload = parsed
+                # Prefer provider receipt/report time as first_seen for new inserts so
+                # post-restart backfill does not stamp every historical row with wall-clock now.
+                first_seen = None
+                for cand in (payload.get("receipt_time"), payload.get("report_time"), payload.get("valid_utc")):
+                    if not cand:
+                        continue
+                    try:
+                        first_seen = str(cand).replace("Z", "+00:00")
+                        # normalize to iso
+                        datetime.fromisoformat(first_seen)
+                        break
+                    except Exception:
+                        first_seen = None
                 res = store.upsert_sample(
                     feed=f"metar_{st}",
                     source_key=key,
                     payload=payload,
                     valid_utc=payload["valid_utc"],
                     product="aviationweather_metar",
+                    first_seen_utc=first_seen,
                 )
                 if res["new"]:
                     n_new += 1

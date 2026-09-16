@@ -414,11 +414,16 @@ def weather_multi_once(config: AppConfig) -> dict[str, Any]:
 
 
 def weather_multi_status(config: AppConfig) -> dict[str, Any]:
-    """Per-location mapping / latest report / aggregate summary."""
+    """Per-location mapping / latest report / aggregate summary + capability matrix."""
     import json
     from pathlib import Path
 
-    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
+    from kalshi_bot.models.weather.obs_engine.feeds.train_operating import LOCATION_TRAIN_PROFILES
+    from kalshi_bot.models.weather.obs_engine.multi.registry import (
+        VERIFIED_NWS_CLI_DAILY_MAX,
+        VERIFIED_TWC_DAILY_MAX,
+        LocationRegistry,
+    )
 
     registry = LocationRegistry()
     try:
@@ -454,13 +459,93 @@ def weather_multi_status(config: AppConfig) -> dict[str, Any]:
                     "probabilities_available": (report or {}).get("probabilities_available"),
                 }
             )
+
+        capability_rows: list[dict[str, Any]] = []
+        seen_locations: set[str] = set()
+        for source, mapping in (
+            ("nws_cli", VERIFIED_NWS_CLI_DAILY_MAX),
+            ("weather_company", VERIFIED_TWC_DAILY_MAX),
+        ):
+            for series, base in mapping.items():
+                loc = str(base.get("location_id"))
+                if loc in seen_locations:
+                    continue
+                seen_locations.add(loc)
+                sibling = base.get("same_station_model_location_id")
+                train_id = sibling or loc
+                has_train_profile = train_id in LOCATION_TRAIN_PROFILES
+                art = root / "artifacts" / f"{train_id}__daily_max_temp_f"
+                has_model = (art / "model.joblib").exists() or any(art.glob("*.joblib"))
+                has_calib = (art / "calibration.json").exists() or any(
+                    art.glob("*calib*.json")
+                )
+                if has_train_profile and has_model and has_calib:
+                    stage = "trained_calibrated_research"
+                    prep = (
+                        f"PYTHONPATH=src python3 -m kalshi_bot.cli weather-train-location "
+                        f"--location {train_id}  # retrain/eval; live still blocked"
+                    )
+                elif has_train_profile and not has_model:
+                    stage = "profile_ready_missing_model_artifact"
+                    prep = (
+                        f"Place ASOS/GHCND under profile paths then: "
+                        f"weather-train-location --location {train_id}"
+                    )
+                elif not has_train_profile:
+                    stage = "needs_historical_backfill_and_train_profile"
+                    prep = (
+                        "Backfill IEM ASOS + GHCND TMAX for this station, add "
+                        f"LOCATION_TRAIN_PROFILES['{train_id}'], then weather-train-location. "
+                        "Do not mark operating or live_eligible until evaluated."
+                    )
+                else:
+                    stage = "trained_missing_location_calibration"
+                    prep = (
+                        f"Calibrate residuals for {train_id} only — no NYC fallback. "
+                        "Missing calib → probabilities_unavailable."
+                    )
+                capability_rows.append(
+                    {
+                        "location_id": loc,
+                        "series_ticker": series,
+                        "settlement_source_family": source,
+                        "train_profile_id": train_id if has_train_profile else None,
+                        "same_icao_transfer": bool(sibling),
+                        "has_train_profile": has_train_profile,
+                        "has_model_artifact": bool(has_model),
+                        "has_location_calibration": bool(has_calib),
+                        "stage": stage,
+                        "live_eligible": False,
+                        "prep_workflow": prep,
+                    }
+                )
+
+        counts = {
+            "verified_nws_series": len(VERIFIED_NWS_CLI_DAILY_MAX),
+            "verified_twc_series": len(VERIFIED_TWC_DAILY_MAX),
+            "unique_locations": len(seen_locations),
+            "train_profiles": len(LOCATION_TRAIN_PROFILES),
+            "trained_calibrated_research": sum(
+                1 for r in capability_rows if r["stage"] == "trained_calibrated_research"
+            ),
+            "needs_backfill": sum(
+                1 for r in capability_rows if r["stage"] == "needs_historical_backfill_and_train_profile"
+            ),
+            "live_eligible": 0,
+        }
         return {
             "n_registry_targets": len(targets),
             "n_operating_nws_cli_daily_max": len(operating),
             "discovery_summary": discovery,
             "last_cycle_summary": (last or {}).get("summary"),
             "locations": per_loc,
+            "capability_matrix": capability_rows,
+            "counts": counts,
             "live_orders": False,
+            "note": (
+                "Registry presence ≠ operating ≠ live_eligible. "
+                "Aliases are not additional locations. Daily-low/precip use other families."
+            ),
         }
     finally:
         registry.close()

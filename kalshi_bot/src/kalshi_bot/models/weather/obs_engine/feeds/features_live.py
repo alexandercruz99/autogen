@@ -103,6 +103,13 @@ def build_operating_features(
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
+    # Never silently use NYC coords for a non-NYC location_id.
+    if location_id and location_id not in ("nyc_central_park", "twc_nyc_central_park", "nyc"):
+        if lat is None or lon is None or not metar_id:
+            raise ValueError(
+                f"features_live requires metar_id/lat/lon for location_id={location_id}; "
+                "refusing NYC coordinate fallback"
+            )
     metar = (metar_id or NYC_TARGET.metar_id).upper()
     tz = tz_name or NYC_TARGET.timezone
     use_lat = lat if lat is not None else NYC_TARGET.lat

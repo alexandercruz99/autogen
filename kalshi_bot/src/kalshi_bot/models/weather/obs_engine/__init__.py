@@ -31,7 +31,9 @@ class NycCentralParkTarget:
     unit: str = "F"
     rounding: str = "whole °F as printed in CLI MAXIMUM / GHCND TMAX rounded to °F"
     settlement_source: str = "NWS Daily Climate Report (CLI) for Central Park"
-    series_prefixes: tuple[str, ...] = ("KXHIGHNY", "HIGHNY")
+    series_prefixes: tuple[str, ...] = ("HIGHNY",)
+    # KXHIGHNY settles on The Weather Company — do NOT include with NWS CLI station_v2.
+    twc_series_prefixes: tuple[str, ...] = ("KXHIGHNY",)
     # Fixed research decision hours (local civil time); LST climate-day caveat documented.
     decision_hours_local: tuple[int, ...] = (8, 11, 14)
     neighbor_asos: tuple[str, ...] = ("LGA",)  # optional spatial features when present

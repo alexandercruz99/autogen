@@ -258,7 +258,9 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
     ledger = PaperLedger()
     try:
         prefer = climate_day
-        markets = fetch_open_series_markets(client, [series_ticker, "KXHIGHNY", "HIGHNY"])
+        # Only the configured settlement series — never mix NWS CLI models with
+        # Weather Company tickers (e.g. HIGHNY ≠ KXHIGHNY).
+        markets = fetch_open_series_markets(client, [series_ticker])
         target_day, event_markets = select_event_markets(markets, prefer_day=prefer)
         out["target_date"] = target_day.isoformat() if target_day else None
         if target_day is None:

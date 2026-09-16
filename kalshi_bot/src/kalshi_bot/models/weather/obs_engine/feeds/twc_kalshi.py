@@ -126,9 +126,13 @@ def collect_twc_climate(
                     report_date = data.get("reportDate") or d.isoformat()
                     is_prelim = status == "preliminary" or not bool(data.get("isOfficial"))
                     key = f"TWC:{cli}:{report_date}:{'P' if is_prelim else 'O'}:{status}"
+                    # Prefer issueTime when present; else report date noon UTC as availability proxy
+                    issue = (data.get("issueTime") or "").strip()
+                    if not issue:
+                        issue = f"{report_date}T12:00:00+00:00"
                     sample = {
                         "climate_day": report_date,
-                        "issuance_utc": data.get("issueTime") or datetime.now(timezone.utc).isoformat(),
+                        "issuance_utc": issue,
                         "max_temp_f": int(data["maxTemp"]) if data.get("maxTemp") is not None else None,
                         "min_temp_f": int(data["minTemp"]) if data.get("minTemp") is not None else None,
                         "precipitation": data.get("precipitation"),
@@ -148,12 +152,12 @@ def collect_twc_climate(
                         ),
                         "source": payload.get("source") or "weather.com/kalshi",
                     }
-                    valid = sample["issuance_utc"] if sample["issuance_utc"] else None
                     res = store.upsert_sample(
                         feed=feed,
                         source_key=key,
                         payload=sample,
-                        valid_utc=valid if valid else None,
+                        valid_utc=issue,
+                        first_seen_utc=issue,
                         product="twc_climate",
                     )
                     if res["new"]:
@@ -267,6 +271,9 @@ def collect_twc_metar(
                     source_key=key,
                     payload=sample,
                     valid_utc=valid.isoformat(),
+                    # Portal historical hours: treat report valid time as availability for
+                    # same-cycle collect→infer (mirrors AviationWeather receipt preference).
+                    first_seen_utc=valid.isoformat(),
                     product="twc_metar",
                 )
                 if res["new"]:

@@ -20,6 +20,12 @@ from kalshi_bot.api.orderbook import parse_orderbook
 from kalshi_bot.config import AppConfig
 from kalshi_bot.data.store import OrderRecord, PositionRecord, Store, dumps, utcnow
 from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
+from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
+    MAX_STRIKE_DISTANCE_F,
+    MIN_MODEL_P,
+    format_bet_rationale,
+    select_forecast_consistent,
+)
 from kalshi_bot.models.weather.obs_engine.multi.pipeline import process_location
 from kalshi_bot.models.weather.obs_engine.multi.registry import VERIFIED_TWC_DAILY_MAX
 from kalshi_bot.money import D, ONE, ZERO, fp_count, fp_price
@@ -119,18 +125,23 @@ def run_twc_forecast(
 
 
 def _best_live_candidate(result: dict[str, Any], *, dollars: Decimal) -> dict[str, Any] | None:
-    """Pick best positive-EV side sized to ~dollars capital at the ask."""
-    evals = [
-        e
-        for e in (result.get("ev_evaluations") or [])
-        if e.get("decision") == "ev_evaluated" and e.get("ev") is not None and D(e["ev"]) > ZERO
-    ]
-    if not evals:
+    """Pick a forecast-consistent +EV side sized to ~dollars — not the cheapest ask."""
+    median = result.get("point_median_f")
+    if median is None:
         return None
-    best = max(evals, key=lambda e: D(e["ev"]))
+    median_f = float(median)
+    max_so_far = (result.get("features_summary") or {}).get("max_so_far")
+
+    best, rejected = select_forecast_consistent(
+        list(result.get("ev_evaluations") or []),
+        median_f=median_f,
+        brackets=list(result.get("brackets") or []),
+    )
+    result["live_selection_rejected"] = rejected
+    if best is None:
+        return None
+
     ask = D(best["ask"])
-    if ask <= ZERO or ask >= ONE:
-        return None
     qty = fp_count(dollars / ask)
     if qty < D("0.01"):
         qty = D("0.01")
@@ -140,12 +151,26 @@ def _best_live_candidate(result: dict[str, Any], *, dollars: Decimal) -> dict[st
         qty = fp_count(qty - D("0.01"))
         fees = estimate_net_fee(qty, ask, multiplier=1.0, assume_taker=True, balance_precision=D("0.0001"))
         capital = ask * qty + fees
+    why = format_bet_rationale(
+        point_median_f=median_f,
+        max_so_far=max_so_far,
+        ticker=str(best["ticker"]),
+        side=str(best["side"]),
+        p=best["p"],
+        ask=best["ask"],
+        interval=best.get("interval"),
+    )
     return {
         **best,
         "qty": str(qty),
         "fees": str(fees),
         "capital_required": str(fp_price(capital)),
         "dollars_cap": str(dollars),
+        "why_buy": why,
+        "selection_rule": (
+            f"forecast-consistent (≤{MAX_STRIKE_DISTANCE_F}°F from median), "
+            f"model_p≥{MIN_MODEL_P}, then max EV — not cheapest ask"
+        ),
     }
 
 
@@ -414,6 +439,7 @@ def weather_twc_bet(
         "decision_hour_local": forecast.get("decision_hour_local"),
         "probabilities_available": forecast.get("probabilities_available"),
         "paper_decision": forecast.get("paper_decision"),
+        "why_buy": (forecast.get("paper_decision") or {}).get("why_buy"),
         "model_origin": forecast.get("model_origin"),
         "live_requested": live,
         "dollars": dollars,
@@ -421,10 +447,14 @@ def weather_twc_bet(
     }
     if not live:
         payload["live_order_submitted"] = False
-        payload["note"] = "Pass --live to submit a capped live order (requires auth)."
+        payload["note"] = (
+            "Pass --live to submit a capped live order (requires auth). "
+            "why_buy explains the weather story; we do not buy just because a ticket is cheap."
+        )
         return payload
 
     bet = place_capped_live_bet(forecast, config, dollars=dollars, dry_run=dry_run)
     payload["bet"] = bet
+    payload["why_buy"] = (bet.get("candidate") or {}).get("why_buy") or payload.get("why_buy")
     payload["live_order_submitted"] = bool(bet.get("live_order_submitted"))
     return payload

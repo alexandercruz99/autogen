@@ -204,9 +204,14 @@ def place_capped_live_bet(
     if candidate is None:
         return {
             "ok": False,
-            "error": "no positive-EV bracket after fees/buffer",
+            "error": (
+                "no forecast-consistent +EV bracket "
+                f"(need model_p≥{MIN_MODEL_P} and strike within {MAX_STRIKE_DISTANCE_F}°F of median); "
+                "refusing cheapest-ask fallback"
+            ),
             "callout": callout,
             "paper_decision": result.get("paper_decision"),
+            "selection_rejected": result.get("live_selection_rejected"),
         }
 
     out: dict[str, Any] = {

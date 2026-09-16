@@ -43,6 +43,7 @@ def residuals_by_hour(
         hour = str(int(r["decision_hour"]))
         X = np.nan_to_num(np.asarray([r[feature_key]], dtype=float), nan=-999.0)
         rem = float(models["q50"].predict(X)[0])
+        # Same clamp as multi.predict.predict_station_v2 (operating + eval parity)
         pred = max(float(r["max_so_far"]) + rem, float(r["max_so_far"]))
         resid = float(r["label_tmax_f"]) - pred
         by.setdefault(hour, []).append(resid)

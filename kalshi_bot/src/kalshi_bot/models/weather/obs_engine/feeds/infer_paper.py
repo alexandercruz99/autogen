@@ -1,4 +1,8 @@
-"""Inference + paper simulation for station_v2 (never live orders)."""
+"""Inference + paper simulation for station_v2 (never live orders).
+
+Uses ``multi.predict.predict_station_v2`` so operating inference matches
+calibration / evaluation / replay for identical inputs and context.
+"""
 
 from __future__ import annotations
 
@@ -7,12 +11,7 @@ import logging
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
-import numpy as np
-
-from kalshi_bot.models.weather.distribution import from_empirical_residuals, truncate_below
-from kalshi_bot.models.weather.obs_engine.feeds.calibration import load_calibration, pick_residuals
 from kalshi_bot.models.weather.obs_engine.feeds.climate_day import (
     SUPPORTED_DECISION_HOURS_LOCAL,
     civil_local,
@@ -23,51 +22,29 @@ from kalshi_bot.models.weather.obs_engine.feeds.climate_day import (
 from kalshi_bot.models.weather.obs_engine.feeds.feature_schema import (
     FEATURE_SCHEMA_VERSION,
     STATION_V2_FEATURES,
-    vector_for_model,
 )
 from kalshi_bot.models.weather.obs_engine.feeds.paper_sim import PaperLedger
 from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
+from kalshi_bot.models.weather.obs_engine.multi.context import ForecastContext
+from kalshi_bot.models.weather.obs_engine.multi.markets import fetch_open_series_markets, select_event_markets
+from kalshi_bot.models.weather.obs_engine.multi.predict import (
+    DEFAULT_CALIB_PATH,
+    DEFAULT_MODEL_PATH,
+    load_operating_model,
+    predict_station_v2,
+)
 from kalshi_bot.models.weather.settlement_rules import interval_from_market
 from kalshi_bot.money import D, ONE, ZERO
 
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = Path("data/obs_engine/feeds/models/station_corrected_v2.joblib")
-CALIB_PATH = Path("data/obs_engine/feeds/models/station_corrected_v2_calibration.json")
-# Fallback to v1 only if schema matches — otherwise refuse
+MODEL_PATH = DEFAULT_MODEL_PATH
+CALIB_PATH = DEFAULT_CALIB_PATH
 LEGACY_MODEL_PATH = Path("data/obs_engine/feeds/models/station_corrected_v1.joblib")
 
 
 def _load_operating_model() -> tuple[dict[str, Any] | None, str, str]:
-    import joblib
-
-    if MODEL_PATH.exists():
-        blob = joblib.load(MODEL_PATH)
-        schema = blob.get("feature_schema_version") or blob.get("feature_set")
-        if schema not in (FEATURE_SCHEMA_VERSION, "station_v2.1", "local_v2"):
-            # allow station_v2.1
-            pass
-        if blob.get("feature_names") != STATION_V2_FEATURES and set(blob.get("feature_names") or []) != set(
-            STATION_V2_FEATURES
-        ):
-            # strict: names must match exactly in order
-            if list(blob.get("feature_names") or []) != STATION_V2_FEATURES:
-                return None, str(MODEL_PATH), "schema_mismatch"
-        return blob, str(MODEL_PATH), "ok"
-    return None, str(MODEL_PATH), "model_missing"
-
-
-def _soft_floor_from_obs(max_so_far: float) -> float | None:
-    """METAR tempFloat is not an official whole-°F CLI floor.
-
-    We do **not** ceil 69.08 → 70. Observation constraint uses the raw max_so_far
-    as a continuous lower bound on the continuous forecast before integer binning
-    in the residual distribution; truncate_below ceils for integer support — so we
-    only apply truncate_below when we have a whole-°F CLI value.
-    For METAR-only, encode constraint via distribution details without claiming
-    official minimum of ceil(max_so_far).
-    """
-    return None  # CLI path applies whole °F; METAR alone → no integer floor claim
+    return load_operating_model(MODEL_PATH)
 
 
 def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dict[str, Any]:
@@ -75,14 +52,18 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
     from kalshi_bot.api.fees import estimate_net_fee
     from kalshi_bot.api.orderbook import parse_orderbook
     from kalshi_bot.config import load_config
-    from kalshi_bot.models.weather.obs_engine.predict_now import (
-        fetch_open_nyc_markets,
-        select_event_markets,
-    )
 
     now = datetime.now(timezone.utc)
-    local = civil_local(now)
-    climate_day = date.fromisoformat(feature_bundle["climate_day"]) if feature_bundle.get("climate_day") else lst_climate_day(now)
+    tz_name = feature_bundle.get("tz_name") or "America/New_York"
+    local = civil_local(now, tz_name)
+    climate_day = (
+        date.fromisoformat(feature_bundle["climate_day"])
+        if feature_bundle.get("climate_day")
+        else lst_climate_day(now, tz_name)
+    )
+    metar_id = feature_bundle.get("metar_id") or "KNYC"
+    location_id = feature_bundle.get("location_id") or "nyc_central_park"
+    series_ticker = feature_bundle.get("series_ticker") or "HIGHNY"
 
     out: dict[str, Any] = {
         "ok": False,
@@ -98,14 +79,14 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         "calibration_status": None,
         "probabilities_available": False,
         "paper_decision": None,
+        "location_id": location_id,
     }
 
-    # --- Gate: supported decision time ---
-    supported, decision_hour = is_supported_decision_time(now)
+    supported, decision_hour = is_supported_decision_time(now, tz_name=tz_name)
     out["decision_hour_local"] = decision_hour
     out["supported_decision_hours_local"] = list(SUPPORTED_DECISION_HOURS_LOCAL)
     if not supported:
-        nxt = next_supported_decision_utc(now)
+        nxt = next_supported_decision_utc(now, tz_name=tz_name)
         out.update(
             {
                 "status": "unsupported_decision_time",
@@ -114,7 +95,7 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                     f"now={local.strftime('%H:%M %Z')}"
                 ),
                 "next_supported_run_utc": nxt.isoformat(),
-                "next_supported_run_local": civil_local(nxt).isoformat(),
+                "next_supported_run_local": civil_local(nxt, tz_name).isoformat(),
                 "historical_replay_ok": True,
             }
         )
@@ -133,7 +114,6 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         _mirror(out)
         return out
 
-    # --- Gate: coverage ---
     cov = feature_bundle.get("coverage") or {}
     if feature_bundle.get("max_so_far") is None or not cov.get("adequate"):
         out.update(
@@ -158,51 +138,14 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         _mirror(out)
         return out
 
-    # --- Model + schema ---
-    blob, artifact_path, load_status = _load_operating_model()
-    if blob is None:
-        out.update({"status": "model_unavailable", "reason": load_status, "model_artifact": artifact_path})
-        out["paper_decision"] = {
-            "decision": "blocked_unsupported_model",
-            "reason": f"operating model unavailable: {load_status}",
-            "live_blocked": True,
-        }
-        store.save_paper_decision(
-            ticker=None, side=None, decision="blocked_unsupported_model", reason=out["paper_decision"]["reason"], details={"live_blocked": True}
-        )
-        _mirror(out)
-        return out
-
-    feature_names = list(blob.get("feature_names") or STATION_V2_FEATURES)
-    if feature_names != STATION_V2_FEATURES:
-        out.update(
-            {
-                "status": "schema_mismatch",
-                "reason": "Artifact feature_names do not match station_v2.1",
-                "model_artifact": artifact_path,
-            }
-        )
-        out["paper_decision"] = {
-            "decision": "blocked_unsupported_model",
-            "reason": out["reason"],
-            "live_blocked": True,
-        }
-        _mirror(out)
-        return out
-
     feats = feature_bundle.get("features") or {}
-    # Attribution: only station features consumed
-    consumed = [n for n in feature_names if feats.get(n) is not None or n.startswith("missing_")]
-    attribution = dict(feature_bundle.get("attribution") or {})
-    attribution["features_consumed_by_model"] = feature_names
-    attribution["feeds_contributing_to_prediction"] = ["metar_KNYC"]
-    attribution["feeds_collected_not_consumed"] = [
-        f
-        for f in (attribution.get("feeds_collected") or [])
-        if f not in ("metar_KNYC",)
-    ]
-    # CLI constraint separate from model features
     cli = feature_bundle.get("cli_applied")
+    attribution = dict(feature_bundle.get("attribution") or {})
+    attribution["features_consumed_by_model"] = list(STATION_V2_FEATURES)
+    attribution["feeds_contributing_to_prediction"] = [f"metar_{metar_id}"]
+    attribution["feeds_collected_not_consumed"] = [
+        f for f in (attribution.get("feeds_collected") or []) if f != f"metar_{metar_id}"
+    ]
     attribution["settlement_constraints_applied"] = []
     if cli:
         attribution["settlement_constraints_applied"].append(
@@ -210,75 +153,99 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         )
     out["attribution"] = attribution
 
-    vec = vector_for_model(feats, feature_names)
-    X = np.nan_to_num(np.asarray([vec], dtype=float), nan=-999.0)
-    models = blob["models"]
-    q10 = float(models["q10"].predict(X)[0])
-    q50 = float(models["q50"].predict(X)[0])
-    q90 = float(models["q90"].predict(X)[0])
-    # Handle crossing quantiles explicitly
-    q_sorted = sorted([q10, q50, q90])
-    crossed = (q10, q50, q90) != tuple(q_sorted)
-    q10, q50, q90 = q_sorted
-    max_so_far = float(feature_bundle["max_so_far"])
-    point = max_so_far + q50
+    ctx = ForecastContext(
+        location_id=location_id,
+        series_ticker=series_ticker,
+        measurement="daily_max_temp_f",
+        settlement_source_family="nws_cli",
+        climate_day=climate_day,
+        decision_time_utc=now,
+        horizon="same_day",
+        feature_schema_version=FEATURE_SCHEMA_VERSION,
+        decision_hour_local=decision_hour,
+        timezone=tz_name,
+        metar_id=metar_id,
+        cli_location_id=feature_bundle.get("cli_location_id"),
+        mode="RESEARCH",
+    )
+    unified = predict_station_v2(
+        context=ctx,
+        features=feats,
+        max_so_far=float(feature_bundle["max_so_far"]),
+        coverage_adequate=True,
+        decision_hour_local=decision_hour,
+        cli_applied=cli,
+        model_path=MODEL_PATH,
+        calib_path=CALIB_PATH,
+    )
+    out["calibration_status"] = unified.calibration_status
+    out["observation_constraint"] = unified.observation_constraint
+    out["forecast_context"] = ctx.as_dict()
 
-    calib = load_calibration(CALIB_PATH)
-    residuals, calib_status = pick_residuals(calib, decision_hour)
-    out["calibration_status"] = calib_status
-    if residuals is None:
+    if unified.status in ("model_unavailable", "schema_mismatch"):
+        out.update(
+            {
+                "status": unified.status,
+                "reason": unified.reason,
+                "model_artifact": unified.model_artifact,
+            }
+        )
+        out["paper_decision"] = {
+            "decision": "blocked_unsupported_model",
+            "reason": unified.reason,
+            "live_blocked": True,
+        }
+        store.save_paper_decision(
+            ticker=None,
+            side=None,
+            decision="blocked_unsupported_model",
+            reason=unified.reason or "",
+            details={"live_blocked": True},
+        )
+        _mirror(out)
+        return out
+
+    if not unified.probabilities_available:
         out.update(
             {
                 "status": "probabilities_unavailable",
-                "reason": calib_status,
-                "remain_q10_q50_q90": [q10, q50, q90],
-                "point_median_f": point,
-                "quantiles_crossed": crossed,
-                "model_artifact": artifact_path,
+                "reason": unified.reason,
+                "remain_q10_q50_q90": unified.remain_q10_q50_q90,
+                "point_median_f": unified.point_median_f,
+                "quantiles_crossed": unified.quantiles_crossed,
+                "model_artifact": unified.model_artifact,
                 "probabilities_available": False,
             }
         )
         out["paper_decision"] = {
             "decision": "blocked_calibration_unavailable",
-            "reason": calib_status,
+            "reason": unified.reason,
             "live_blocked": True,
+            "research_point_forecast": unified.point_median_f,
         }
         store.save_paper_decision(
-            ticker=None, side=None, decision="blocked_calibration_unavailable", reason=calib_status, details={"live_blocked": True}
+            ticker=None,
+            side=None,
+            decision="blocked_calibration_unavailable",
+            reason=unified.reason or "",
+            details={"live_blocked": True},
         )
         _mirror(out)
         return out
 
-    dist = from_empirical_residuals(
-        point,
-        residuals,
-        method=f"calibrated_residual_hour_{decision_hour}",
-    )
-    # METAR max_so_far: do not claim ceil official floor; shift support conservatively via details only
-    out["observation_constraint"] = {
-        "max_so_far_f": max_so_far,
-        "max_so_far_status": (feature_bundle.get("coverage") or {}).get("max_so_far_status"),
-        "integer_floor_applied": False,
-        "note": "Fractional METAR max_so_far is not an official whole-°F CLI minimum",
-    }
-    if cli and cli.get("max_temp_f") is not None:
-        # whole °F CLI value only
-        dist = truncate_below(dist, float(int(cli["max_temp_f"])), reason="CLI same-day whole °F floor")
-        out["observation_constraint"]["integer_floor_applied"] = True
-        out["observation_constraint"]["cli_floor_f"] = int(cli["max_temp_f"])
-        out["observation_constraint"]["cli_is_preliminary"] = cli.get("is_preliminary")
-
+    dist = unified.distribution
+    assert dist is not None
     out.update(
         {
             "ok": True,
             "status": "ok",
-            "model_artifact": artifact_path,
+            "model_artifact": unified.model_artifact,
             "feature_set": FEATURE_SCHEMA_VERSION,
-            "model_version": blob.get("model_version"),
-            "max_so_far": max_so_far,
-            "remain_q10_q50_q90": [q10, q50, q90],
-            "quantiles_crossed_before_sort": crossed,
-            "point_median_f": point,
+            "model_version": unified.model_version,
+            "max_so_far": float(feature_bundle["max_so_far"]),
+            "remain_q10_q50_q90": unified.remain_q10_q50_q90,
+            "quantiles_crossed_before_sort": unified.quantiles_crossed,
+            "point_median_f": unified.point_median_f,
             "distribution": dist.as_dict(),
             "probabilities_available": True,
             "cli_applied": cli,
@@ -290,13 +257,17 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
     client = KalshiClient(cfg.api)
     ledger = PaperLedger()
     try:
-        prefer = climate_day  # settlement day for this forecast
-        markets = fetch_open_nyc_markets(client)
+        prefer = climate_day
+        markets = fetch_open_series_markets(client, [series_ticker, "KXHIGHNY", "HIGHNY"])
         target_day, event_markets = select_event_markets(markets, prefer_day=prefer)
         out["target_date"] = target_day.isoformat() if target_day else None
         if target_day is None:
             out["status"] = "no_open_markets"
-            out["paper_decision"] = {"decision": "blocked_no_markets", "reason": "no open NYC markets", "live_blocked": True}
+            out["paper_decision"] = {
+                "decision": "blocked_no_markets",
+                "reason": "no open markets",
+                "live_blocked": True,
+            }
             _mirror(out)
             return out
         if target_day != prefer:
@@ -317,12 +288,15 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                 side=None,
                 decision="blocked_unsupported_horizon",
                 reason=out["reason"],
-                details={"live_blocked": True, "prefer": prefer.isoformat(), "market_day": target_day.isoformat()},
+                details={
+                    "live_blocked": True,
+                    "prefer": prefer.isoformat(),
+                    "market_day": target_day.isoformat(),
+                },
             )
-            # Do not attach brackets from wrong day
             out["brackets"] = []
             store.save_prediction(
-                model_version=str(blob.get("model_version") or "station_v2"),
+                model_version=str(unified.model_version or "station_v2"),
                 feature_set=FEATURE_SCHEMA_VERSION,
                 target_day=prefer.isoformat(),
                 ticker=None,
@@ -334,6 +308,7 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         out["horizon"] = "same_day"
         brackets = []
         evaluations: list[dict[str, Any]] = []
+        quote_ts = datetime.now(timezone.utc).isoformat()
         for m in sorted(event_markets, key=lambda x: (x.get("strike_type") or "", x.get("floor_strike") or 0)):
             iv = interval_from_market(m)
             if iv is None:
@@ -364,6 +339,7 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                     "no_ask": str(no_ask) if no_ask is not None else None,
                     "yes_ask_size": yes_depth,
                     "no_ask_size": no_depth,
+                    "quote_ts_utc": quote_ts,
                     "interval": {"op": iv.op, "low": iv.low, "high": iv.high},
                 }
             )
@@ -419,10 +395,10 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                         "uncertainty_buffer": str(buffer),
                         "ev": str(ev),
                         "qty": str(qty),
+                        "quote_ts_utc": quote_ts,
                     }
                 )
 
-        # Persist all evaluations; sim-fill at most the best positive EV once
         paper_decision = None
         positive = [e for e in evaluations if e.get("ev") is not None and D(e["ev"]) > ZERO]
         negative = [e for e in evaluations if e.get("ev") is not None and D(e["ev"]) <= ZERO]
@@ -450,6 +426,10 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                 fees=D(best["fees"]),
                 decision_reason="paper_sim_fill_unvalidated",
                 details=best,
+                location_id=location_id,
+                series_ticker=series_ticker,
+                quote_ts_utc=quote_ts,
+                market_ts_utc=quote_ts,
             )
             if sim.get("ok") and sim.get("filled"):
                 paper_decision = {
@@ -486,19 +466,14 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                 details={**paper_decision, "live_order_submitted": False},
             )
         elif negative:
-            worst = negative[0]
             paper_decision = {
-                **worst,
+                **negative[0],
                 "decision": "paper_skip_negative_ev",
-                "reason": worst["reason"],
+                "reason": negative[0]["reason"],
                 "live_blocked": True,
-                "note": "Probabilities below 55% still reached EV evaluation",
             }
         elif evaluations:
-            paper_decision = {
-                **evaluations[0],
-                "live_blocked": True,
-            }
+            paper_decision = {**evaluations[0], "live_blocked": True}
         else:
             paper_decision = {
                 "decision": "paper_skip_no_brackets",
@@ -511,7 +486,7 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
         out["paper_decision"] = paper_decision
         out["paper_ledger"] = ledger.snapshot()
         store.save_prediction(
-            model_version=str(blob.get("model_version") or "station_v2"),
+            model_version=str(unified.model_version or "station_v2"),
             feature_set=FEATURE_SCHEMA_VERSION,
             target_day=target_day.isoformat(),
             ticker=(brackets[0]["ticker"] if brackets else None),

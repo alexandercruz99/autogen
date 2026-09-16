@@ -25,6 +25,10 @@ class HourlyObs:
     skyc1: str | None
     station: str
     source: str = "iem_asos"
+    # When known (live FeedStore), first time this observation entered our store.
+    # Archive/replay without this field must disclose valid_utc≈availability assumption.
+    first_seen_utc: datetime | None = None
+    receipt_utc: datetime | None = None
 
 
 def default_data_dir() -> Path:

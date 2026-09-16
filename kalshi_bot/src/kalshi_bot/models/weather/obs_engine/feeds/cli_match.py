@@ -10,10 +10,10 @@ from kalshi_bot.models.weather.obs_engine import NYC_TARGET
 from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
 
 
-def list_cli_reports(store: FeedStore) -> list[dict[str, Any]]:
+def list_cli_reports(store: FeedStore, feed: str = "cli_nyc") -> list[dict[str, Any]]:
     rows = store._conn.execute(
         "SELECT payload_json, first_seen_utc, retrieved_at_utc, valid_utc, source_key FROM feed_samples WHERE feed=? ORDER BY retrieved_at_utc",
-        ("cli_nyc",),
+        (feed,),
     ).fetchall()
     out = []
     for r in rows:
@@ -31,23 +31,29 @@ def select_cli_for_decision(
     target_day: date,
     decision_utc: datetime,
     station_id: str = NYC_TARGET.cli_location_id,
+    feed: str | None = None,
 ) -> dict[str, Any]:
-    """Return applied CLI constraint (if any) plus excluded wrong-day reports.
+    """Return applied CLI constraint (if any) plus excluded wrong-day/station reports.
 
-    Only reports for ``station_id`` and ``target_day`` whose issuance and
-    first_seen are ≤ decision_utc may constrain the forecast. Wrong-day reports
-    are listed under ``excluded`` and must not appear as applied constraints.
+    Only reports whose payload ``station_id`` matches ``station_id``, climate day
+    matches ``target_day``, and whose issuance and first_seen are ≤ decision_utc
+    may constrain the forecast.
     """
     if decision_utc.tzinfo is None:
         decision_utc = decision_utc.replace(tzinfo=timezone.utc)
+    feed_name = feed or f"cli_{station_id.lower()}"
+    # Backward-compatible default for NYC
+    if station_id == NYC_TARGET.cli_location_id and feed is None:
+        feed_name = "cli_nyc"
     excluded: list[dict[str, Any]] = []
     candidates: list[dict[str, Any]] = []
-    for p in list_cli_reports(store):
+    for p in list_cli_reports(store, feed=feed_name):
         day_s = p.get("climate_day")
         try:
             day = date.fromisoformat(day_s) if day_s and day_s != "unknown" else None
         except ValueError:
             day = None
+        report_station = (p.get("station_id") or p.get("cli_location_id") or "").upper()
         issuance_raw = p.get("issuance_utc") or p.get("_retrieved_at_utc")
         try:
             issuance = datetime.fromisoformat(issuance_raw.replace("Z", "+00:00")) if issuance_raw else None
@@ -60,26 +66,30 @@ def select_cli_for_decision(
             first_seen = None
         meta = {
             "climate_day": day_s,
+            "station_id": report_station,
             "max_temp_f": p.get("max_temp_f"),
             "is_preliminary": p.get("is_preliminary"),
             "issuance_utc": issuance_raw,
             "first_seen_utc": first_seen_raw,
             "source_key": p.get("_source_key"),
+            "feed": feed_name,
         }
         if day != target_day:
             excluded.append({**meta, "exclude_reason": "wrong_climate_day"})
             continue
-        if station_id != NYC_TARGET.cli_location_id:
+        if report_station and report_station != station_id.upper():
+            excluded.append({**meta, "exclude_reason": "wrong_station"})
+            continue
+        if not report_station and station_id.upper() != NYC_TARGET.cli_location_id:
+            # Legacy NYC rows without station_id only match NYC
             excluded.append({**meta, "exclude_reason": "wrong_station"})
             continue
         if p.get("max_temp_f") is None:
             excluded.append({**meta, "exclude_reason": "missing_max_temp"})
             continue
-        # Publication time
         if issuance is None or issuance > decision_utc:
             excluded.append({**meta, "exclude_reason": "not_published_at_decision_time"})
             continue
-        # System availability (backfill after decision cannot constrain that decision)
         if first_seen is None or first_seen > decision_utc:
             excluded.append({**meta, "exclude_reason": "not_in_store_at_decision_time"})
             continue
@@ -95,6 +105,7 @@ def select_cli_for_decision(
         max_f = best.get("max_temp_f")
         applied = {
             "climate_day": best.get("climate_day"),
+            "station_id": best.get("station_id") or station_id,
             "max_temp_f": int(max_f) if max_f is not None else None,
             "is_preliminary": bool(best.get("is_preliminary")),
             "issuance_utc": best.get("issuance_utc"),
@@ -112,5 +123,6 @@ def select_cli_for_decision(
         "excluded": excluded,
         "n_candidates": len(candidates),
         "station_id": station_id,
+        "feed": feed_name,
         "target_day": target_day.isoformat(),
     }

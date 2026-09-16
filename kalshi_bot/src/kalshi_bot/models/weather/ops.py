@@ -309,3 +309,97 @@ def weather_feeds_train(config: AppConfig) -> dict[str, Any]:
 
     data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
     return train_station_corrected(data_dir=data_dir)
+
+
+def weather_discover(config: AppConfig) -> dict[str, Any]:
+    """Refresh Kalshi weather market discovery into the location registry."""
+    from kalshi_bot.api.client import KalshiClient
+    from kalshi_bot.models.weather.obs_engine.multi.discovery import discover_weather_markets
+    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
+
+    client = KalshiClient(config.api)
+    registry = LocationRegistry()
+    try:
+        return discover_weather_markets(client, registry=registry)
+    finally:
+        client.close()
+        registry.close()
+
+
+def weather_multi_once(config: AppConfig) -> dict[str, Any]:
+    """One multi-location collect/infer/paper cycle (live orders blocked)."""
+    from kalshi_bot.models.weather.obs_engine.multi.pipeline import run_multi_cycle
+    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry, VERIFIED_NWS_CLI_DAILY_MAX
+
+    registry = LocationRegistry()
+    # Ensure verified mappings exist even if discovery has not run yet
+    if not registry.operating_daily_max():
+        for tick, base in VERIFIED_NWS_CLI_DAILY_MAX.items():
+            registry.upsert_target(
+                {
+                    **base,
+                    "series_ticker": tick,
+                    "measurement": "daily_max_temp_f",
+                    "settlement_source_family": "nws_cli",
+                    "unit": "F",
+                    "uses_lst_climate_day": True,
+                    "data_availability": "public_metar_cli",
+                }
+            )
+    try:
+        return run_multi_cycle(registry=registry, do_paper=True, collect=True)
+    finally:
+        registry.close()
+
+
+def weather_multi_status(config: AppConfig) -> dict[str, Any]:
+    """Per-location mapping / latest report / aggregate summary."""
+    import json
+    from pathlib import Path
+
+    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
+
+    registry = LocationRegistry()
+    try:
+        targets = registry.list_targets()
+        operating = registry.operating_daily_max()
+        root = Path("data/obs_engine/multi")
+        last = None
+        if (root / "last_multi_cycle.json").exists():
+            last = json.loads((root / "last_multi_cycle.json").read_text())
+        discovery = None
+        if (root / "last_discovery.json").exists():
+            discovery = json.loads((root / "last_discovery.json").read_text()).get("summary")
+        per_loc = []
+        for t in operating:
+            report_path = (
+                root
+                / "artifacts"
+                / f"{t['location_id']}__{t['measurement']}"
+                / "latest_report.json"
+            )
+            report = json.loads(report_path.read_text()) if report_path.exists() else None
+            per_loc.append(
+                {
+                    "location_id": t["location_id"],
+                    "series_ticker": t["series_ticker"],
+                    "mapping_status": t.get("mapping_status"),
+                    "validation_status": t.get("validation_status"),
+                    "timezone": t.get("timezone"),
+                    "metar_ids": t.get("metar_ids"),
+                    "cli_location_id": t.get("cli_location_id"),
+                    "latest_status": (report or {}).get("status"),
+                    "latest_paper": ((report or {}).get("paper_decision") or {}).get("decision"),
+                    "probabilities_available": (report or {}).get("probabilities_available"),
+                }
+            )
+        return {
+            "n_registry_targets": len(targets),
+            "n_operating_nws_cli_daily_max": len(operating),
+            "discovery_summary": discovery,
+            "last_cycle_summary": (last or {}).get("summary"),
+            "locations": per_loc,
+            "live_orders": False,
+        }
+    finally:
+        registry.close()

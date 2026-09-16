@@ -20,8 +20,11 @@ from typing import Any
 from kalshi_bot.models.weather.obs_engine import NYC_TARGET
 from kalshi_bot.models.weather.obs_engine.data import HourlyObs, solar_elevation_approx
 from kalshi_bot.models.weather.obs_engine.feeds.climate_day import (
+    EXPECTED_CADENCE_HOURS,
     LATE_START_HOUR_LST,
     MAX_GAP_HOURS,
+    MAX_START_GAP_HOURS,
+    MAX_STALE_HOURS,
     MIN_TEMP_OBS_FOR_COVERAGE,
     civil_local,
     climate_day_start_utc,
@@ -82,11 +85,15 @@ class CoverageReport:
     first_obs_utc: str | None
     last_obs_utc: str | None
     max_gap_hours: float | None
+    start_gap_hours: float | None
+    stale_hours: float | None
     late_start: bool
     gaps_exceeded: bool
+    start_gap_exceeded: bool
+    stale_exceeded: bool
     adequate: bool
     max_so_far: float | None
-    max_so_far_status: str  # insufficient | partial_window | adequate_daytime_coverage
+    max_so_far_status: str  # insufficient | partial_window | adequate_window_coverage
     notes: list[str]
 
     def as_dict(self) -> dict[str, Any]:
@@ -98,8 +105,12 @@ class CoverageReport:
             "first_obs_utc": self.first_obs_utc,
             "last_obs_utc": self.last_obs_utc,
             "max_gap_hours": self.max_gap_hours,
+            "start_gap_hours": self.start_gap_hours,
+            "stale_hours": self.stale_hours,
             "late_start": self.late_start,
             "gaps_exceeded": self.gaps_exceeded,
+            "start_gap_exceeded": self.start_gap_exceeded,
+            "stale_exceeded": self.stale_exceeded,
             "adequate": self.adequate,
             "max_so_far": self.max_so_far,
             "max_so_far_status": self.max_so_far_status,
@@ -107,8 +118,11 @@ class CoverageReport:
             "requirements": {
                 "min_temp_obs": MIN_TEMP_OBS_FOR_COVERAGE,
                 "max_gap_hours": MAX_GAP_HOURS,
-                "late_start_hour_lst": LATE_START_HOUR_LST,
-                "climate_day_basis": "LST_UTC-5",
+                "max_start_gap_hours": MAX_START_GAP_HOURS,
+                "max_stale_hours": MAX_STALE_HOURS,
+                "expected_cadence_hours": EXPECTED_CADENCE_HOURS,
+                "climate_day_basis": "LST_fixed_offset_per_location",
+                "note": "Partial max_so_far is never treated as a verified full-day maximum",
             },
         }
 
@@ -118,69 +132,106 @@ def day_window_obs(
     *,
     climate_day: date,
     decision_utc: datetime,
+    tz_name: str = NYC_TARGET.timezone,
+    enforce_first_seen: bool = True,
 ) -> list[HourlyObs]:
-    """Observations on the LST climate day with valid_utc <= decision_utc."""
-    start = climate_day_start_utc(climate_day)
-    out = [
-        o
-        for o in obs
-        if o.valid_utc <= decision_utc
-        and o.valid_utc >= start
-        and lst_climate_day(o.valid_utc) == climate_day
-    ]
+    """Observations on the LST climate day with valid_utc <= decision_utc.
+
+    When ``enforce_first_seen`` is True and an observation carries ``first_seen_utc``,
+    rows first seen after the decision are excluded (replay safety). Archive rows
+    without first_seen keep the disclosed valid_utc≈availability assumption.
+    """
+    start = climate_day_start_utc(climate_day, tz_name=tz_name)
+    out: list[HourlyObs] = []
+    for o in obs:
+        if o.valid_utc > decision_utc or o.valid_utc < start:
+            continue
+        if lst_climate_day(o.valid_utc, tz_name) != climate_day:
+            continue
+        if enforce_first_seen and getattr(o, "first_seen_utc", None) is not None:
+            fs = o.first_seen_utc
+            if fs.tzinfo is None:
+                fs = fs.replace(tzinfo=timezone.utc)
+            if fs > decision_utc:
+                continue
+        out.append(o)
     out.sort(key=lambda o: o.valid_utc)
     return out
 
 
-def assess_coverage(day_obs: list[HourlyObs], *, climate_day: date, decision_utc: datetime) -> CoverageReport:
+def assess_coverage(
+    day_obs: list[HourlyObs],
+    *,
+    climate_day: date,
+    decision_utc: datetime,
+    tz_name: str = NYC_TARGET.timezone,
+) -> CoverageReport:
+    """Coverage across the full required window — start gap, inter-obs gaps, and freshness."""
     notes: list[str] = []
     temps = [o for o in day_obs if o.tmpf is not None]
+    empty = CoverageReport(
+        climate_day=climate_day,
+        decision_time_utc=decision_utc,
+        n_temp_obs=0,
+        n_obs_total=len(day_obs),
+        first_obs_utc=None,
+        last_obs_utc=None,
+        max_gap_hours=None,
+        start_gap_hours=None,
+        stale_hours=None,
+        late_start=True,
+        gaps_exceeded=True,
+        start_gap_exceeded=True,
+        stale_exceeded=True,
+        adequate=False,
+        max_so_far=None,
+        max_so_far_status="insufficient",
+        notes=["No temperature observations in LST climate-day window before decision time"],
+    )
     if not temps:
-        return CoverageReport(
-            climate_day=climate_day,
-            decision_time_utc=decision_utc,
-            n_temp_obs=0,
-            n_obs_total=len(day_obs),
-            first_obs_utc=None,
-            last_obs_utc=None,
-            max_gap_hours=None,
-            late_start=True,
-            gaps_exceeded=True,
-            adequate=False,
-            max_so_far=None,
-            max_so_far_status="insufficient",
-            notes=["No temperature observations in LST climate-day window before decision time"],
-        )
+        return empty
+
     first, last = temps[0], temps[-1]
-    gaps = []
-    for a, b in zip(temps, temps[1:]):
-        gaps.append((b.valid_utc - a.valid_utc).total_seconds() / 3600.0)
+    gaps = [(b.valid_utc - a.valid_utc).total_seconds() / 3600.0 for a, b in zip(temps, temps[1:])]
     max_gap = max(gaps) if gaps else 0.0
-    first_lst = lst_datetime(first.valid_utc)
+    day_start = climate_day_start_utc(climate_day, tz_name=tz_name)
+    start_gap = (first.valid_utc - day_start).total_seconds() / 3600.0
+    stale = (decision_utc - last.valid_utc).total_seconds() / 3600.0
+    first_lst = lst_datetime(first.valid_utc, tz_name)
     late_start = first_lst.hour > LATE_START_HOUR_LST or (
         first_lst.hour == LATE_START_HOUR_LST and first_lst.minute > 0
     )
+    start_gap_exceeded = start_gap > MAX_START_GAP_HOURS
     gaps_exceeded = max_gap > MAX_GAP_HOURS
+    stale_exceeded = stale > MAX_STALE_HOURS
     adequate = (
         len(temps) >= MIN_TEMP_OBS_FOR_COVERAGE
-        and not late_start
+        and not start_gap_exceeded
         and not gaps_exceeded
+        and not stale_exceeded
     )
     max_so_far = max(float(o.tmpf) for o in temps if o.tmpf is not None)
     if not adequate:
         status = "partial_window"
-        if late_start:
+        if start_gap_exceeded:
             notes.append(
-                f"First temp obs at {first_lst.isoformat()} LST — daytime maximum may have been missed"
+                f"Start gap {start_gap:.2f}h from 00:00 LST to first temp exceeds {MAX_START_GAP_HOURS}h "
+                f"(first={first_lst.isoformat()} LST) — early-window maximum may have been missed"
             )
+        if late_start and not start_gap_exceeded:
+            notes.append(f"First temp obs at {first_lst.isoformat()} LST (legacy late_start flag)")
         if gaps_exceeded:
             notes.append(f"Max inter-obs gap {max_gap:.2f}h exceeds {MAX_GAP_HOURS}h")
+        if stale_exceeded:
+            notes.append(
+                f"Latest temp obs is {stale:.2f}h before decision (limit {MAX_STALE_HOURS}h) — stale coverage"
+            )
         if len(temps) < MIN_TEMP_OBS_FOR_COVERAGE:
             notes.append(f"Only {len(temps)} temp obs (need ≥{MIN_TEMP_OBS_FOR_COVERAGE})")
         notes.append("max_so_far is NOT a verified full-day maximum")
     else:
-        status = "adequate_daytime_coverage"
-        notes.append("Coverage meets documented minimums; still not a final CLI maximum")
+        status = "adequate_window_coverage"
+        notes.append("Coverage meets documented window requirements; still not a final CLI maximum")
     return CoverageReport(
         climate_day=climate_day,
         decision_time_utc=decision_utc,
@@ -189,8 +240,12 @@ def assess_coverage(day_obs: list[HourlyObs], *, climate_day: date, decision_utc
         first_obs_utc=first.valid_utc.isoformat(),
         last_obs_utc=last.valid_utc.isoformat(),
         max_gap_hours=max_gap,
+        start_gap_hours=start_gap,
+        stale_hours=stale,
         late_start=late_start,
         gaps_exceeded=gaps_exceeded,
+        start_gap_exceeded=start_gap_exceeded,
+        stale_exceeded=stale_exceeded,
         adequate=adequate,
         max_so_far=max_so_far,
         max_so_far_status=status,
@@ -215,14 +270,18 @@ def build_station_v2_features(
     decision_utc: datetime,
     *,
     climate_day: date | None = None,
+    tz_name: str = NYC_TARGET.timezone,
+    lat: float | None = None,
+    lon: float | None = None,
+    station_id: str | None = None,
     availability_assumption: str = "valid_utc_as_availability",
 ) -> StationFeatureBundle | None:
     """Shared feature builder. Returns None only if zero temp obs in window."""
     if decision_utc.tzinfo is None:
         decision_utc = decision_utc.replace(tzinfo=timezone.utc)
-    day = climate_day or lst_climate_day(decision_utc)
-    day_obs = day_window_obs(obs, climate_day=day, decision_utc=decision_utc)
-    coverage = assess_coverage(day_obs, climate_day=day, decision_utc=decision_utc)
+    day = climate_day or lst_climate_day(decision_utc, tz_name)
+    day_obs = day_window_obs(obs, climate_day=day, decision_utc=decision_utc, tz_name=tz_name)
+    coverage = assess_coverage(day_obs, climate_day=day, decision_utc=decision_utc, tz_name=tz_name)
     if coverage.max_so_far is None:
         return None
 
@@ -230,8 +289,10 @@ def build_station_v2_features(
     latest = temps[-1]
     max_so_far = coverage.max_so_far
     min_so_far = min(float(o.tmpf) for o in temps if o.tmpf is not None)
-    local = civil_local(decision_utc)
-    lst_now = lst_datetime(decision_utc)
+    local = civil_local(decision_utc, tz_name)
+    lst_now = lst_datetime(decision_utc, tz_name)
+    use_lat = lat if lat is not None else NYC_TARGET.lat
+    use_lon = lon if lon is not None else NYC_TARGET.lon
 
     def _prev(hours: float, attr: str):
         target = decision_utc - timedelta(hours=hours)
@@ -285,7 +346,7 @@ def build_station_v2_features(
         rad = math.radians(float(drct))
         wsin, wcos = math.sin(rad), math.cos(rad)
 
-    solar = solar_elevation_approx(NYC_TARGET.lat, NYC_TARGET.lon, decision_utc)
+    solar = solar_elevation_approx(use_lat, use_lon, decision_utc)
     hours_to_20 = max(0.0, 20.0 - (local.hour + local.minute / 60.0))
 
     fmap: dict[str, float | None] = {
@@ -325,9 +386,10 @@ def build_station_v2_features(
         coverage=coverage,
         provenance={
             "feature_schema_version": FEATURE_SCHEMA_VERSION,
-            "climate_day_basis": "LST_UTC-5",
+            "climate_day_basis": f"LST_{tz_name}",
             "availability_assumption": availability_assumption,
-            "station": NYC_TARGET.metar_id,
+            "station": station_id or NYC_TARGET.metar_id,
+            "tz_name": tz_name,
             "n_day_obs": len(day_obs),
         },
     )

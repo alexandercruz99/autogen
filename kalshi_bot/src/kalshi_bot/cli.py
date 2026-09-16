@@ -127,6 +127,9 @@ def main(argv: list[str] | None = None) -> int:
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
+    sub.add_parser("weather-discover", help="Discover Kalshi weather markets → location/settlement registry")
+    sub.add_parser("weather-multi-once", help="Multi-location collect/infer/paper cycle (live blocked)")
+    sub.add_parser("weather-multi-status", help="Per-location mapping, coverage, forecast, paper status")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -164,14 +167,20 @@ def main(argv: list[str] | None = None) -> int:
         "weather-feeds-once",
         "weather-feeds-status",
         "weather-feeds-train",
+        "weather-discover",
+        "weather-multi-once",
+        "weather-multi-status",
     )
     if args.cmd in weather_ops:
         config = load_config(cfg_path)
         from kalshi_bot.models.weather.ops import (
             weather_collect,
+            weather_discover,
             weather_feeds_once,
             weather_feeds_status,
             weather_feeds_train,
+            weather_multi_once,
+            weather_multi_status,
             weather_obs_audit,
             weather_obs_backtest,
             weather_obs_collect_once,
@@ -203,6 +212,9 @@ def main(argv: list[str] | None = None) -> int:
             "weather-feeds-once": weather_feeds_once,
             "weather-feeds-status": weather_feeds_status,
             "weather-feeds-train": weather_feeds_train,
+            "weather-discover": weather_discover,
+            "weather-multi-once": weather_multi_once,
+            "weather-multi-status": weather_multi_status,
         }
         print(json.dumps(dispatch[args.cmd](config), indent=2, default=str))
         return 0

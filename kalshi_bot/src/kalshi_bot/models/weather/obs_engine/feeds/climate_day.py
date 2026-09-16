@@ -1,12 +1,11 @@
-"""Climate-day helpers for NYC Central Park settlement alignment.
+"""Climate-day helpers using local *standard* time (no DST) per location timezone.
 
-NWS CLI / Kalshi daily-max settlement use **local standard time (LST)** for the
-climate day. During Eastern Daylight Time the civil clock is UTC−4 while LST is
-UTC−5, so civil midnight–00:59 is still the previous LST climate day.
+NWS CLI / Kalshi daily-max settlement use LST for the climate day. During daylight
+saving, civil midnight–00:59 is still the previous LST climate day.
 
 Frozen baseline training historically used America/New_York civil dates via
-``local_date_for``. Operating feeds / station_v2 use ``lst_climate_day`` and
-disclose the difference.
+``local_date_for``. Operating station_v2 uses ``lst_climate_day`` and discloses
+the difference. Pass ``tz_name`` for non-Eastern locations.
 """
 
 from __future__ import annotations
@@ -16,68 +15,81 @@ from zoneinfo import ZoneInfo
 
 from kalshi_bot.models.weather.obs_engine import NYC_TARGET
 
-# Eastern Local Standard Time fixed offset (no DST).
-_LST = timezone(timedelta(hours=-5), name="LST_UTC-5")
+# Standard-time UTC offsets (hours) for common IANA zones — no DST.
+_STANDARD_OFFSET_HOURS: dict[str, int] = {
+    "America/New_York": -5,
+    "America/Chicago": -6,
+    "America/Denver": -7,
+    "America/Phoenix": -7,
+    "America/Los_Angeles": -8,
+    "America/Anchorage": -9,
+    "Pacific/Honolulu": -10,
+    "UTC": 0,
+}
 
-# Validated actionable decision hours (local *civil* clock, as in backtests).
 SUPPORTED_DECISION_HOURS_LOCAL: tuple[int, ...] = (8, 11, 14)
 
-# Coverage: need temperature obs spanning morning→decision on the LST climate day.
 MIN_TEMP_OBS_FOR_COVERAGE = 4
 MAX_GAP_HOURS = 3.5
-# If first temp obs is after this local LST hour, daytime max may have been missed.
-LATE_START_HOUR_LST = 10
+MAX_START_GAP_HOURS = 4.0
+MAX_STALE_HOURS = 2.5
+EXPECTED_CADENCE_HOURS = 1.0
+LATE_START_HOUR_LST = 10  # legacy flag only
 
 
-def lst_climate_day(when: datetime) -> date:
-    """Return the NWS/Kalshi LST climate day for an aware UTC/local timestamp."""
+def lst_tz(tz_name: str = NYC_TARGET.timezone) -> timezone:
+    hours = _STANDARD_OFFSET_HOURS.get(tz_name)
+    if hours is None:
+        # Fall back to January offset (standard time) of the zone
+        jan = datetime(2024, 1, 15, 12, 0, tzinfo=ZoneInfo(tz_name))
+        hours = int(jan.utcoffset().total_seconds() // 3600)  # type: ignore[union-attr]
+    return timezone(timedelta(hours=hours), name=f"LST_{tz_name}")
+
+
+def lst_climate_day(when: datetime, tz_name: str = NYC_TARGET.timezone) -> date:
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
-    return when.astimezone(_LST).date()
+    return when.astimezone(lst_tz(tz_name)).date()
 
 
-def lst_datetime(when: datetime) -> datetime:
+def lst_datetime(when: datetime, tz_name: str = NYC_TARGET.timezone) -> datetime:
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
-    return when.astimezone(_LST)
+    return when.astimezone(lst_tz(tz_name))
 
 
-def civil_local(when: datetime) -> datetime:
+def civil_local(when: datetime, tz_name: str = NYC_TARGET.timezone) -> datetime:
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
-    return when.astimezone(ZoneInfo(NYC_TARGET.timezone))
+    return when.astimezone(ZoneInfo(tz_name))
 
 
-def climate_day_start_utc(day: date) -> datetime:
-    """00:00 LST on ``day`` as UTC."""
-    return datetime(day.year, day.month, day.day, 0, 0, tzinfo=_LST).astimezone(timezone.utc)
+def climate_day_start_utc(day: date, tz_name: str = NYC_TARGET.timezone) -> datetime:
+    return datetime(day.year, day.month, day.day, 0, 0, tzinfo=lst_tz(tz_name)).astimezone(timezone.utc)
 
 
-def climate_day_end_utc(day: date) -> datetime:
-    """Exclusive end: next day's 00:00 LST as UTC."""
-    return climate_day_start_utc(day + timedelta(days=1))
+def climate_day_end_utc(day: date, tz_name: str = NYC_TARGET.timezone) -> datetime:
+    return climate_day_start_utc(day + timedelta(days=1), tz_name=tz_name)
 
 
-def next_supported_decision_utc(now: datetime) -> datetime:
-    """Next upcoming supported decision hour in NYC civil time (today or tomorrow)."""
-    local = civil_local(now)
+def next_supported_decision_utc(now: datetime, tz_name: str = NYC_TARGET.timezone) -> datetime:
+    local = civil_local(now, tz_name)
     for hour in SUPPORTED_DECISION_HOURS_LOCAL:
         cand = local.replace(hour=hour, minute=0, second=0, microsecond=0)
         if cand > local:
             return cand.astimezone(timezone.utc)
-    # Next calendar day 08:00 civil
     nxt = (local + timedelta(days=1)).replace(
         hour=SUPPORTED_DECISION_HOURS_LOCAL[0], minute=0, second=0, microsecond=0
     )
     return nxt.astimezone(timezone.utc)
 
 
-def is_supported_decision_time(now: datetime, *, tolerance_minutes: int = 20) -> tuple[bool, int | None]:
-    """True if ``now`` is within tolerance of a validated decision hour (civil local)."""
-    local = civil_local(now)
+def is_supported_decision_time(
+    now: datetime, *, tz_name: str = NYC_TARGET.timezone, tolerance_minutes: int = 20
+) -> tuple[bool, int | None]:
+    local = civil_local(now, tz_name)
     for hour in SUPPORTED_DECISION_HOURS_LOCAL:
         delta = abs((local.hour * 60 + local.minute) - hour * 60)
-        # also allow wrap near midnight not relevant for 8/11/14
         if delta <= tolerance_minutes:
             return True, hour
     return False, None

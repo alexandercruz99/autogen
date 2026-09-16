@@ -18,3 +18,8 @@ data/secrets/
 .mypy_cache/
 *.log
 .DS_Store
+data/obs_engine/feeds/goes_samples/
+data/obs_engine/feeds/nexrad_samples/
+data/obs_engine/feeds/satrad_backfill/
+data/obs_engine/feeds/collector.pid
+data/obs_engine/feeds/*.db-journal

@@ -144,7 +144,22 @@ def run_infer_and_paper(store: FeedStore, feature_bundle: dict[str, Any]) -> dic
                 if paper_decision is None:
                     paper_decision = {"ticker": ticker, "decision": decision, "reason": reason}
         out["brackets"] = brackets
-        out["paper_decision"] = paper_decision or {"decision": "no_signal", "reason": "no bracket met research paper criteria"}
+        if paper_decision is None:
+            # Always persist a paper cycle record (never live)
+            top = brackets[0] if brackets else None
+            paper_decision = {
+                "ticker": top["ticker"] if top else None,
+                "decision": "paper_skip_no_edge",
+                "reason": "no bracket met research paper criteria — cycle recorded; live orders blocked",
+            }
+            store.save_paper_decision(
+                ticker=paper_decision.get("ticker"),
+                side="yes",
+                decision=paper_decision["decision"],
+                reason=paper_decision["reason"],
+                details={"live_blocked": True, "n_brackets": len(brackets)},
+            )
+        out["paper_decision"] = paper_decision
         store.save_prediction(
             model_version=str(blob.get("model_version") or "station_corrected_or_baseline"),
             feature_set=out["feature_set"],

@@ -1,0 +1,119 @@
+{
+  "generated_at_utc": "2026-09-16T02:51:56.560754+00:00",
+  "proof": {
+    "real_samples": {
+      "cli_nyc": 8,
+      "goes19_acmc": 2,
+      "metar_KJFK": 6,
+      "metar_KLGA": 6,
+      "metar_KNYC": 6,
+      "nexrad_okx_n0b": 2
+    },
+    "restart_recovery": "verified \u2014 samples preserved, duplicate keys blocked, worker recovered checkpoints",
+    "features_extracted": 3,
+    "operating_artifact": "data/obs_engine/feeds/models/station_corrected_v1.joblib",
+    "feature_schema": [
+      "hour_local",
+      "doy",
+      "tmpf",
+      "dwpf",
+      "sknt",
+      "alti",
+      "max_so_far",
+      "rise_from_min",
+      "dT_1h",
+      "dT_3h",
+      "solar_el",
+      "hours_to_20_local",
+      "precip_6h",
+      "time_since_max_h",
+      "d_dewpt_3h",
+      "d_alti_3h",
+      "d_sknt_3h",
+      "wind_dir_sin",
+      "wind_dir_cos",
+      "missing_sknt",
+      "missing_alti",
+      "missing_dwpf",
+      "sky_code"
+    ],
+    "prediction": {
+      "target_date": "2026-09-15",
+      "max_so_far": 69.08,
+      "remain_q50": 1.8220838147546357,
+      "feeds_contributed": [
+        "metar_KNYC",
+        "goes19_acmc",
+        "nexrad_okx_n0b",
+        "cli_nyc"
+      ],
+      "live_orders": false,
+      "paper_decision": {
+        "ticker": "KXHIGHNY-26SEP15-B70.5",
+        "decision": "paper_skip_no_edge",
+        "reason": "no bracket met research paper criteria \u2014 cycle recorded; live orders blocked"
+      }
+    },
+    "stale_feed_handling": "goes_stale / radar missing \u2192 explicit missing flags; never clear/dry defaults (unit tested)",
+    "paper_without_live": true
+  },
+  "model_comparison": {
+    "station_corrected_test_mae": {
+      "8": 3.410473823090774,
+      "11": 2.2983073784785377,
+      "14": 1.0599121840308618
+    },
+    "baseline_schema_test_mae": {
+      "8": 3.4536517713644415,
+      "11": 2.3851530948727677,
+      "14": 1.0752478624849935
+    },
+    "sat_radar": {
+      "status": "evaluated",
+      "note": "Candidate trained only on days with retrieved sat/radar features; not attached to station-only artifact.",
+      "coverage": {
+        "goes_ok": 30,
+        "radar_ok": 30,
+        "both_ok": 30,
+        "attempted": 30,
+        "station_only_skipped_satrad": 0
+      },
+      "n_feature_rows": 30,
+      "n_train_rows": 21,
+      "n_test_rows": 9,
+      "n_matched_compare": 9,
+      "test_mae_satrad": 1.4082914607396586,
+      "test_mae_station_corrected_same_dates": 1.3083000159245413,
+      "mae_delta_satrad_minus_station": {
+        "n": 9.0,
+        "delta_mae": 0.09999144481511735,
+        "ci80_low": -0.12677374817479797,
+        "ci80_high": 0.32685787416768636
+      },
+      "calibration_proxy": {
+        "satrad_mean_signed_error": 0.15456936988299694,
+        "station_mean_signed_error": 0.1259171327128191,
+        "satrad_frac_over": 0.4444444444444444,
+        "station_frac_over": 0.4444444444444444
+      },
+      "promoted": false,
+      "promotion_note": "Not promoted: require CI excluding zero improvement and larger multi-year coverage. Operating inference uses station_corrected.v1; sat/radar features stored for prospective use.",
+      "artifact": "data/obs_engine/feeds/models/satrad_candidate_v1.joblib"
+    }
+  },
+  "service": {
+    "commands": {
+      "start": "PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-feeds-run --interval 300",
+      "stop": "PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-stop",
+      "status": "PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-status",
+      "once": "PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-once",
+      "train": "PYTHONPATH=src python3 -m kalshi_bot.cli weather-feeds-train"
+    }
+  },
+  "blockers": [
+    "NYS Mesonet optional until permitted access",
+    "Sat/radar candidate not promoted (n=9 compare; MAE not better; CI includes zero)",
+    "Multi-year sat/radar backfill incomplete \u2014 prospective collection continues via worker",
+    "Live orders remain blocked (research/paper only)"
+  ]
+}

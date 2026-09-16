@@ -257,6 +257,7 @@ def weather_feeds_once(config: AppConfig) -> dict[str, Any]:
 def weather_feeds_status(config: AppConfig) -> dict[str, Any]:
     from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
     import os
+    from datetime import datetime, timezone
     from pathlib import Path
 
     store = FeedStore()
@@ -270,11 +271,32 @@ def weather_feeds_status(config: AppConfig) -> dict[str, Any]:
             running = True
         except Exception:
             running = False
+    now = datetime.now(timezone.utc)
+    feed_ages = {}
+    for feed in ("metar_KNYC", "metar_KLGA", "metar_KJFK", "cli_nyc", "goes19_acmc", "nexrad_okx_n0b"):
+        row = store.latest_sample(feed)
+        if not row:
+            feed_ages[feed] = {"connected": False, "age_hours": None, "valid_utc": None}
+            continue
+        age_h = None
+        if row.get("valid_utc"):
+            try:
+                age_h = (now - datetime.fromisoformat(row["valid_utc"])).total_seconds() / 3600.0
+            except Exception:
+                age_h = None
+        feed_ages[feed] = {
+            "connected": True,
+            "age_hours": age_h,
+            "valid_utc": row.get("valid_utc"),
+            "retrieved_at_utc": row.get("retrieved_at_utc"),
+            "source_key": row.get("source_key"),
+        }
     out = {
         "running": running,
         "pid": pid,
         "heartbeat": store.get_heartbeat(),
         "checkpoints": store.list_checkpoints(),
+        "feed_ages": feed_ages,
         "latest_prediction": store.latest_prediction(),
         "nys_mesonet": {"status": "optional_blocked", "reason": "No permitted access configured"},
     }

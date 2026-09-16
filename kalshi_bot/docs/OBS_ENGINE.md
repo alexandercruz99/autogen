@@ -97,3 +97,8 @@ authorize live. Paper/research remain available.
 
 `weather-obs-predict` writes `data/obs_engine/latest_research_prediction.json`.
 Never places live orders.
+
+## Continuous public feeds
+
+See [FEEDS.md](FEEDS.md) for METAR / CLI / GOES-19 / NEXRAD adapters, the persistent
+collector worker, station-corrected operating model, and paper-loop wiring.

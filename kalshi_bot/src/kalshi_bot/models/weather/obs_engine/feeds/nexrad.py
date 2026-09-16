@@ -95,29 +95,40 @@ def _dest_point(lat: float, lon: float, az_deg: float, dist_km: float) -> tuple[
     return math.degrees(lat2), math.degrees(lon2)
 
 
-def extract_precip_features(path: Path, *, center_lat: float = NYC_LAT, center_lon: float = NYC_LON, radius_km: float = 40.0) -> dict[str, Any]:
+def extract_precip_features(path: Path, *, center_lat: float = NYC_LAT, center_lon: float = NYC_LON, radius_km: float = 100.0) -> dict[str, Any]:
     from metpy.io import Level3File
 
     f = Level3File(str(path))
     radar_lat = float(f.lat)
     radar_lon = float(f.lon)
     block = f.sym_block[0][0]
-    data = np.asarray(block["data"], dtype=float)
-    # MetPy Level3 N0B: data are level indices; map roughly to dBZ via product max metadata
-    # Use raw levels > threshold as precip proxy; keep scale explicit.
-    start_az = float(block["start_az"])
+    raw = block["data"]
+    # Map digital codes → dBZ via MetPy product thresholds (missing stays NaN)
+    mapped = f.map_data(raw)
+    data = np.ma.filled(np.asarray(mapped, dtype=float), np.nan)
+    if data.ndim != 2:
+        raise ValueError(f"unexpected N0B data ndim={data.ndim}")
     naz, nr = data.shape
-    az = (start_az + np.arange(naz) * (360.0 / naz)) % 360.0
-    # gate spacing ~0.25 km for many dig products; first/gate_scale available
-    gate_scale = float(block.get("gate_scale") or 1000.0) / 1000.0  # meters→km if needed
-    if gate_scale > 10:  # still meters
-        gate_scale = gate_scale / 1000.0
+    start_az_raw = block["start_az"]
+    if isinstance(start_az_raw, (list, tuple, np.ndarray)):
+        az = np.asarray(start_az_raw, dtype=float) % 360.0
+        if len(az) != naz:
+            az = (float(az[0]) + np.arange(naz) * (360.0 / max(naz, 1))) % 360.0
+    else:
+        az = (float(start_az_raw) + np.arange(naz) * (360.0 / max(naz, 1))) % 360.0
+    gate_raw = float(block.get("gate_scale") or 1.0)
+    # MetPy N0B often reports ~1.0 (km-scale). Values >> 10 are meters.
+    if gate_raw > 10:
+        gate_scale = gate_raw / 1000.0
+    else:
+        gate_scale = gate_raw
     first = float(block.get("first") or 0.0)
     if first > 100:
         first = first / 1000.0
-    ranges = first + np.arange(nr) * max(gate_scale, 0.25)
+    step = gate_scale if gate_scale >= 0.1 else 0.25
+    ranges = first + np.arange(nr) * step
 
-    # Collect ALL gates in NYC radius (including zero). Empty ≠ dry if geometry misses.
+    # Collect ALL finite gates in NYC radius. Empty ≠ dry if geometry misses.
     vals = []
     for i, a in enumerate(az):
         for j in range(0, nr, 4):
@@ -125,16 +136,21 @@ def extract_precip_features(path: Path, *, center_lat: float = NYC_LAT, center_l
             dlat = (plat - center_lat) * 111.0
             dlon = (plon - center_lon) * 111.0 * math.cos(math.radians(center_lat))
             if dlat * dlat + dlon * dlon <= radius_km * radius_km:
-                vals.append(float(data[i, j]))
+                v = data[i, j]
+                if np.isfinite(v):
+                    vals.append(float(v))
     vals_a = np.asarray(vals, dtype=float) if vals else np.asarray([], dtype=float)
     vol_time = f.metadata.get("vol_time")
     valid_utc = vol_time.replace(tzinfo=timezone.utc).isoformat() if isinstance(vol_time, datetime) else None
     geo_ok = len(vals_a) > 0
     return {
         "n_gates_in_nyc_radius": int(len(vals_a)),
-        # Explicit None when no gates mapped — never invent "no precip"
-        "precip_gate_frac": float(np.mean(vals_a > 5)) if geo_ok else None,
-        "mean_level_if_any": float(np.mean(vals_a[vals_a > 0])) if geo_ok and np.any(vals_a > 0) else (0.0 if geo_ok else None),
+        # frac of gates with reflectivity >= 20 dBZ (light precip threshold)
+        "precip_gate_frac": float(np.mean(vals_a >= 20.0)) if geo_ok else None,
+        "mean_dbz_if_any": float(np.mean(vals_a)) if geo_ok else None,
+        "max_dbz_if_any": float(np.max(vals_a)) if geo_ok else None,
+        # keep aliases used by feature schema
+        "mean_level_if_any": float(np.mean(vals_a)) if geo_ok else None,
         "max_level_if_any": float(np.max(vals_a)) if geo_ok else None,
         "radar_lat": radar_lat,
         "radar_lon": radar_lon,
@@ -147,7 +163,7 @@ def extract_precip_features(path: Path, *, center_lat: float = NYC_LAT, center_l
             "product": "N0B",
             "bucket": NEXRAD_L3_BUCKET,
             "site": RADAR_L3_PREFIX,
-            "units_note": "Level indices (not calibrated dBZ); used as relative precip intensity features",
+            "units_note": "MetPy map_data reflectivity (dBZ); precip_gate_frac uses >=20 dBZ",
             "forecast_model_inputs": False,
         },
     }

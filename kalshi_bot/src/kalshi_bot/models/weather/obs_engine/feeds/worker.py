@@ -117,21 +117,9 @@ def worker_loop(interval_seconds: int = 300, pidfile: Path | None = None) -> Non
 
     while not stop["flag"]:
         t0 = time.time()
-        now = time.time()
-        # Per-source cadence inside the master loop
-        due = {
-            "metar": now - last_run.get("metar", 0) >= DEFAULT_INTERVALS["metar"],
-            "cli": now - last_run.get("cli", 0) >= DEFAULT_INTERVALS["cli"],
-            "goes": now - last_run.get("goes", 0) >= DEFAULT_INTERVALS["goes"],
-            "nexrad": now - last_run.get("nexrad", 0) >= DEFAULT_INTERVALS["nexrad"],
-        }
-        if any(due.values()) or not last_run:
-            # Full cycle when any source is due (simpler checkpoint + infer coherence)
-            run_collect_cycle(store, do_infer=True)
-            for k in ("metar", "cli", "goes", "nexrad", "features_infer"):
-                last_run[k] = time.time()
+        run_collect_cycle(store, do_infer=True)
         elapsed = time.time() - t0
-        sleep_for = max(5.0, min(interval_seconds, 60) - elapsed)
+        sleep_for = max(5.0, interval_seconds - elapsed)
         end = time.time() + sleep_for
         while time.time() < end and not stop["flag"]:
             time.sleep(min(1.0, end - time.time()))

@@ -252,7 +252,7 @@ def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: in
         )
         satrad_report["coverage"] = cov
         satrad_report["n_feature_rows"] = len(sat_rows)
-        if len(sat_rows) >= 40:
+        if len(sat_rows) >= 20:
             sat_days = sorted({r["climate_day"] for r in sat_rows})
             cut = int(len(sat_days) * 0.7) or 1
             tr_d, te_d = set(sat_days[:cut]), set(sat_days[cut:])
@@ -285,7 +285,7 @@ def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: in
                 pred_st = np.maximum(max_so + models["q50"].predict(Xst), max_so)
                 mae_sat = float(np.mean(np.abs(y - pred_sat)))
                 mae_st = float(np.mean(np.abs(y - pred_st)))
-                # crude probability calibration proxy: |P(T>median)-0.5| via residual sign balance
+                # crude probability calibration proxy: residual sign balance
                 resid_sat = y - pred_sat
                 resid_st = y - pred_st
                 cal = {
@@ -332,7 +332,7 @@ def train_station_corrected(*, data_dir: Path | None = None, satrad_max_days: in
                 satrad_report["status"] = "insufficient_overlap"
         else:
             satrad_report["status"] = "insufficient_rows"
-            satrad_report["note"] = f"Only {len(sat_rows)} satrad rows (need >=40); keep collecting prospectively."
+            satrad_report["note"] = f"Only {len(sat_rows)} satrad rows (need >=20); keep collecting prospectively."
     except Exception as exc:
         logger.exception("satrad backfill/train failed")
         satrad_report = {"status": "error", "error": str(exc)}

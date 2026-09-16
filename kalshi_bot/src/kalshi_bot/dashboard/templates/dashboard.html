@@ -186,6 +186,13 @@
         <li class="muted">No checkpoints yet — run <code>weather-feeds-once</code> or <code>weather-feeds-run</code></li>
         {% endfor %}
       </ul>
+      {% if feeds.feed_ages %}
+      <p class="muted">Observation ages (hours):
+        {% for name, info in feeds.feed_ages.items() %}
+          {{ name }}={% if info.connected %}{{ '%.2f'|format(info.age_hours) if info.age_hours is not none else '?' }}h{% else %}offline{% endif %}{% if not loop.last %} · {% endif %}
+        {% endfor %}
+      </p>
+      {% endif %}
       <p class="muted">NYS Mesonet: optional / not connected ({{ (feeds.nys_mesonet or {}).reason }})</p>
       {% endif %}
       {% if research_forecast %}

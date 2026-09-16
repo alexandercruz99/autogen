@@ -161,6 +161,134 @@ VERIFIED_NWS_CLI_DAILY_MAX: dict[str, dict[str, Any]] = {
 }
 
 
+# Evidence-backed Weather Company daily-max mappings.
+# Station IDs come from Kalshi rules_primary (CLINYC/…) + weather.com/kalshi portal
+# ``cliId`` / ``icao`` fields. Do NOT mix these series with the NWS CLI pipeline.
+VERIFIED_TWC_DAILY_MAX: dict[str, dict[str, Any]] = {
+    "KXHIGHNY": {
+        "location_id": "twc_nyc_central_park",
+        "display_name": "NYC Central Park (TWC CLINYC)",
+        "cli_location_id": "NYC",
+        "climate_station_name": "CLINYC",
+        "metar_ids": ["KNYC"],
+        "neighbor_metar_ids": ["KLGA", "KJFK"],
+        "lat": 40.77898,
+        "lon": -73.96925,
+        "elev_m": 42.7,
+        "timezone": "America/New_York",
+        "mapping_status": "verified",
+        "validation_status": "operating_candidate",
+        "model_family": "twc_daily_max_v1",
+        "same_station_model_location_id": "nyc_central_park",
+        "notes": (
+            "Settles on The Weather Company CLINYC via weather.com/kalshi; "
+            "progressive evidence from TWC portal METAR + AviationWeather KNYC features; "
+            "residual model may reuse same-ICAO station_v2 artifact (exploratory transfer)"
+        ),
+    },
+    "KXHIGHCHI": {
+        "location_id": "twc_chi_midway",
+        "display_name": "Chicago Midway (TWC CLIMDW)",
+        "cli_location_id": "MDW",
+        "climate_station_name": "CLIMDW",
+        "metar_ids": ["KMDW"],
+        "neighbor_metar_ids": ["KORD"],
+        "lat": 41.7868,
+        "lon": -87.7522,
+        "elev_m": 189.0,
+        "timezone": "America/Chicago",
+        "mapping_status": "verified",
+        "validation_status": "operating_candidate",
+        "model_family": "twc_daily_max_v1",
+        "same_station_model_location_id": "chi_midway",
+        "notes": (
+            "Settles on The Weather Company CLIMDW (Midway, not O'Hare); "
+            "same-ICAO residual transfer from chi_midway when trained"
+        ),
+    },
+    "KXHIGHLAX": {
+        "location_id": "twc_lax",
+        "display_name": "Los Angeles LAX (TWC CLILAX)",
+        "cli_location_id": "LAX",
+        "climate_station_name": "CLILAX",
+        "metar_ids": ["KLAX"],
+        "neighbor_metar_ids": [],
+        "lat": 33.9425,
+        "lon": -118.4081,
+        "elev_m": 38.0,
+        "timezone": "America/Los_Angeles",
+        "mapping_status": "verified",
+        "validation_status": "needs_historical_backfill",
+        "model_family": "twc_daily_max_v1",
+        "notes": "TWC portal cliId=LAX / ICAO KLAX; no location model yet",
+    },
+    "KXHIGHAUS": {
+        "location_id": "twc_aus",
+        "display_name": "Austin Bergstrom (TWC CLIAUS)",
+        "cli_location_id": "AUS",
+        "climate_station_name": "CLIAUS",
+        "metar_ids": ["KAUS"],
+        "neighbor_metar_ids": [],
+        "lat": 30.1945,
+        "lon": -97.6699,
+        "elev_m": 165.0,
+        "timezone": "America/Chicago",
+        "mapping_status": "verified",
+        "validation_status": "needs_historical_backfill",
+        "model_family": "twc_daily_max_v1",
+        "notes": "TWC CLIAUS = Bergstrom (not Camp Mabry)",
+    },
+    "KXHIGHDEN": {
+        "location_id": "twc_den",
+        "display_name": "Denver Intl (TWC CLIDEN)",
+        "cli_location_id": "DEN",
+        "climate_station_name": "CLIDEN",
+        "metar_ids": ["KDEN"],
+        "neighbor_metar_ids": [],
+        "lat": 39.8561,
+        "lon": -104.6737,
+        "elev_m": 1655.0,
+        "timezone": "America/Denver",
+        "mapping_status": "verified",
+        "validation_status": "needs_historical_backfill",
+        "model_family": "twc_daily_max_v1",
+        "notes": "TWC portal cliId=DEN / ICAO KDEN",
+    },
+    "KXHIGHPHIL": {
+        "location_id": "twc_phl",
+        "display_name": "Philadelphia Intl (TWC CLIPHL)",
+        "cli_location_id": "PHL",
+        "climate_station_name": "CLIPHL",
+        "metar_ids": ["KPHL"],
+        "neighbor_metar_ids": [],
+        "lat": 39.8744,
+        "lon": -75.2424,
+        "elev_m": 11.0,
+        "timezone": "America/New_York",
+        "mapping_status": "verified",
+        "validation_status": "needs_historical_backfill",
+        "model_family": "twc_daily_max_v1",
+        "notes": "TWC portal cliId=PHL / ICAO KPHL (CLIPHL)",
+    },
+    "KXHIGHMIA": {
+        "location_id": "twc_mia",
+        "display_name": "Miami (TWC CLIMIA)",
+        "cli_location_id": "MIA",
+        "climate_station_name": "CLIMIA",
+        "metar_ids": ["KMIA"],
+        "neighbor_metar_ids": [],
+        "lat": 25.7959,
+        "lon": -80.2870,
+        "elev_m": 3.0,
+        "timezone": "America/New_York",
+        "mapping_status": "verified",
+        "validation_status": "needs_historical_backfill",
+        "model_family": "twc_daily_max_v1",
+        "notes": "TWC portal cliId=MIA / ICAO KMIA",
+    },
+}
+
+
 class LocationRegistry:
     def __init__(self, path: Path | None = None) -> None:
         root = Path("data/obs_engine/multi")
@@ -264,9 +392,15 @@ class LocationRegistry:
         self._conn.commit()
 
     def operating_daily_max(self) -> list[dict[str, Any]]:
-        return [
-            t
-            for t in self.list_targets(measurement="daily_max_temp_f")
-            if t.get("settlement_source_family") == "nws_cli"
-            and t.get("mapping_status") in ("verified", "verified_cli_url")
-        ]
+        """NWS CLI + verified TWC daily-max targets ready for the multi pipeline."""
+        out = []
+        for t in self.list_targets(measurement="daily_max_temp_f"):
+            family = t.get("settlement_source_family")
+            mapping = t.get("mapping_status")
+            if mapping not in ("verified", "verified_cli_url"):
+                continue
+            if family == "nws_cli":
+                out.append(t)
+            elif family == "weather_company" and t.get("model_family") == "twc_daily_max_v1":
+                out.append(t)
+        return out

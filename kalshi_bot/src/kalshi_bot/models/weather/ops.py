@@ -359,7 +359,11 @@ def weather_discover(config: AppConfig) -> dict[str, Any]:
 def weather_multi_once(config: AppConfig) -> dict[str, Any]:
     """One multi-location collect/infer/paper cycle (live orders blocked)."""
     from kalshi_bot.models.weather.obs_engine.multi.pipeline import run_multi_cycle
-    from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry, VERIFIED_NWS_CLI_DAILY_MAX
+    from kalshi_bot.models.weather.obs_engine.multi.registry import (
+        VERIFIED_NWS_CLI_DAILY_MAX,
+        VERIFIED_TWC_DAILY_MAX,
+        LocationRegistry,
+    )
 
     registry = LocationRegistry()
     # Ensure verified mappings exist even if discovery has not run yet
@@ -376,6 +380,26 @@ def weather_multi_once(config: AppConfig) -> dict[str, Any]:
                     "data_availability": "public_metar_cli",
                 }
             )
+    # Always refresh verified TWC rows so adapter mappings stay current
+    for tick, base in VERIFIED_TWC_DAILY_MAX.items():
+        details = {}
+        if base.get("same_station_model_location_id"):
+            details["same_station_model_location_id"] = base["same_station_model_location_id"]
+        registry.upsert_target(
+            {
+                **{k: v for k, v in base.items() if k != "same_station_model_location_id"},
+                "series_ticker": tick,
+                "measurement": "daily_max_temp_f",
+                "settlement_source_family": "weather_company",
+                "settlement_name": "The Weather Company",
+                "settlement_url": "https://weather.com/kalshi",
+                "unit": "F",
+                "uses_lst_climate_day": True,
+                "rounding_note": "Whole °F as printed on weather.com/kalshi climate report",
+                "data_availability": "twc_kalshi_portal_public",
+                "details": details,
+            }
+        )
     try:
         return run_multi_cycle(registry=registry, do_paper=True, collect=True)
     finally:

@@ -21,9 +21,11 @@ from kalshi_bot.models.weather.obs_engine.feeds.climate_day import (
 from kalshi_bot.models.weather.obs_engine.feeds.cli_feed import collect_cli
 from kalshi_bot.models.weather.obs_engine.feeds.feature_schema import FEATURE_SCHEMA_VERSION
 from kalshi_bot.models.weather.obs_engine.feeds.features_live import build_operating_features
+from kalshi_bot.models.weather.obs_engine.feeds.features_twc import build_twc_operating_features
 from kalshi_bot.models.weather.obs_engine.feeds.metar import collect_metar
 from kalshi_bot.models.weather.obs_engine.feeds.paper_sim import PaperLedger
 from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
+from kalshi_bot.models.weather.obs_engine.feeds.twc_kalshi import collect_twc_climate, collect_twc_metar
 from kalshi_bot.models.weather.obs_engine.multi.context import ForecastContext
 from kalshi_bot.models.weather.obs_engine.multi.markets import fetch_open_series_markets, select_event_markets
 from kalshi_bot.models.weather.obs_engine.multi.predict import DEFAULT_MODEL_PATH, predict_station_v2
@@ -94,6 +96,10 @@ def process_location(
             }
         )
         return out
+    if family == "weather_company":
+        return _process_twc_location(
+            target, store, out=out, now=now, do_paper=do_paper, collect=collect
+        )
     if family != "nws_cli":
         out.update(
             {
@@ -315,6 +321,306 @@ def process_location(
         return out
 
     # Paper evaluation against this series' open markets
+    try:
+        paper = _paper_evaluate(
+            pred=pred,
+            series_ticker=series,
+            climate_day=climate_day,
+            decision_hour=decision_hour,
+            location_id=location_id,
+        )
+        out["paper_decision"] = paper.get("paper_decision")
+        out["brackets"] = paper.get("brackets")
+        out["ev_evaluations"] = paper.get("ev_evaluations")
+        out["paper_ledger"] = paper.get("paper_ledger")
+        out["target_date"] = paper.get("target_date")
+        out["horizon"] = paper.get("horizon")
+        if paper.get("status"):
+            out["status"] = paper["status"]
+            out["reason"] = paper.get("reason")
+        out["ok"] = True
+    except Exception as exc:
+        logger.exception("paper eval %s", location_id)
+        out["paper_decision"] = {
+            "decision": "blocked_paper_error",
+            "reason": str(exc),
+            "live_blocked": True,
+        }
+        out["ok"] = True
+        out["status"] = "paper_error"
+
+    _write_location_report(location_id, measurement, out)
+    return out
+
+
+def _resolve_twc_model_path(target: dict[str, Any], location_id: str, measurement: str) -> tuple[Path | None, str]:
+    """Prefer location-specific TWC artifact; else same-ICAO NWS station_v2 transfer."""
+    loc_model = _artifact_dir(location_id, measurement) / "station_corrected_v2.joblib"
+    if loc_model.exists():
+        return loc_model, "location_twc_artifact"
+    sibling = (target.get("details") or {}).get("same_station_model_location_id") or target.get(
+        "same_station_model_location_id"
+    )
+    if sibling:
+        sib_path = _artifact_dir(sibling, measurement) / "station_corrected_v2.joblib"
+        if sib_path.exists():
+            return sib_path, f"same_icao_transfer:{sibling}"
+        if sibling == "nyc_central_park" and DEFAULT_MODEL_PATH.exists():
+            return DEFAULT_MODEL_PATH, "same_icao_transfer:nyc_feeds_default"
+    if location_id == "twc_nyc_central_park" and DEFAULT_MODEL_PATH.exists():
+        return DEFAULT_MODEL_PATH, "same_icao_transfer:nyc_feeds_default"
+    return None, "missing"
+
+
+def _process_twc_location(
+    target: dict[str, Any],
+    store: FeedStore,
+    *,
+    out: dict[str, Any],
+    now: datetime,
+    do_paper: bool,
+    collect: bool,
+) -> dict[str, Any]:
+    """TWC settlement path — never applies NWS CLI floors."""
+    location_id = target["location_id"]
+    measurement = target["measurement"]
+    series = target["series_ticker"]
+    tz = target.get("timezone") or "America/New_York"
+    metars = target.get("metar_ids") or []
+    neighbors = target.get("neighbor_metar_ids") or []
+    cli_id = target.get("cli_location_id")
+    mapping = target.get("mapping_status")
+
+    if mapping not in ("verified", "verified_cli_url"):
+        out.update(
+            {
+                "status": "blocked_incomplete_mapping",
+                "reason": target.get("notes") or f"mapping_status={mapping}",
+            }
+        )
+        return out
+    if not metars or not cli_id:
+        out.update(
+            {
+                "status": "blocked_incomplete_mapping",
+                "reason": "TWC target requires verified metar_ids and cli_location_id (CLIxxx)",
+            }
+        )
+        return out
+
+    primary = metars[0]
+    stations = tuple(dict.fromkeys([*metars, *neighbors]))
+    collect_summary: dict[str, Any] = {}
+    if collect:
+        try:
+            collect_summary["aviationweather_metar"] = collect_metar(store, stations=stations, hours=30)
+        except Exception as exc:
+            collect_summary["aviationweather_metar"] = {"ok": False, "error": str(exc), "usable": False}
+        try:
+            collect_summary["twc_climate"] = collect_twc_climate(store, cli_ids=[cli_id])
+        except Exception as exc:
+            collect_summary["twc_climate"] = {"ok": False, "error": str(exc), "usable": False}
+        try:
+            collect_summary["twc_metar"] = collect_twc_metar(store, icao_ids=[primary])
+        except Exception as exc:
+            collect_summary["twc_metar"] = {"ok": False, "error": str(exc), "usable": False}
+    out["collection"] = collect_summary
+
+    av_ok = bool((collect_summary.get("aviationweather_metar") or {}).get("usable")) or bool(
+        store.latest_sample(f"metar_{primary}")
+    )
+    twc_ok = bool((collect_summary.get("twc_metar") or {}).get("usable")) or bool(
+        store.latest_sample(f"twc_metar_{primary}")
+    )
+    out["data_availability"] = {
+        "metar_primary": primary,
+        "aviationweather_usable": av_ok,
+        "twc_metar_usable": twc_ok,
+        "twc_cli_id": cli_id,
+        "notes": target.get("notes"),
+    }
+    if not av_ok and not twc_ok and collect:
+        out.update(
+            {
+                "status": "blocked_no_usable_metar",
+                "reason": f"No usable AviationWeather or TWC METAR for {primary}",
+            }
+        )
+        return out
+
+    features = build_twc_operating_features(
+        store,
+        now=now,
+        metar_id=primary,
+        twc_cli_id=cli_id,
+        tz_name=tz,
+        lat=target.get("lat"),
+        lon=target.get("lon"),
+        location_id=location_id,
+        include_satrad=(location_id == "twc_nyc_central_park"),
+    )
+    out["features_summary"] = {
+        "max_so_far": features.get("max_so_far"),
+        "coverage": features.get("coverage"),
+        "cli_applied": features.get("cli_applied"),
+        "twc_metar": features.get("twc_metar"),
+        "attribution": features.get("attribution"),
+        "missing": features.get("missing"),
+    }
+
+    local = civil_local(now, tz)
+    supported, decision_hour = is_supported_decision_time(now, tz_name=tz)
+    climate_day = date.fromisoformat(features["climate_day"])
+    ctx = ForecastContext(
+        location_id=location_id,
+        series_ticker=series,
+        measurement=measurement,
+        settlement_source_family="weather_company",
+        climate_day=climate_day,
+        decision_time_utc=now,
+        horizon="same_day",
+        model_version=None,
+        feature_schema_version=FEATURE_SCHEMA_VERSION,
+        decision_hour_local=decision_hour,
+        timezone=tz,
+        uses_lst_climate_day=True,
+        metar_id=primary,
+        cli_location_id=cli_id,
+        lat=target.get("lat"),
+        lon=target.get("lon"),
+        elev_m=target.get("elev_m"),
+        mode="RESEARCH",
+        extras={"model_family": "twc_daily_max_v1"},
+    )
+    out["forecast_context"] = ctx.as_dict()
+    out["decision_hour_local"] = decision_hour
+    out["supported_decision_hours_local"] = list(SUPPORTED_DECISION_HOURS_LOCAL)
+    out["generated_at_local"] = local.isoformat()
+
+    if not supported:
+        nxt = next_supported_decision_utc(now, tz_name=tz)
+        out.update(
+            {
+                "status": "unsupported_decision_time",
+                "reason": (
+                    f"Actionable forecasts restricted to local hours {SUPPORTED_DECISION_HOURS_LOCAL}; "
+                    f"now={local.strftime('%H:%M %Z')} tz={tz}"
+                ),
+                "next_supported_run_utc": nxt.isoformat(),
+                "next_supported_run_local": civil_local(nxt, tz).isoformat(),
+                "ok": True,
+                "paper_decision": {
+                    "decision": "blocked_unsupported_decision_time",
+                    "reason": "off-hours — not an end-to-end forecast success",
+                    "live_blocked": True,
+                },
+            }
+        )
+        _write_location_report(location_id, measurement, out)
+        return out
+
+    cov = features.get("coverage") or {}
+    if features.get("max_so_far") is None or not cov.get("adequate"):
+        out.update(
+            {
+                "status": "insufficient_data",
+                "reason": "Essential station coverage inadequate for TWC path",
+                "coverage_notes": cov.get("notes") if isinstance(cov, dict) else None,
+                "ok": True,
+                "paper_decision": {
+                    "decision": "blocked_insufficient_data",
+                    "reason": "coverage inadequate",
+                    "live_blocked": True,
+                },
+            }
+        )
+        _write_location_report(location_id, measurement, out)
+        return out
+
+    model_path, model_origin = _resolve_twc_model_path(target, location_id, measurement)
+    if model_path is None:
+        out.update(
+            {
+                "status": "blocked_no_location_model",
+                "reason": (
+                    f"No TWC/same-ICAO model for {location_id}; collect history then train, "
+                    "or add same_station_model_location_id transfer after validation."
+                ),
+                "ok": True,
+                "model_origin": model_origin,
+                "paper_decision": {
+                    "decision": "blocked_unsupported_model",
+                    "reason": "location model missing",
+                    "live_blocked": True,
+                },
+            }
+        )
+        _write_location_report(location_id, measurement, out)
+        return out
+
+    calib_candidates = [
+        _artifact_dir(location_id, measurement) / "station_corrected_v2_calibration.json",
+    ]
+    sibling = (target.get("details") or {}).get("same_station_model_location_id") or target.get(
+        "same_station_model_location_id"
+    )
+    if sibling:
+        calib_candidates.append(
+            _artifact_dir(sibling, measurement) / "station_corrected_v2_calibration.json"
+        )
+    if sibling == "nyc_central_park" or location_id == "twc_nyc_central_park":
+        calib_candidates.append(Path("data/obs_engine/feeds/models/station_corrected_v2_calibration.json"))
+    calib_path = next((p for p in calib_candidates if p.exists()), None)
+
+    pred = predict_station_v2(
+        context=ctx,
+        features=features.get("features") or {},
+        max_so_far=float(features["max_so_far"]),
+        coverage_adequate=True,
+        decision_hour_local=decision_hour,
+        cli_applied=features.get("cli_applied"),
+        model_path=model_path,
+        calib_path=calib_path,
+    )
+    out["prediction"] = pred.as_dict()
+    out["status"] = pred.status
+    out["probabilities_available"] = pred.probabilities_available
+    out["calibration_status"] = pred.calibration_status
+    out["point_median_f"] = pred.point_median_f
+    out["observation_constraint"] = pred.observation_constraint
+    out["model_origin"] = model_origin
+    out["model_artifact"] = str(model_path)
+    out["attribution"] = features.get("attribution")
+    out["sim_label"] = "twc_adapter_exploratory_paper"
+    if "same_icao_transfer" in model_origin:
+        out["model_transfer_note"] = (
+            "Residual model transferred from same-ICAO ASOS/NWS-label training; "
+            "settlement floor and progressive max use TWC portal — labeled exploratory."
+        )
+
+    if not pred.probabilities_available:
+        out.update(
+            {
+                "ok": True,
+                "reason": pred.reason,
+                "paper_decision": {
+                    "decision": "blocked_calibration_unavailable"
+                    if pred.status == "probabilities_unavailable"
+                    else f"blocked_{pred.status}",
+                    "reason": pred.reason,
+                    "live_blocked": True,
+                    "research_point_forecast": pred.point_median_f,
+                },
+            }
+        )
+        _write_location_report(location_id, measurement, out)
+        return out
+
+    if not do_paper:
+        out["ok"] = True
+        _write_location_report(location_id, measurement, out)
+        return out
+
     try:
         paper = _paper_evaluate(
             pred=pred,

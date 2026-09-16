@@ -8,7 +8,11 @@ import re
 from pathlib import Path
 from typing import Any
 
-from kalshi_bot.models.weather.obs_engine.multi.registry import VERIFIED_NWS_CLI_DAILY_MAX, LocationRegistry
+from kalshi_bot.models.weather.obs_engine.multi.registry import (
+    VERIFIED_NWS_CLI_DAILY_MAX,
+    VERIFIED_TWC_DAILY_MAX,
+    LocationRegistry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -137,30 +141,60 @@ def discover_weather_markets(client, *, registry: LocationRegistry | None = None
             }
             n_ambiguous += 1
         elif family == "weather_company":
-            row = {
-                "location_id": f"twc_{tick.lower()}",
-                "series_ticker": tick,
-                "measurement": measurement,
-                "display_name": title,
-                "settlement_source_family": "weather_company",
-                "settlement_name": name,
-                "settlement_url": url,
-                "contract_url": ser.get("contract_url"),
-                "metar_ids": [],
-                "mapping_status": "discovered",
-                "data_availability": "twc_settlement_adapter_missing",
-                "validation_status": "blocked_unsupported_settlement_source",
-                "model_family": None,
-                "notes": (
-                    "Settles on The Weather Company per series API — NWS CLI / station_v2 pipeline "
-                    "must NOT be applied. Metric-specific TWC adapter required."
-                ),
-                "timezone": "UTC",
-                "uses_lst_climate_day": False,
-                "unit": "F",
-                "details": {"api_title": title, "frequency": freq},
-            }
-            n_unsupported += 1
+            verified_twc = (
+                VERIFIED_TWC_DAILY_MAX.get(tick.upper()) if measurement == "daily_max_temp_f" else None
+            )
+            if verified_twc:
+                details = {
+                    "api_title": title,
+                    "frequency": freq,
+                    "twc_portal": "https://weather.com/kalshi",
+                }
+                if verified_twc.get("same_station_model_location_id"):
+                    details["same_station_model_location_id"] = verified_twc[
+                        "same_station_model_location_id"
+                    ]
+                row = {
+                    **verified_twc,
+                    "series_ticker": tick,
+                    "measurement": measurement,
+                    "settlement_source_family": "weather_company",
+                    "settlement_name": name,
+                    "settlement_url": url,
+                    "contract_url": ser.get("contract_url"),
+                    "uses_lst_climate_day": True,
+                    "unit": "F",
+                    "rounding_note": "Whole °F as printed on weather.com/kalshi climate report",
+                    "data_availability": "twc_kalshi_portal_public",
+                    "rule_version": ser.get("contract_url") or "api_settlement_sources",
+                    "details": details,
+                }
+                n_mapped += 1
+            else:
+                row = {
+                    "location_id": f"twc_{tick.lower()}",
+                    "series_ticker": tick,
+                    "measurement": measurement,
+                    "display_name": title,
+                    "settlement_source_family": "weather_company",
+                    "settlement_name": name,
+                    "settlement_url": url,
+                    "contract_url": ser.get("contract_url"),
+                    "metar_ids": [],
+                    "mapping_status": "discovered",
+                    "data_availability": "twc_settlement_adapter_partial",
+                    "validation_status": "blocked_incomplete_mapping",
+                    "model_family": None,
+                    "notes": (
+                        "Settles on The Weather Company per series API — station mapping not yet "
+                        "verified against weather.com/kalshi portal. Do not apply NWS CLI pipeline."
+                    ),
+                    "timezone": "UTC",
+                    "uses_lst_climate_day": False,
+                    "unit": "F",
+                    "details": {"api_title": title, "frequency": freq},
+                }
+                n_unsupported += 1
         else:
             row = {
                 "location_id": f"unk_{tick.lower()}",
@@ -218,6 +252,14 @@ def discover_weather_markets(client, *, registry: LocationRegistry | None = None
             if r.get("measurement") == "daily_max_temp_f"
             and r.get("settlement_source_family") == "nws_cli"
             and r.get("mapping_status") in ("verified", "verified_cli_url")
+        ],
+        "operating_twc_daily_max": [
+            r["series_ticker"]
+            for r in rows_out
+            if r.get("measurement") == "daily_max_temp_f"
+            and r.get("settlement_source_family") == "weather_company"
+            and r.get("mapping_status") == "verified"
+            and r.get("model_family") == "twc_daily_max_v1"
         ],
     }
     registry.record_discovery_run(summary)

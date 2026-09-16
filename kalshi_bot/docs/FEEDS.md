@@ -91,8 +91,12 @@ target. Settlement stations are **never** inferred from city names without evide
 
 - Verified NWS CLI daily-max mappings (initial): HIGHNY (Central Park), HIGHCHI (Midway),
   HIGHMIA, HIGHAUS, KXDENHIGH, KXHIGHOU (+ Houston aliases).
-- Weather Company (TWC) series are recorded as `blocked_unsupported_settlement_source` —
-  the NWS station_v2 pipeline must not be applied.
+- Weather Company (TWC) daily-max adapter (`feeds/twc_kalshi.py`) reads the public
+  weather.com/kalshi portal JSON (`/kalshi/api/climate/primary`, `/kalshi/api/metar`).
+  Verified series: KXHIGHNY (CLINYC/KNYC), KXHIGHCHI (CLIMDW/KMDW), KXHIGHLAX, KXHIGHAUS,
+  KXHIGHDEN, KXHIGHPHIL, KXHIGHMIA. Settlement floors use TWC climate reports — never NWS CLI.
+  Same-ICAO residual transfer (e.g. NYC station_v2 → KXHIGHNY) is labeled exploratory.
+- Unmapped TWC series stay `blocked_incomplete_mapping`.
 - Ambiguous CLI-only mappings (`issuedby` known, METAR unsettled) are recorded explicitly
   and skipped for operating inference.
 - `ForecastContext` partitions location / measurement / climate day / decision time /

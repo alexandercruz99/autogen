@@ -24,7 +24,11 @@ from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
 from kalshi_bot.models.weather.obs_engine.multi.context import ForecastContext
 from kalshi_bot.models.weather.obs_engine.multi.pipeline import process_location
 from kalshi_bot.models.weather.obs_engine.multi.predict import predict_station_v2
-from kalshi_bot.models.weather.obs_engine.multi.registry import VERIFIED_NWS_CLI_DAILY_MAX, LocationRegistry
+from kalshi_bot.models.weather.obs_engine.multi.registry import (
+    VERIFIED_NWS_CLI_DAILY_MAX,
+    VERIFIED_TWC_DAILY_MAX,
+    LocationRegistry,
+)
 from kalshi_bot.money import D
 
 
@@ -394,18 +398,40 @@ def test_registry_seed_and_isolation(tmp_path: Path):
     ops = reg.operating_daily_max()
     assert any(t["location_id"] == "nyc_central_park" for t in ops)
     assert any(t["location_id"] == "chi_midway" for t in ops)
-    # TWC must not be operating
+    # Unverified TWC must not be operating
     reg.upsert_target(
         {
             "location_id": "twc_x",
-            "series_ticker": "KXHIGHNY",
+            "series_ticker": "KXFOO",
             "measurement": "daily_max_temp_f",
             "settlement_source_family": "weather_company",
             "mapping_status": "discovered",
             "validation_status": "blocked",
+            "model_family": None,
         }
     )
-    assert all(t["settlement_source_family"] == "nws_cli" for t in reg.operating_daily_max())
+    assert all(
+        t["series_ticker"] != "KXFOO" for t in reg.operating_daily_max()
+    )
+    # Verified TWC is operating
+    for tick, base in VERIFIED_TWC_DAILY_MAX.items():
+        details = {}
+        if base.get("same_station_model_location_id"):
+            details["same_station_model_location_id"] = base["same_station_model_location_id"]
+        reg.upsert_target(
+            {
+                **{k: v for k, v in base.items() if k != "same_station_model_location_id"},
+                "series_ticker": tick,
+                "measurement": "daily_max_temp_f",
+                "settlement_source_family": "weather_company",
+                "unit": "F",
+                "uses_lst_climate_day": True,
+                "details": details,
+            }
+        )
+    ops2 = reg.operating_daily_max()
+    assert any(t["series_ticker"] == "KXHIGHNY" for t in ops2)
+    assert any(t["settlement_source_family"] == "weather_company" for t in ops2)
     reg.close()
 
 
@@ -417,10 +443,10 @@ def test_unsupported_location_fails_independently(tmp_path: Path):
         "measurement": "daily_max_temp_f",
         "settlement_source_family": "weather_company",
         "mapping_status": "discovered",
-        "validation_status": "blocked_unsupported_settlement_source",
+        "validation_status": "blocked_incomplete_mapping",
         "metar_ids": [],
         "timezone": "UTC",
-        "notes": "TWC — do not apply NWS pipeline",
+        "notes": "TWC — unmapped station",
     }
     chi = {
         **VERIFIED_NWS_CLI_DAILY_MAX["HIGHCHI"],
@@ -430,7 +456,7 @@ def test_unsupported_location_fails_independently(tmp_path: Path):
     }
     r1 = process_location(twc, store, collect=False, do_paper=False)
     r2 = process_location(chi, store, collect=False, do_paper=False)
-    assert r1["status"] == "blocked_unsupported_settlement_source"
+    assert r1["status"] == "blocked_incomplete_mapping"
     assert r2["status"] in (
         "blocked_no_usable_metar",
         "blocked_no_location_model",
@@ -440,6 +466,100 @@ def test_unsupported_location_fails_independently(tmp_path: Path):
     )
     # Independent: TWC block does not prevent CHI from producing its own status
     assert r2["location_id"] == "chi_midway"
+    store.close()
+
+
+def test_twc_climate_floor_and_metar_collect(tmp_path: Path):
+    """Unit-level TWC store helpers: climate floor + progressive max (no network)."""
+    from kalshi_bot.models.weather.obs_engine.feeds.twc_kalshi import (
+        climate_feed_name,
+        metar_feed_name,
+        select_twc_climate_for_decision,
+        twc_metar_max_so_far,
+    )
+
+    store = FeedStore(path=tmp_path / "twc.db")
+    day = date(2026, 9, 15)
+    decision = datetime(2026, 9, 15, 20, 0, tzinfo=timezone.utc)
+    feed = climate_feed_name("NYC")
+    store.upsert_sample(
+        feed=feed,
+        source_key="TWC:NYC:2026-09-15:O:official",
+        payload={
+            "climate_day": "2026-09-15",
+            "issuance_utc": "2026-09-15T12:00:00+00:00",
+            "max_temp_f": 72,
+            "min_temp_f": 57,
+            "is_preliminary": False,
+            "is_official": True,
+            "status": "official",
+            "station_id": "NYC",
+            "cli_location_id": "NYC",
+        },
+        valid_utc="2026-09-15T12:00:00+00:00",
+        first_seen_utc="2026-09-15T12:05:00+00:00",
+        product="twc_climate",
+    )
+    sel = select_twc_climate_for_decision(
+        store, target_day=day, decision_utc=decision, cli_id="NYC"
+    )
+    assert sel["applied"] is not None
+    assert sel["applied"]["max_temp_f"] == 72
+    assert sel["applied"]["floor_policy"] == "whole_F_twc_climate_value_only"
+
+    mfeed = metar_feed_name("KNYC")
+    for h, temp in ((10, 65.0), (14, 71.0), (16, 70.0)):
+        ts = datetime(2026, 9, 15, h, 0, tzinfo=timezone.utc)
+        store.upsert_sample(
+            feed=mfeed,
+            source_key=f"TWC_METAR:KNYC:{ts.isoformat()}",
+            payload={
+                "station": "KNYC",
+                "valid_utc": ts.isoformat(),
+                "tmpf": temp,
+                "local_date": "2026-09-15",
+                "local_hour": h - 4,
+            },
+            valid_utc=ts.isoformat(),
+            first_seen_utc=ts.isoformat(),
+            product="twc_metar",
+        )
+    prog = twc_metar_max_so_far(
+        store,
+        icao="KNYC",
+        climate_day=day,
+        tz_name="America/New_York",
+        decision_utc=decision,
+    )
+    assert prog["usable"]
+    assert prog["max_so_far"] == 71.0
+    store.close()
+
+
+def test_twc_verified_path_does_not_use_nws_cli_gate(tmp_path: Path):
+    """Verified KXHIGHNY enters TWC branch (not blocked_unsupported_settlement_source)."""
+    store = FeedStore(path=tmp_path / "f.db")
+    base = VERIFIED_TWC_DAILY_MAX["KXHIGHNY"]
+    target = {
+        **{k: v for k, v in base.items() if k != "same_station_model_location_id"},
+        "series_ticker": "KXHIGHNY",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "weather_company",
+        "details": {"same_station_model_location_id": "nyc_central_park"},
+    }
+    # Off-hours or no data — but must not be the old unsupported-settlement block
+    r = process_location(target, store, collect=False, do_paper=False)
+    assert r["status"] != "blocked_unsupported_settlement_source"
+    assert r["settlement_source_family"] == "weather_company"
+    assert r["status"] in (
+        "blocked_no_usable_metar",
+        "insufficient_data",
+        "unsupported_decision_time",
+        "blocked_no_location_model",
+        "ok",
+        "probabilities_available",
+        "point_only",
+    )
     store.close()
 
 

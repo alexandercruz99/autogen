@@ -90,6 +90,23 @@ def create_app(
         positions = store.list_positions()
         audit = store.list_audit(limit=30)
         validation = pipeline.validation_status()
+        feeds = {}
+        research_forecast = None
+        try:
+            from kalshi_bot.models.weather.ops import weather_feeds_status
+
+            feeds = weather_feeds_status(config)
+        except Exception as exc:
+            feeds = {"error": str(exc)}
+        try:
+            import json
+            from pathlib import Path
+
+            p = Path("data/obs_engine/feeds/latest_prediction.json")
+            if p.exists():
+                research_forecast = json.loads(p.read_text())
+        except Exception:
+            research_forecast = None
         return templates.TemplateResponse(
             request,
             "dashboard.html",
@@ -103,6 +120,8 @@ def create_app(
                 "config_mode": config.mode,
                 "live_config_enabled": config.live.enabled,
                 "validation": validation,
+                "feeds": feeds,
+                "research_forecast": research_forecast,
             },
         )
 

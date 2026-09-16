@@ -246,3 +246,44 @@ def weather_obs_experiment(config: AppConfig) -> dict[str, Any]:
 
     data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
     return run_feature_experiments(data_dir=data_dir)
+
+
+def weather_feeds_once(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.feeds.worker import run_collect_cycle
+
+    return run_collect_cycle(do_infer=True)
+
+
+def weather_feeds_status(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
+    import os
+    from pathlib import Path
+
+    store = FeedStore()
+    pidfile = Path("data/obs_engine/feeds/collector.pid")
+    running = False
+    pid = None
+    if pidfile.exists():
+        try:
+            pid = int(pidfile.read_text().strip())
+            os.kill(pid, 0)
+            running = True
+        except Exception:
+            running = False
+    out = {
+        "running": running,
+        "pid": pid,
+        "heartbeat": store.get_heartbeat(),
+        "checkpoints": store.list_checkpoints(),
+        "latest_prediction": store.latest_prediction(),
+        "nys_mesonet": {"status": "optional_blocked", "reason": "No permitted access configured"},
+    }
+    store.close()
+    return out
+
+
+def weather_feeds_train(config: AppConfig) -> dict[str, Any]:
+    from kalshi_bot.models.weather.obs_engine.feeds.train_operating import train_station_corrected
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return train_station_corrected(data_dir=data_dir)

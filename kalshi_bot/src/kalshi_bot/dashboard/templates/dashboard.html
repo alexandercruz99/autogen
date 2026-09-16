@@ -172,6 +172,38 @@
     </section>
 
     <section class="card">
+      <h2>Weather feeds (research)</h2>
+      {% if feeds.error %}
+      <p class="bad">{{ feeds.error }}</p>
+      {% else %}
+      <p>Collector worker: {% if feeds.running %}<span class="ok">RUNNING</span> pid={{ feeds.pid }}{% else %}<span class="warn">stopped</span>{% endif %}
+         · heartbeat: {{ feeds.heartbeat.status if feeds.heartbeat else "n/a" }} @ {{ feeds.heartbeat.updated_at_utc if feeds.heartbeat else "" }}
+      </p>
+      <ul>
+        {% for cp in feeds.checkpoints or [] %}
+        <li><code>{{ cp.feed }}</code> — last_success={{ cp.last_success_utc or "never" }} · fails={{ cp.consecutive_failures }} {% if cp.last_error %}<span class="bad">{{ cp.last_error }}</span>{% endif %}</li>
+        {% else %}
+        <li class="muted">No checkpoints yet — run <code>weather-feeds-once</code> or <code>weather-feeds-run</code></li>
+        {% endfor %}
+      </ul>
+      <p class="muted">NYS Mesonet: optional / not connected ({{ (feeds.nys_mesonet or {}).reason }})</p>
+      {% endif %}
+      {% if research_forecast %}
+      <h3>Latest research forecast</h3>
+      <p>target={{ research_forecast.target_date }} · median remain path · model={{ research_forecast.model_artifact or research_forecast.model_version }} · live_orders={{ research_forecast.live_orders }}</p>
+      <p class="muted">feeds contributed: {{ research_forecast.feeds_contributed }} · missing={{ research_forecast.missing }}</p>
+      <ul>
+        {% for b in research_forecast.brackets or [] %}
+        <li>{{ b.ticker }} P(YES)={{ b.p_yes }} ask={{ b.yes_ask }}</li>
+        {% endfor %}
+      </ul>
+      {% if research_forecast.paper_decision %}
+      <p class="note">Paper: {{ research_forecast.paper_decision.decision }} — {{ research_forecast.paper_decision.reason }}</p>
+      {% endif %}
+      {% endif %}
+    </section>
+
+    <section class="card">
       <h2>Controls</h2>
       <div class="controls">
         <form method="post" action="/actions/scan"><button type="submit" class="primary">Scan now</button></form>

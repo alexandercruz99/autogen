@@ -121,6 +121,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-obs-audit", help="Measurement/settlement data-quality audit")
     sub.add_parser("weather-obs-diagnose", help="Export per decision-time error diagnostics")
     sub.add_parser("weather-obs-experiment", help="Compare feature candidates chronologically")
+    sub.add_parser("weather-feeds-once", help="One full feed cycle: METAR/CLI/GOES/NEXRAD + research infer (no live)")
+    sub.add_parser("weather-feeds-status", help="Collector heartbeat and feed checkpoints")
+    sub.add_parser("weather-feeds-train", help="Train station-corrected operating model (baseline frozen)")
+    p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
+    p_feeds_run.add_argument("--interval", type=int, default=300)
+    sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -131,6 +137,14 @@ def main(argv: list[str] | None = None) -> int:
         cfg_path = "config.yaml"
     elif cfg_path is None and Path("config.example.yaml").exists():
         cfg_path = "config.example.yaml"
+
+    # Feed worker commands (may run without trading boot)
+    if args.cmd in ("weather-feeds-run", "weather-feeds-stop"):
+        from kalshi_bot.models.weather.obs_engine.feeds import worker as feed_worker
+
+        if args.cmd == "weather-feeds-run":
+            return feed_worker.main(["run", "--interval", str(args.interval)])
+        return feed_worker.main(["stop"])
 
     # Weather ops can run without starting the trading loop / live boot side effects.
     weather_ops = (
@@ -147,11 +161,17 @@ def main(argv: list[str] | None = None) -> int:
         "weather-obs-audit",
         "weather-obs-diagnose",
         "weather-obs-experiment",
+        "weather-feeds-once",
+        "weather-feeds-status",
+        "weather-feeds-train",
     )
     if args.cmd in weather_ops:
         config = load_config(cfg_path)
         from kalshi_bot.models.weather.ops import (
             weather_collect,
+            weather_feeds_once,
+            weather_feeds_status,
+            weather_feeds_train,
             weather_obs_audit,
             weather_obs_backtest,
             weather_obs_collect_once,
@@ -180,6 +200,9 @@ def main(argv: list[str] | None = None) -> int:
             "weather-obs-audit": weather_obs_audit,
             "weather-obs-diagnose": weather_obs_diagnose,
             "weather-obs-experiment": weather_obs_experiment,
+            "weather-feeds-once": weather_feeds_once,
+            "weather-feeds-status": weather_feeds_status,
+            "weather-feeds-train": weather_feeds_train,
         }
         print(json.dumps(dispatch[args.cmd](config), indent=2, default=str))
         return 0

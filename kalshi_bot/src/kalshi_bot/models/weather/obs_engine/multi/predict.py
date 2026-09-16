@@ -91,6 +91,7 @@ def predict_station_v2(
     calib_path: Path | None = None,
     calibration: dict[str, Any] | None = None,
     require_supported_hour: bool = True,
+    require_location_id: bool = True,
     clamp_point_to_max_so_far: bool = True,
 ) -> UnifiedPrediction:
     """Single prediction function for train/eval/replay/operating.
@@ -156,15 +157,71 @@ def predict_station_v2(
     raw_point = float(max_so_far) + q50
     point = max(raw_point, float(max_so_far)) if clamp_point_to_max_so_far else raw_point
 
-    calib = calibration if calibration is not None else load_calibration(calib_path or DEFAULT_CALIB_PATH)
-    residuals, calib_status = pick_residuals(calib, decision_hour_local)
-
     obs_constraint: dict[str, Any] = {
         "max_so_far_f": float(max_so_far),
         "clamp_point_to_max_so_far": clamp_point_to_max_so_far,
         "integer_floor_applied": False,
         "note": "Fractional METAR max_so_far is not an official whole-°F CLI minimum",
     }
+
+    if calibration is not None:
+        calib = calibration
+    elif calib_path is None:
+        return UnifiedPrediction(
+            ok=True,
+            status="probabilities_unavailable",
+            context=ctx,
+            point_median_f=point,
+            remain_q10_q50_q90=[q10, q50, q90],
+            quantiles_crossed=crossed,
+            probabilities_available=False,
+            calibration_status="missing_location_calibration",
+            observation_constraint=obs_constraint,
+            model_artifact=artifact,
+            model_version=str(model_blob.get("model_version") or ""),
+            reason="missing_location_calibration",
+            extras={"research_point_forecast_only": True},
+        )
+    else:
+        calib = load_calibration(calib_path)
+        if calib is None:
+            return UnifiedPrediction(
+                ok=True,
+                status="probabilities_unavailable",
+                context=ctx,
+                point_median_f=point,
+                remain_q10_q50_q90=[q10, q50, q90],
+                quantiles_crossed=crossed,
+                probabilities_available=False,
+                calibration_status="missing_location_calibration",
+                observation_constraint=obs_constraint,
+                model_artifact=artifact,
+                model_version=str(model_blob.get("model_version") or ""),
+                reason="missing_location_calibration",
+                extras={"research_point_forecast_only": True, "calib_path": str(calib_path)},
+            )
+
+    if require_location_id:
+        calib_loc = (calib.get("meta") or {}).get("location_id")
+        if calib_loc and calib_loc != ctx.location_id:
+            reason = f"calibration_location_mismatch:{calib_loc}!={ctx.location_id}"
+            return UnifiedPrediction(
+                ok=True,
+                status="probabilities_unavailable",
+                context=ctx,
+                point_median_f=point,
+                remain_q10_q50_q90=[q10, q50, q90],
+                quantiles_crossed=crossed,
+                probabilities_available=False,
+                calibration_status=reason,
+                observation_constraint=obs_constraint,
+                model_artifact=artifact,
+                model_version=str(model_blob.get("model_version") or ""),
+                reason=reason,
+                extras={"research_point_forecast_only": True},
+            )
+
+    residuals, calib_status = pick_residuals(calib, decision_hour_local)
 
     if residuals is None:
         return UnifiedPrediction(

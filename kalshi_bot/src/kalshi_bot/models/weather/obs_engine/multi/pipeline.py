@@ -28,7 +28,11 @@ from kalshi_bot.models.weather.obs_engine.feeds.storage import FeedStore
 from kalshi_bot.models.weather.obs_engine.feeds.twc_kalshi import collect_twc_climate, collect_twc_metar
 from kalshi_bot.models.weather.obs_engine.multi.context import ForecastContext
 from kalshi_bot.models.weather.obs_engine.multi.markets import fetch_open_series_markets, select_event_markets
-from kalshi_bot.models.weather.obs_engine.multi.predict import DEFAULT_MODEL_PATH, predict_station_v2
+from kalshi_bot.models.weather.obs_engine.multi.predict import (
+    DEFAULT_CALIB_PATH,
+    DEFAULT_MODEL_PATH,
+    predict_station_v2,
+)
 from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
 from kalshi_bot.models.weather.settlement_rules import interval_from_market
 from kalshi_bot.money import D, ONE, ZERO
@@ -42,6 +46,56 @@ def _artifact_dir(location_id: str, measurement: str) -> Path:
     p = ARTIFACT_ROOT / "artifacts" / f"{location_id}__{measurement}"
     p.mkdir(parents=True, exist_ok=True)
     return p
+
+
+def _artifact_calib_path(location_id: str, measurement: str) -> Path:
+    return _artifact_dir(location_id, measurement) / "station_corrected_v2_calibration.json"
+
+
+def _sibling_location_id(target: dict[str, Any] | None) -> str | None:
+    if not target:
+        return None
+    return (target.get("details") or {}).get("same_station_model_location_id") or target.get(
+        "same_station_model_location_id"
+    )
+
+
+def _resolve_calibration_path(
+    location_id: str,
+    measurement: str,
+    *,
+    target: dict[str, Any] | None = None,
+    model_path: Path | None = None,
+    model_origin: str = "",
+) -> tuple[Path | None, bool]:
+    """Resolve explicit calibration path; never rely on predict's implicit NYC fallback.
+
+    Returns (calib_path, require_location_id). When a model is in use but calib is
+    missing, returns the expected artifact path (nonexistent) so predict fails closed.
+    """
+    loc_calib = _artifact_calib_path(location_id, measurement)
+    if loc_calib.exists():
+        return loc_calib, True
+
+    sibling = _sibling_location_id(target)
+    if sibling is None and model_origin.startswith("same_icao_transfer:"):
+        sibling = model_origin.split(":", 1)[1]
+        if sibling == "nyc_feeds_default":
+            sibling = "nyc_central_park"
+
+    if sibling:
+        sib_calib = _artifact_calib_path(sibling, measurement)
+        if sib_calib.exists():
+            return sib_calib, False
+        return sib_calib, False
+
+    if model_path == DEFAULT_MODEL_PATH or "nyc_feeds_default" in model_origin:
+        return DEFAULT_CALIB_PATH, location_id == "nyc_central_park"
+
+    if model_path is not None and model_path.exists():
+        return loc_calib, True
+
+    return None, True
 
 
 def _shared_paper_ledger() -> PaperLedger:
@@ -278,6 +332,14 @@ def process_location(
         _write_location_report(location_id, measurement, out)
         return out
 
+    model_origin = "nyc_feeds_default" if model_path == DEFAULT_MODEL_PATH else "location_artifact"
+    calib_path, require_location_id = _resolve_calibration_path(
+        location_id,
+        measurement,
+        target=target,
+        model_path=model_path,
+        model_origin=model_origin,
+    )
     pred = predict_station_v2(
         context=ctx,
         features=features.get("features") or {},
@@ -286,11 +348,8 @@ def process_location(
         decision_hour_local=decision_hour,
         cli_applied=features.get("cli_applied"),
         model_path=model_path,
-        calib_path=(
-            _artifact_dir(location_id, measurement) / "station_corrected_v2_calibration.json"
-            if (_artifact_dir(location_id, measurement) / "station_corrected_v2_calibration.json").exists()
-            else None
-        ),
+        calib_path=calib_path,
+        require_location_id=require_location_id,
     )
     out["prediction"] = pred.as_dict()
     out["status"] = pred.status
@@ -582,19 +641,13 @@ def _process_twc_location(
         _write_location_report(location_id, measurement, out)
         return out
 
-    calib_candidates = [
-        _artifact_dir(location_id, measurement) / "station_corrected_v2_calibration.json",
-    ]
-    sibling = (target.get("details") or {}).get("same_station_model_location_id") or target.get(
-        "same_station_model_location_id"
+    calib_path, require_location_id = _resolve_calibration_path(
+        location_id,
+        measurement,
+        target=target,
+        model_path=model_path,
+        model_origin=model_origin,
     )
-    if sibling:
-        calib_candidates.append(
-            _artifact_dir(sibling, measurement) / "station_corrected_v2_calibration.json"
-        )
-    if sibling == "nyc_central_park" or location_id == "twc_nyc_central_park":
-        calib_candidates.append(Path("data/obs_engine/feeds/models/station_corrected_v2_calibration.json"))
-    calib_path = next((p for p in calib_candidates if p.exists()), None)
 
     pred = predict_station_v2(
         context=ctx,
@@ -605,6 +658,7 @@ def _process_twc_location(
         cli_applied=features.get("cli_applied"),
         model_path=model_path,
         calib_path=calib_path,
+        require_location_id=require_location_id,
     )
     out["prediction"] = pred.as_dict()
     out["status"] = pred.status

@@ -176,34 +176,40 @@ def _eval_production_distribution(
     models: dict[str, Any],
     residuals_by_h: dict[str, list[float]],
 ) -> dict[str, Any]:
-    from kalshi_bot.models.weather.distribution import from_empirical_residuals
+    from kalshi_bot.models.weather.obs_engine.multi.predict import predict_from_rows
 
+    calib = {"residuals_by_hour": residuals_by_h, "meta": {}}
+    preds = predict_from_rows(rows, models, calibration=calib, feature_key="features")
     by_hour: dict[str, Any] = {}
     for hour in SUPPORTED_DECISION_HOURS_LOCAL:
-        hrs = [r for r in rows if int(r["decision_hour"]) == hour]
-        if not hrs:
+        hour_pairs = [
+            (r, p) for r, p in zip(rows, preds) if int(r["decision_hour"]) == hour
+        ]
+        if not hour_pairs:
             continue
         res = residuals_by_h.get(str(hour)) or residuals_by_h.get("all") or []
         if len(res) < 10:
-            by_hour[str(hour)] = {"n": len(hrs), "status": "calib_thin"}
+            by_hour[str(hour)] = {"n": len(hour_pairs), "status": "calib_thin"}
             continue
         abs_err = []
         hit80 = []
         bias = []
-        for r in hrs:
-            X = np.nan_to_num(np.asarray([r["features"]], dtype=float), nan=-999.0)
-            rem = float(models["q50"].predict(X)[0])
-            point = max(float(r["max_so_far"]) + rem, float(r["max_so_far"]))
-            dist = from_empirical_residuals(point, res, method="eval")
-            med = dist.quantile(0.5)
+        for r, pred in hour_pairs:
+            dist = pred.get("distribution")
+            if not pred.get("probabilities_available") or not dist:
+                continue
+            med = float(dist["q50"])
             y = float(r["label_tmax_f"])
             abs_err.append(abs(y - med))
             bias.append(med - y)
-            q10, q90 = dist.quantile(0.1), dist.quantile(0.9)
+            q10, q90 = float(dist["q10"]), float(dist["q90"])
             hit80.append(1.0 if q10 <= y <= q90 else 0.0)
+        if not abs_err:
+            by_hour[str(hour)] = {"n": len(hour_pairs), "status": "calib_thin"}
+            continue
         by_hour[str(hour)] = {
-            "n_rows": len(hrs),
-            "n_independent_days": len({r["climate_day"] for r in hrs}),
+            "n_rows": len(hour_pairs),
+            "n_independent_days": len({r["climate_day"] for r, _ in hour_pairs}),
             "production_median_mae_f": float(np.mean(abs_err)),
             "production_median_bias_f": float(np.mean(bias)),
             "interval_80_coverage": float(np.mean(hit80)),

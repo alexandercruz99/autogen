@@ -83,9 +83,9 @@ models:
         station_note: "Daily max → NWS CLI Central Park (NYC)"
       LAX:
         series_prefixes: ["KXHIGHLAX", "HIGHLAX"]
-        lat: 34.0522
-        lon: -118.2437
-        station_note: "Daily max → NWS CLI LAX — verify rules_primary"
+        lat: 33.9425
+        lon: -118.4081
+        station_note: "Daily max → TWC CLILAX / KLAX airport (KXHIGHLAX)"
       CHI:
         series_prefixes: ["KXHIGHTCHI", "HIGHCHI", "KXHIGHCHI"]
         lat: 41.7868

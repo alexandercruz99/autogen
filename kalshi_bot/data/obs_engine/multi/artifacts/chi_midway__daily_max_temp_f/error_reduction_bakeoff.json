@@ -1,0 +1,582 @@
+{
+  "ok": true,
+  "location_id": "chi_midway",
+  "literature_basis": [
+    "Diurnal temperature lag after solar noon (Penn State Meteo / WKU temperature lab)",
+    "Forecasters' Reference Book: daytime rise of surface temperature / insolation heating",
+    "MOS cloud-conditioned temperature corrections (NWS MOS docs; cloud cover modulates Tmax error)",
+    "Nowcast clamp: final max >= max_so_far; peak-lock when cooling onset"
+  ],
+  "methods": [
+    "baseline_station_v2",
+    "diurnal_climatology",
+    "sky_conditioned_clim",
+    "peak_lock_hybrid",
+    "blend_model_clim",
+    "persistence_max_so_far"
+  ],
+  "splits": {
+    "n_train_days": 1199,
+    "n_test_days": 257,
+    "n_train_rows_core": 3596,
+    "n_test_rows_core": 770,
+    "train_end": "2025-04-16",
+    "test_end": "2026-09-13"
+  },
+  "core_hours_8_11_14_test": {
+    "baseline_station_v2": {
+      "n": 770,
+      "mae_f": 2.428471409926401,
+      "bias_f": -0.608361825986533,
+      "rmse_f": 3.706255831975107,
+      "pct_within_0_5f": 20.909090909090907,
+      "pct_within_1_0f": 36.883116883116884,
+      "pct_within_2_0f": 59.87012987012987
+    },
+    "diurnal_climatology": {
+      "n": 770,
+      "mae_f": 2.9824675324675325,
+      "bias_f": -0.4461038961038961,
+      "rmse_f": 4.555476937694903,
+      "pct_within_0_5f": 21.16883116883117,
+      "pct_within_1_0f": 41.81818181818181,
+      "pct_within_2_0f": 57.7922077922078
+    },
+    "sky_conditioned_clim": {
+      "n": 770,
+      "mae_f": 2.992012987012987,
+      "bias_f": -0.020974025974025944,
+      "rmse_f": 4.582562587693688,
+      "pct_within_0_5f": 22.07792207792208,
+      "pct_within_1_0f": 41.42857142857143,
+      "pct_within_2_0f": 59.350649350649356
+    },
+    "peak_lock_hybrid": {
+      "n": 770,
+      "mae_f": 2.4593346510736516,
+      "bias_f": -0.665452496374313,
+      "rmse_f": 3.7252278312656437,
+      "pct_within_0_5f": 19.350649350649352,
+      "pct_within_1_0f": 36.62337662337662,
+      "pct_within_2_0f": 59.74025974025974
+    },
+    "blend_model_clim": {
+      "n": 770,
+      "mae_f": 2.5452382694572724,
+      "bias_f": -0.544842628566998,
+      "rmse_f": 3.876339731123595,
+      "pct_within_0_5f": 21.038961038961038,
+      "pct_within_1_0f": 35.97402597402598,
+      "pct_within_2_0f": 57.14285714285714
+    },
+    "persistence_max_so_far": {
+      "n": 770,
+      "mae_f": 5.9831168831168835,
+      "bias_f": -5.9831168831168835,
+      "rmse_f": 8.188128879387191,
+      "pct_within_0_5f": 5.584415584415584,
+      "pct_within_1_0f": 23.376623376623375,
+      "pct_within_2_0f": 36.493506493506494
+    }
+  },
+  "ranked_by_mae_core": [
+    {
+      "method": "baseline_station_v2",
+      "n": 770,
+      "mae_f": 2.428471409926401,
+      "bias_f": -0.608361825986533,
+      "rmse_f": 3.706255831975107,
+      "pct_within_0_5f": 20.909090909090907,
+      "pct_within_1_0f": 36.883116883116884,
+      "pct_within_2_0f": 59.87012987012987
+    },
+    {
+      "method": "peak_lock_hybrid",
+      "n": 770,
+      "mae_f": 2.4593346510736516,
+      "bias_f": -0.665452496374313,
+      "rmse_f": 3.7252278312656437,
+      "pct_within_0_5f": 19.350649350649352,
+      "pct_within_1_0f": 36.62337662337662,
+      "pct_within_2_0f": 59.74025974025974
+    },
+    {
+      "method": "blend_model_clim",
+      "n": 770,
+      "mae_f": 2.5452382694572724,
+      "bias_f": -0.544842628566998,
+      "rmse_f": 3.876339731123595,
+      "pct_within_0_5f": 21.038961038961038,
+      "pct_within_1_0f": 35.97402597402598,
+      "pct_within_2_0f": 57.14285714285714
+    },
+    {
+      "method": "diurnal_climatology",
+      "n": 770,
+      "mae_f": 2.9824675324675325,
+      "bias_f": -0.4461038961038961,
+      "rmse_f": 4.555476937694903,
+      "pct_within_0_5f": 21.16883116883117,
+      "pct_within_1_0f": 41.81818181818181,
+      "pct_within_2_0f": 57.7922077922078
+    },
+    {
+      "method": "sky_conditioned_clim",
+      "n": 770,
+      "mae_f": 2.992012987012987,
+      "bias_f": -0.020974025974025944,
+      "rmse_f": 4.582562587693688,
+      "pct_within_0_5f": 22.07792207792208,
+      "pct_within_1_0f": 41.42857142857143,
+      "pct_within_2_0f": 59.350649350649356
+    },
+    {
+      "method": "persistence_max_so_far",
+      "n": 770,
+      "mae_f": 5.9831168831168835,
+      "bias_f": -5.9831168831168835,
+      "rmse_f": 8.188128879387191,
+      "pct_within_0_5f": 5.584415584415584,
+      "pct_within_1_0f": 23.376623376623375,
+      "pct_within_2_0f": 36.493506493506494
+    }
+  ],
+  "improvement_vs_baseline_mae_f": {
+    "baseline_station_v2": 0.0,
+    "diurnal_climatology": -0.554,
+    "sky_conditioned_clim": -0.5635,
+    "peak_lock_hybrid": -0.0309,
+    "blend_model_clim": -0.1168,
+    "persistence_max_so_far": -3.5546
+  },
+  "by_decision_hour_local": {
+    "8": {
+      "n": 256,
+      "baseline_station_v2": {
+        "n": 256,
+        "mae_f": 3.7937058033740585,
+        "bias_f": -0.8097036594413722,
+        "rmse_f": 5.19037291493976,
+        "pct_within_0_5f": 10.15625,
+        "pct_within_1_0f": 17.1875,
+        "pct_within_2_0f": 35.9375
+      },
+      "diurnal_climatology": {
+        "n": 256,
+        "mae_f": 4.912109375,
+        "bias_f": -0.10351562499999989,
+        "rmse_f": 6.616836066523788,
+        "pct_within_0_5f": 10.9375,
+        "pct_within_1_0f": 18.359375,
+        "pct_within_2_0f": 33.203125
+      },
+      "sky_conditioned_clim": {
+        "n": 256,
+        "mae_f": 4.8869140625,
+        "bias_f": 0.6724609374999999,
+        "rmse_f": 6.684128092681573,
+        "pct_within_0_5f": 11.328125,
+        "pct_within_1_0f": 23.828125,
+        "pct_within_2_0f": 40.234375
+      },
+      "peak_lock_hybrid": {
+        "n": 256,
+        "mae_f": 3.7937058033740585,
+        "bias_f": -0.8097036594413722,
+        "rmse_f": 5.19037291493976,
+        "pct_within_0_5f": 10.15625,
+        "pct_within_1_0f": 17.1875,
+        "pct_within_2_0f": 35.9375
+      },
+      "blend_model_clim": {
+        "n": 256,
+        "mae_f": 4.039039513302866,
+        "bias_f": -0.5272284456648232,
+        "rmse_f": 5.488504356711944,
+        "pct_within_0_5f": 10.546875,
+        "pct_within_1_0f": 16.796875,
+        "pct_within_2_0f": 33.59375
+      },
+      "persistence_max_so_far": {
+        "n": 256,
+        "mae_f": 10.484375,
+        "bias_f": -10.484375,
+        "rmse_f": 12.25,
+        "pct_within_0_5f": 1.953125,
+        "pct_within_1_0f": 7.03125,
+        "pct_within_2_0f": 12.109375
+      },
+      "cooling_onset_rate": 0.0
+    },
+    "11": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 2.4174364765473184,
+        "bias_f": -0.6814083412444798,
+        "rmse_f": 3.4120295486275656,
+        "pct_within_0_5f": 14.396887159533073,
+        "pct_within_1_0f": 30.35019455252918,
+        "pct_within_2_0f": 57.97665369649806
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 2.922178988326848,
+        "bias_f": -0.6848249027237354,
+        "rmse_f": 3.9077395020093397,
+        "pct_within_0_5f": 14.396887159533073,
+        "pct_within_1_0f": 31.906614785992215,
+        "pct_within_2_0f": 48.63813229571984
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 2.9449416342412453,
+        "bias_f": -0.2270428015564202,
+        "rmse_f": 3.8697658260724426,
+        "pct_within_0_5f": 15.953307392996107,
+        "pct_within_1_0f": 28.01556420233463,
+        "pct_within_2_0f": 47.081712062256805
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 2.4174364765473184,
+        "bias_f": -0.6814083412444798,
+        "rmse_f": 3.4120295486275656,
+        "pct_within_0_5f": 14.396887159533073,
+        "pct_within_1_0f": 30.35019455252918,
+        "pct_within_2_0f": 57.97665369649806
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 2.5254490554752986,
+        "bias_f": -0.682774965836182,
+        "rmse_f": 3.498544902568073,
+        "pct_within_0_5f": 14.785992217898833,
+        "pct_within_1_0f": 28.404669260700388,
+        "pct_within_2_0f": 50.19455252918288
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 5.5136186770428015,
+        "bias_f": -5.5136186770428015,
+        "rmse_f": 6.665142497622889,
+        "pct_within_0_5f": 3.501945525291829,
+        "pct_within_1_0f": 13.229571984435799,
+        "pct_within_2_0f": 22.56809338521401
+      },
+      "cooling_onset_rate": 0.0
+    },
+    "12": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 2.006176871745991,
+        "bias_f": 0.5305431909754652,
+        "rmse_f": 2.646703557467808,
+        "pct_within_0_5f": 17.120622568093385,
+        "pct_within_1_0f": 29.961089494163424,
+        "pct_within_2_0f": 61.478599221789885
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 4.136186770428016,
+        "bias_f": -4.136186770428016,
+        "rmse_f": 5.113117334033645,
+        "pct_within_0_5f": 4.669260700389105,
+        "pct_within_1_0f": 17.898832684824903,
+        "pct_within_2_0f": 31.906614785992215
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 4.136186770428016,
+        "bias_f": -4.136186770428016,
+        "rmse_f": 5.113117334033645,
+        "pct_within_0_5f": 4.669260700389105,
+        "pct_within_1_0f": 17.898832684824903,
+        "pct_within_2_0f": 31.906614785992215
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 2.063603750661933,
+        "bias_f": 0.357726804283015,
+        "rmse_f": 2.794042971218022,
+        "pct_within_0_5f": 17.509727626459142,
+        "pct_within_1_0f": 31.1284046692607,
+        "pct_within_2_0f": 61.08949416342413
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 2.035701353032515,
+        "bias_f": -1.3361487935859275,
+        "rmse_f": 2.9701648207056532,
+        "pct_within_0_5f": 20.233463035019454,
+        "pct_within_1_0f": 37.35408560311284,
+        "pct_within_2_0f": 63.035019455252915
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 4.136186770428016,
+        "bias_f": -4.136186770428016,
+        "rmse_f": 5.113117334033645,
+        "pct_within_0_5f": 4.669260700389105,
+        "pct_within_1_0f": 17.898832684824903,
+        "pct_within_2_0f": 31.906614785992215
+      },
+      "cooling_onset_rate": 0.07003891050583658
+    },
+    "13": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 1.586018244672983,
+        "bias_f": -1.1536304335510037,
+        "rmse_f": 2.332088544581707,
+        "pct_within_0_5f": 24.90272373540856,
+        "pct_within_1_0f": 47.47081712062256,
+        "pct_within_2_0f": 78.21011673151752
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 2.8988326848249026,
+        "bias_f": -2.8988326848249026,
+        "rmse_f": 3.6982486127296013,
+        "pct_within_0_5f": 7.003891050583658,
+        "pct_within_1_0f": 29.571984435797667,
+        "pct_within_2_0f": 49.416342412451364
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 2.8988326848249026,
+        "bias_f": -2.8988326848249026,
+        "rmse_f": 3.6982486127296013,
+        "pct_within_0_5f": 7.003891050583658,
+        "pct_within_1_0f": 29.571984435797667,
+        "pct_within_2_0f": 49.416342412451364
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 1.6301708716788448,
+        "bias_f": -1.2427477029732463,
+        "rmse_f": 2.391055989802565,
+        "pct_within_0_5f": 22.56809338521401,
+        "pct_within_1_0f": 47.081712062256805,
+        "pct_within_2_0f": 77.82101167315176
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 2.0092210760231444,
+        "bias_f": -1.8517113340605633,
+        "rmse_f": 2.8055062501901773,
+        "pct_within_0_5f": 19.06614785992218,
+        "pct_within_1_0f": 35.40856031128405,
+        "pct_within_2_0f": 61.08949416342413
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 2.8988326848249026,
+        "bias_f": -2.8988326848249026,
+        "rmse_f": 3.6982486127296013,
+        "pct_within_0_5f": 7.003891050583658,
+        "pct_within_1_0f": 29.571984435797667,
+        "pct_within_2_0f": 49.416342412451364
+      },
+      "cooling_onset_rate": 0.10116731517509728
+    },
+    "14": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 1.079584145941278,
+        "bias_f": -0.3347569085323257,
+        "rmse_f": 1.6365989934576344,
+        "pct_within_0_5f": 38.13229571984436,
+        "pct_within_1_0f": 63.035019455252915,
+        "pct_within_2_0f": 85.60311284046692
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 1.1206225680933852,
+        "bias_f": -0.5486381322957199,
+        "rmse_f": 1.814875841226101,
+        "pct_within_0_5f": 38.13229571984436,
+        "pct_within_1_0f": 75.09727626459144,
+        "pct_within_2_0f": 91.43968871595331
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 1.151556420233463,
+        "bias_f": -0.5056420233463035,
+        "rmse_f": 1.8544850460416815,
+        "pct_within_0_5f": 38.91050583657588,
+        "pct_within_1_0f": 72.37354085603113,
+        "pct_within_2_0f": 90.6614785992218
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 1.1720537789505514,
+        "bias_f": -0.5058067770093323,
+        "rmse_f": 1.7609309964120463,
+        "pct_within_0_5f": 33.46303501945525,
+        "pct_within_1_0f": 62.2568093385214,
+        "pct_within_2_0f": 85.21400778210116
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 1.0770386957953866,
+        "bias_f": -0.4244559365233266,
+        "rmse_f": 1.6653163133192164,
+        "pct_within_0_5f": 37.7431906614786,
+        "pct_within_1_0f": 62.64591439688716,
+        "pct_within_2_0f": 87.54863813229572
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 1.9688715953307394,
+        "bias_f": -1.9688715953307394,
+        "rmse_f": 2.640598918032498,
+        "pct_within_0_5f": 11.284046692607005,
+        "pct_within_1_0f": 49.80544747081712,
+        "pct_within_2_0f": 74.70817120622569
+      },
+      "cooling_onset_rate": 0.17120622568093385
+    },
+    "15": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 0.9200370578976098,
+        "bias_f": 0.09880708446328283,
+        "rmse_f": 1.272345842904728,
+        "pct_within_0_5f": 37.35408560311284,
+        "pct_within_1_0f": 64.59143968871595,
+        "pct_within_2_0f": 91.43968871595331
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 1.3891050583657587,
+        "bias_f": -1.3891050583657587,
+        "rmse_f": 1.9012590544736134,
+        "pct_within_0_5f": 19.06614785992218,
+        "pct_within_1_0f": 67.70428015564202,
+        "pct_within_2_0f": 87.93774319066148
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 1.3891050583657587,
+        "bias_f": -1.3891050583657587,
+        "rmse_f": 1.9012590544736134,
+        "pct_within_0_5f": 19.06614785992218,
+        "pct_within_1_0f": 67.70428015564202,
+        "pct_within_2_0f": 87.93774319066148
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 0.9711973712353509,
+        "bias_f": -0.09116719714439539,
+        "rmse_f": 1.3424891770016363,
+        "pct_within_0_5f": 35.019455252918284,
+        "pct_within_1_0f": 64.59143968871595,
+        "pct_within_2_0f": 91.82879377431907
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 0.8771388550886285,
+        "bias_f": -0.496357772668334,
+        "rmse_f": 1.3313625468114834,
+        "pct_within_0_5f": 42.4124513618677,
+        "pct_within_1_0f": 74.70817120622569,
+        "pct_within_2_0f": 91.05058365758755
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 1.3891050583657587,
+        "bias_f": -1.3891050583657587,
+        "rmse_f": 1.9012590544736134,
+        "pct_within_0_5f": 19.06614785992218,
+        "pct_within_1_0f": 67.70428015564202,
+        "pct_within_2_0f": 87.93774319066148
+      },
+      "cooling_onset_rate": 0.19455252918287938
+    },
+    "16": {
+      "n": 257,
+      "baseline_station_v2": {
+        "n": 257,
+        "mae_f": 0.8814911355409571,
+        "bias_f": 0.3052392606063437,
+        "rmse_f": 1.2246355475956179,
+        "pct_within_0_5f": 34.63035019455253,
+        "pct_within_1_0f": 68.09338521400778,
+        "pct_within_2_0f": 92.60700389105058
+      },
+      "diurnal_climatology": {
+        "n": 257,
+        "mae_f": 1.0350194552529184,
+        "bias_f": -1.0350194552529184,
+        "rmse_f": 1.5100184243986383,
+        "pct_within_0_5f": 28.404669260700388,
+        "pct_within_1_0f": 82.49027237354085,
+        "pct_within_2_0f": 92.60700389105058
+      },
+      "sky_conditioned_clim": {
+        "n": 257,
+        "mae_f": 1.0350194552529184,
+        "bias_f": -1.0350194552529184,
+        "rmse_f": 1.5100184243986383,
+        "pct_within_0_5f": 28.404669260700388,
+        "pct_within_1_0f": 82.49027237354085,
+        "pct_within_2_0f": 92.60700389105058
+      },
+      "peak_lock_hybrid": {
+        "n": 257,
+        "mae_f": 0.9517529687548578,
+        "bias_f": 0.04645708027762648,
+        "rmse_f": 1.3013611267156493,
+        "pct_within_0_5f": 30.739299610894943,
+        "pct_within_1_0f": 69.64980544747081,
+        "pct_within_2_0f": 92.60700389105058
+      },
+      "blend_model_clim": {
+        "n": 257,
+        "mae_f": 0.7312824907221641,
+        "bias_f": -0.23086422573736118,
+        "rmse_f": 1.1332409526246874,
+        "pct_within_0_5f": 50.583657587548636,
+        "pct_within_1_0f": 79.76653696498055,
+        "pct_within_2_0f": 95.3307392996109
+      },
+      "persistence_max_so_far": {
+        "n": 257,
+        "mae_f": 1.0350194552529184,
+        "bias_f": -1.0350194552529184,
+        "rmse_f": 1.5100184243986383,
+        "pct_within_0_5f": 28.404669260700388,
+        "pct_within_1_0f": 82.49027237354085,
+        "pct_within_2_0f": 92.60700389105058
+      },
+      "cooling_onset_rate": 0.30739299610894943
+    }
+  },
+  "hours_with_pct_within_0_5f_ge_50": [
+    {
+      "hour": 16,
+      "method": "blend_model_clim",
+      "pct_within_0_5f": 50.583657587548636,
+      "mae_f": 0.7312824907221641
+    }
+  ],
+  "neighbor_ord_diagnostic": {
+    "available": true,
+    "n_ord_obs": 41233,
+    "n_paired_hour11": 257,
+    "ord_minus_mdw_mean_f": -0.49416342412451364,
+    "corr_delta_vs_remain": 0.09387948612444717,
+    "note": "Neighbor ORD delta vs remaining rise \u2014 weak/strong informs spatial feature value"
+  },
+  "honest_conclusion": {
+    "half_degree_at_11am": "At 11 CDT, best method hit-rate within \u00b10.5\u00b0F is 15.953307392996107%",
+    "path_to_half_degree": "\u00b10.5\u00b0F majority accuracy appears mainly at late afternoon hours (15\u201316) when max_so_far \u2248 final max (persistence), not from morning pattern recognition alone.",
+    "trading_implication": "For ~noon bets, optimize bracket probabilities / EV \u2014 do not expect \u00b10.5\u00b0F point skill. For tighter point skill, wait until 14\u201316 local when the high is nearly locked."
+  },
+  "generated_at_utc": "2026-09-16T08:26:22.721360+00:00"
+}

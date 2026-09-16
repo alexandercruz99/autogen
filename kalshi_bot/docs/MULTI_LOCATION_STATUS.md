@@ -27,19 +27,20 @@ Registry entry ≠ operating. Missing artifacts → documented prep (`weather-tr
 ## Prep workflow (repeatable)
 
 ```bash
+# Capability matrix (separate counts; prep path for missing artifacts)
+PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-multi-status
+
 # Backfill / collect observations for a location profile
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-feeds-run
 
-# Train location model
+# Train location model (nyc_central_park | chi_midway | lax_airport only today)
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-train-location --location lax_airport
 
-# Calibrate (location-scoped; missing calib → probabilities_unavailable)
-# Evaluate production path (shares predict_station_v2)
 # Research / paper inference (no --live)
 PYTHONPATH=src python3 -m kalshi_bot.cli --config config.yaml weather-twc-bet --series KXHIGHLAX
 ```
 
-Daily lows / precip / snow must use their own model families — never daily-high models.
+Locations without `LOCATION_TRAIN_PROFILES` (MIA/AUS/DEN/HOU/PHL, …) need IEM ASOS + GHCND backfill before train — status output lists `prep_workflow` per row. Do not mark them operating or live_eligible until trained, calibrated, and evaluated.
 
 ## LAX
 

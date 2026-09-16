@@ -692,10 +692,9 @@ def _paper_evaluate(
     from kalshi_bot.api.orderbook import parse_orderbook
     from kalshi_bot.config import load_config
     from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
-        MAX_STRIKE_DISTANCE_F,
-        MIN_MODEL_P,
         format_bet_rationale,
         select_forecast_consistent,
+        selection_rule_text,
     )
 
     cfg = load_config("config.yaml" if Path("config.yaml").exists() else "config.example.yaml")
@@ -875,10 +874,7 @@ def _paper_evaluate(
                     "decision": "paper_sim_fill_unvalidated",
                     "reason": "Simulated taker fill; live order NOT submitted",
                     "why_buy": why,
-                    "selection_rule": (
-                        f"forecast-consistent (≤{MAX_STRIKE_DISTANCE_F}°F from median), "
-                        f"model_p≥{MIN_MODEL_P}, then max EV — not cheapest ask"
-                    ),
+                    "selection_rule": selection_rule_text(),
                     "sim": sim,
                     "live_blocked": True,
                     "live_order_submitted": False,

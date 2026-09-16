@@ -25,6 +25,7 @@ from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
     MIN_MODEL_P,
     format_bet_rationale,
     select_forecast_consistent,
+    selection_rule_text,
 )
 from kalshi_bot.models.weather.obs_engine.multi.pipeline import process_location
 from kalshi_bot.models.weather.obs_engine.multi.registry import VERIFIED_TWC_DAILY_MAX
@@ -167,10 +168,7 @@ def _best_live_candidate(result: dict[str, Any], *, dollars: Decimal) -> dict[st
         "capital_required": str(fp_price(capital)),
         "dollars_cap": str(dollars),
         "why_buy": why,
-        "selection_rule": (
-            f"forecast-consistent (≤{MAX_STRIKE_DISTANCE_F}°F from median), "
-            f"model_p≥{MIN_MODEL_P}, then max EV — not cheapest ask"
-        ),
+        "selection_rule": selection_rule_text(),
     }
 
 
@@ -205,9 +203,9 @@ def place_capped_live_bet(
         return {
             "ok": False,
             "error": (
-                "no forecast-consistent +EV bracket "
-                f"(need model_p≥{MIN_MODEL_P} and strike within {MAX_STRIKE_DISTANCE_F}°F of median); "
-                "refusing cheapest-ask fallback"
+                "no high-confidence data pick with edge "
+                f"(need model_p≥{MIN_MODEL_P}, strike within {MAX_STRIKE_DISTANCE_F}°F of median, "
+                "positive EV); refusing lottery / cheapest-ask fallback"
             ),
             "callout": callout,
             "paper_decision": result.get("paper_decision"),

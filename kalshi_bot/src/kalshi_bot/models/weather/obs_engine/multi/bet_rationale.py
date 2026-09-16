@@ -1,4 +1,11 @@
-"""Weather-first bet selection: explain why we buy; do not chase cheapest asks."""
+"""Data-first bet selection for slow continuous growth.
+
+Philosophy
+----------
+Buy the weather story the model believes — even at 60–70¢ — as long as there is
+edge. Prefer high win-rate compounds over cheap lottery tickets with big EV
+numbers. Price is a check that we are not overpaying; it is never the reason to buy.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +14,11 @@ from typing import Any
 
 from kalshi_bot.money import D, ZERO
 
-# Live/paper picks must match the forecast story; cheap asks alone are not a reason.
-MIN_MODEL_P = D("0.35")
+# High conviction: rather win often at 63¢ than chase 3¢ longshots.
+MIN_MODEL_P = D("0.55")
 MAX_STRIKE_DISTANCE_F = 4.0
+# Still require a real gap vs ask (after fees/buffer already in `ev`).
+MIN_EV = D("0.02")
 
 
 def interval_label(interval: dict[str, Any] | None) -> str:
@@ -39,7 +48,7 @@ def format_bet_rationale(
     ask: Decimal | float | str,
     interval: dict[str, Any] | None = None,
 ) -> str:
-    """Explain the weather story first; price is only the mispricing check."""
+    """Explain the weather/data story first; price only confirms we are not overpaying."""
     p_d, ask_d = D(str(p)), D(str(ask))
     claim = interval_label(interval)
     pred = f"{round(float(point_median_f))}°F" if point_median_f is not None else "unknown"
@@ -48,16 +57,18 @@ def format_bet_rationale(
     if side_u == "YES":
         weather = (
             f"Forecast high ~{pred} (already {seen}), so YES on {ticker} "
-            f"({claim}) matches the weather story."
+            f"({claim}) is the data pick."
         )
     else:
         weather = (
             f"Forecast high ~{pred} (already {seen}), so NO on {ticker} "
-            f"(rejecting {claim}) matches the weather story."
+            f"(rejecting {claim}) is the data pick."
         )
+    win_cents = int(round((1.0 - float(ask_d)) * 100))
     edge = (
-        f"Model puts {float(p_d)*100:.0f}% on that side vs market ask "
-        f"{float(ask_d)*100:.0f}¢ — buy because of that gap, not because the ticket is cheap."
+        f"Model confidence {float(p_d)*100:.0f}% vs ask {float(ask_d)*100:.0f}¢ "
+        f"(~{win_cents}¢ profit if right). We buy conviction for steady growth — "
+        f"not the cheapest ticket or the biggest payout."
     )
     return f"{weather} {edge}"
 
@@ -101,6 +112,19 @@ def interval_for_ticker(brackets: list[dict[str, Any]] | None, ticker: str) -> d
     return None
 
 
+def selection_rule_text(
+    *,
+    min_model_p: Decimal = MIN_MODEL_P,
+    max_strike_distance_f: float = MAX_STRIKE_DISTANCE_F,
+    min_ev: Decimal = MIN_EV,
+) -> str:
+    return (
+        f"data-first continuous growth: forecast-consistent (≤{max_strike_distance_f}°F), "
+        f"model_p≥{min_model_p}, EV≥{min_ev}; rank by confidence then edge — "
+        f"not cheapest ask / max lottery EV"
+    )
+
+
 def select_forecast_consistent(
     evaluations: list[dict[str, Any]],
     *,
@@ -108,14 +132,16 @@ def select_forecast_consistent(
     brackets: list[dict[str, Any]] | None = None,
     min_model_p: Decimal = MIN_MODEL_P,
     max_strike_distance_f: float = MAX_STRIKE_DISTANCE_F,
+    min_ev: Decimal = MIN_EV,
 ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
-    """Among +EV sides, keep only forecast-aligned / min-p rows; rank by distance then EV."""
+    """Keep data-aligned +EV rows; prefer high model confidence over max EV."""
     kept: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     for e in evaluations:
         if e.get("p") is None or e.get("ask") is None or e.get("ev") is None:
             continue
-        if D(e["ev"]) <= ZERO:
+        ev = D(e["ev"])
+        if ev <= ZERO:
             continue
         p = D(e["p"])
         ask = D(e["ask"])
@@ -124,7 +150,18 @@ def select_forecast_consistent(
         row = {**e, "interval": interval, "strike_distance_f": dist}
         if p < min_model_p:
             rejected.append(
-                {**row, "reject_reason": f"model_p {p} < {min_model_p} (blocks cheap longshots)"}
+                {
+                    **row,
+                    "reject_reason": (
+                        f"model_p {p} < {min_model_p} "
+                        "(want high-confidence compounds, not low-p lotteries)"
+                    ),
+                }
+            )
+            continue
+        if ev < min_ev:
+            rejected.append(
+                {**row, "reject_reason": f"EV {ev} < {min_ev} (need a real edge vs ask)"}
             )
             continue
         if dist > max_strike_distance_f:
@@ -133,7 +170,7 @@ def select_forecast_consistent(
                     **row,
                     "reject_reason": (
                         f"strike {dist:.1f}°F from forecast {median_f:.0f}°F "
-                        f"(max {max_strike_distance_f}°F) — weather story mismatch"
+                        f"(max {max_strike_distance_f}°F) — not the data pick"
                     ),
                 }
             )
@@ -144,5 +181,9 @@ def select_forecast_consistent(
 
     if not kept:
         return None, rejected
-    best = max(kept, key=lambda e: (-float(e["strike_distance_f"]), D(e["ev"])))
+    # 1) closest to forecast, 2) highest confidence, 3) edge only as tie-break
+    best = max(
+        kept,
+        key=lambda e: (-float(e["strike_distance_f"]), D(e["p"]), D(e["ev"])),
+    )
     return best, rejected

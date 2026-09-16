@@ -90,6 +90,26 @@ VERIFIED_NWS_CLI_DAILY_MAX: dict[str, dict[str, Any]] = {
         "model_family": "station_v2_nws_cli",
         "notes": "CHIHIGH terms: Midway CLI — not O'Hare; GHCND USW00014819 labels for training",
     },
+    "HIGHLAX": {
+        "location_id": "lax_airport",
+        "display_name": "Los Angeles International (LAX)",
+        "cli_location_id": "LAX",
+        "wfo_office": "LOX",
+        "climate_station_name": "LOS ANGELES INTL",
+        "metar_ids": ["KLAX"],
+        "neighbor_metar_ids": [],
+        "lat": 33.9425,
+        "lon": -118.4081,
+        "elev_m": 38.0,
+        "timezone": "America/Los_Angeles",
+        "mapping_status": "verified",
+        "validation_status": "operating_candidate",
+        "model_family": "station_v2_twc_proxy",
+        "notes": (
+            "GHCND USW00023174 LAX TMAX trains station_v2 for TWC CLILAX / KXHIGHLAX "
+            "same-ICAO transfer; settlement is TWC not NWS CLI"
+        ),
+    },
     "HIGHMIA": {
         "location_id": "mia_cli",
         "display_name": "Miami (CLI MIA)",
@@ -218,9 +238,13 @@ VERIFIED_TWC_DAILY_MAX: dict[str, dict[str, Any]] = {
         "elev_m": 38.0,
         "timezone": "America/Los_Angeles",
         "mapping_status": "verified",
-        "validation_status": "needs_historical_backfill",
+        "validation_status": "operating_candidate",
         "model_family": "twc_daily_max_v1",
-        "notes": "TWC portal cliId=LAX / ICAO KLAX; no location model yet",
+        "same_station_model_location_id": "lax_airport",
+        "notes": (
+            "Settles on The Weather Company CLILAX via weather.com/kalshi; "
+            "same-ICAO residual transfer from lax_airport when trained"
+        ),
     },
     "KXHIGHAUS": {
         "location_id": "twc_aus",

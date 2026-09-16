@@ -312,25 +312,32 @@ def weather_feeds_train(config: AppConfig) -> dict[str, Any]:
 
 
 def weather_train_location(config: AppConfig, *, location_id: str = "chi_midway") -> dict[str, Any]:
-    """Train a location-specific station_v2 model (e.g. chi_midway, nyc_central_park)."""
+    """Train a location-specific station_v2 model (e.g. chi_midway, nyc_central_park, lax_airport)."""
     from kalshi_bot.models.weather.obs_engine.feeds.train_operating import train_location_station_corrected
     from kalshi_bot.models.weather.obs_engine.multi.registry import LocationRegistry
 
     data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
     report = train_location_station_corrected(location_id, data_dir=data_dir)
-    if report.get("ok") and location_id == "chi_midway":
+    if report.get("ok") and location_id in ("chi_midway", "lax_airport"):
         reg = LocationRegistry()
         try:
             for t in reg.list_targets(measurement="daily_max_temp_f"):
-                if t.get("location_id") == "chi_midway":
+                if t.get("location_id") == location_id:
                     row = dict(t)
                     row["validation_status"] = "operating_candidate"
                     row["data_availability"] = "public_metar_cli_ghcnd_backfilled"
-                    row["model_family"] = "station_v2_nws_cli"
-                    row["notes"] = (
-                        (row.get("notes") or "")
-                        + " | Midway station_v2 trained; GHCND USW00014819 labels; live still blocked"
-                    )
+                    if location_id == "chi_midway":
+                        row["model_family"] = "station_v2_nws_cli"
+                        row["notes"] = (
+                            (row.get("notes") or "")
+                            + " | Midway station_v2 trained; GHCND USW00014819 labels; live still blocked"
+                        )
+                    else:
+                        row["model_family"] = "station_v2_twc_proxy"
+                        row["notes"] = (
+                            (row.get("notes") or "")
+                            + " | LAX station_v2 trained; GHCND USW00023174 labels; TWC KXHIGHLAX transfer"
+                        )
                     # unwrap json fields expected by upsert
                     row["metar_ids"] = row.get("metar_ids") or []
                     row["neighbor_metar_ids"] = row.get("neighbor_metar_ids") or []

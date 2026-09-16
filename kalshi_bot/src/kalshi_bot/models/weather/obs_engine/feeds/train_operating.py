@@ -77,6 +77,29 @@ LOCATION_TRAIN_PROFILES: dict[str, dict[str, Any]] = {
             "NWS CLI MAXIMUM MDW when historical CLI text is incomplete; settlement remains CLI."
         ),
     },
+    "lax_airport": {
+        "location_id": "lax_airport",
+        "measurement": "daily_max_temp_f",
+        "series_ticker": "KXHIGHLAX",
+        "display_name": "Los Angeles International (LAX)",
+        "timezone": "America/Los_Angeles",
+        "lat": 33.9425,
+        "lon": -118.4081,
+        "elev_m": 38.0,
+        "metar_id": "KLAX",
+        "iem_station": "LAX",
+        "asos_glob": "asos_LAX_*.csv",
+        "asos_subdir": "la",
+        "label_csv": "la/lax_ghcnd_tmax_f.csv",
+        "ghcnd_id": "USW00023174",
+        "cli_location_id": "LAX",
+        "model_version": "weather.obs_lax_airport.station_corrected.v1",
+        "write_legacy_feeds_models": False,
+        "label_note": (
+            "GHCND USW00023174 LAX daily TMAX (°F) trains the station model for TWC CLILAX / "
+            "KXHIGHLAX settlement (same ICAO). Progressive evidence uses KLAX + TWC portal."
+        ),
+    },
 }
 
 

@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("weather-feeds-train", help="Train station-corrected operating model (baseline frozen)")
     p_train_loc = sub.add_parser(
         "weather-train-location",
-        help="Train location-specific station_v2 model (chi_midway, nyc_central_park)",
+        help="Train location-specific station_v2 model (chi_midway, nyc_central_park, lax_airport)",
     )
     p_train_loc.add_argument(
         "--location",

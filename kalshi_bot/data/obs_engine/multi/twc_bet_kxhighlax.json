@@ -1,0 +1,780 @@
+{
+  "location_id": "twc_lax",
+  "series_ticker": "KXHIGHLAX",
+  "measurement": "daily_max_temp_f",
+  "display_name": "Los Angeles LAX (TWC CLILAX)",
+  "mapping_status": "verified",
+  "validation_status": "operating_candidate",
+  "settlement_source_family": "weather_company",
+  "timezone": "America/Los_Angeles",
+  "generated_at_utc": "2026-09-16T19:16:08.518706+00:00",
+  "live_order_submitted": false,
+  "ok": true,
+  "force_decision": true,
+  "collection": {
+    "aviationweather_metar": {
+      "feed": "metar",
+      "stations": {
+        "KLAX": {
+          "ok": true,
+          "n_fetched": 32,
+          "n_new": 0,
+          "latest_key": "KLAX:2026-09-15T13:53:00+00:00",
+          "usable": true
+        }
+      },
+      "hours_requested": 30,
+      "ok": true,
+      "usable": true
+    },
+    "twc_climate": {
+      "ok": true,
+      "days": [
+        {
+          "date": "2026-09-16",
+          "officialReports": 0,
+          "preliminaryReports": 0,
+          "noReports": 37,
+          "source": "live",
+          "n_new": 0
+        },
+        {
+          "date": "2026-09-15",
+          "officialReports": 37,
+          "preliminaryReports": 0,
+          "noReports": 0,
+          "source": "live",
+          "n_new": 0
+        }
+      ],
+      "n_new": 0,
+      "stations": {
+        "LAX": {
+          "feed": "twc_climate_lax",
+          "status": "official",
+          "max_temp_f": 81,
+          "climate_day": "2026-09-15",
+          "usable": true
+        }
+      },
+      "usable": true
+    },
+    "twc_metar": {
+      "ok": true,
+      "week_start": "2026-09-14",
+      "n_new": 0,
+      "stations": {
+        "KLAX": {
+          "feed": "twc_metar_KLAX",
+          "n_new": 0,
+          "n_obs": 60,
+          "max_so_far_today_f": 78.1,
+          "usable": true
+        }
+      },
+      "source": "live",
+      "totalObservations": 2329,
+      "fetchedAt": "2026-09-16T19:11:39.000Z",
+      "usable": true
+    }
+  },
+  "data_availability": {
+    "metar_primary": "KLAX",
+    "aviationweather_usable": true,
+    "twc_metar_usable": true,
+    "twc_cli_id": "LAX",
+    "notes": "Settles on The Weather Company CLILAX via weather.com/kalshi; same-ICAO residual transfer from lax_airport when trained"
+  },
+  "features_summary": {
+    "max_so_far": 78.1,
+    "coverage": {
+      "climate_day": "2026-09-16",
+      "decision_time_utc": "2026-09-16T19:16:08.518706+00:00",
+      "n_temp_obs": 11,
+      "n_obs_total": 11,
+      "first_obs_utc": "2026-09-16T08:39:00+00:00",
+      "last_obs_utc": "2026-09-16T18:53:00+00:00",
+      "max_gap_hours": 2.0,
+      "start_gap_hours": 0.65,
+      "stale_hours": 0.38569964055555556,
+      "late_start": false,
+      "gaps_exceeded": false,
+      "start_gap_exceeded": false,
+      "stale_exceeded": false,
+      "adequate": true,
+      "max_so_far": 78.08,
+      "max_so_far_status": "adequate_window_coverage",
+      "notes": [
+        "Coverage meets documented window requirements; still not a final CLI maximum"
+      ],
+      "requirements": {
+        "min_temp_obs": 4,
+        "max_gap_hours": 3.5,
+        "max_start_gap_hours": 4.0,
+        "max_stale_hours": 2.5,
+        "expected_cadence_hours": 1.0,
+        "climate_day_basis": "LST_fixed_offset_per_location",
+        "note": "Partial max_so_far is never treated as a verified full-day maximum"
+      }
+    },
+    "cli_applied": null,
+    "twc_metar": {
+      "feed": "twc_metar_KLAX",
+      "icao": "KLAX",
+      "climate_day": "2026-09-16",
+      "n_obs": 12,
+      "max_so_far": 78.1,
+      "usable": true
+    },
+    "attribution": {
+      "feeds_collected": [
+        "metar_KLAX",
+        "twc_metar_KLAX"
+      ],
+      "feeds_quality_ok": [
+        "metar_KLAX",
+        "twc_metar_KLAX"
+      ],
+      "features_consumed_by_model": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h",
+        "time_since_max_h",
+        "d_dewpt_3h",
+        "d_alti_3h",
+        "d_sknt_3h",
+        "wind_dir_sin",
+        "wind_dir_cos",
+        "missing_sknt",
+        "missing_alti",
+        "missing_dwpf",
+        "missing_precip_6h",
+        "sky_code"
+      ],
+      "settlement_constraints_applied": [
+        "twc_metar_max_so_far"
+      ],
+      "location_id": "twc_lax",
+      "settlement_source_family": "weather_company"
+    },
+    "missing": {}
+  },
+  "decision_hour_snapped": true,
+  "forecast_context": {
+    "location_id": "twc_lax",
+    "series_ticker": "KXHIGHLAX",
+    "measurement": "daily_max_temp_f",
+    "settlement_source_family": "weather_company",
+    "climate_day": "2026-09-16",
+    "decision_time_utc": "2026-09-16T19:16:08.518706+00:00",
+    "horizon": "same_day",
+    "model_version": null,
+    "feature_schema_version": "station_v2.1",
+    "decision_hour_local": 11,
+    "timezone": "America/Los_Angeles",
+    "uses_lst_climate_day": true,
+    "metar_id": "KLAX",
+    "cli_location_id": "LAX",
+    "lat": 33.9425,
+    "lon": -118.4081,
+    "elev_m": 38.0,
+    "mode": "RESEARCH",
+    "extras": {
+      "model_family": "twc_daily_max_v1",
+      "decision_hour_snapped": true
+    }
+  },
+  "decision_hour_local": 11,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "generated_at_local": "2026-09-16T12:16:08.518706-07:00",
+  "prediction": {
+    "ok": true,
+    "status": "ok",
+    "context": {
+      "location_id": "twc_lax",
+      "series_ticker": "KXHIGHLAX",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "weather_company",
+      "climate_day": "2026-09-16",
+      "decision_time_utc": "2026-09-16T19:16:08.518706+00:00",
+      "horizon": "same_day",
+      "model_version": null,
+      "feature_schema_version": "station_v2.1",
+      "decision_hour_local": 11,
+      "timezone": "America/Los_Angeles",
+      "uses_lst_climate_day": true,
+      "metar_id": "KLAX",
+      "cli_location_id": "LAX",
+      "lat": 33.9425,
+      "lon": -118.4081,
+      "elev_m": 38.0,
+      "mode": "RESEARCH",
+      "extras": {
+        "model_family": "twc_daily_max_v1",
+        "decision_hour_snapped": true
+      }
+    },
+    "point_median_f": 81.22201676176272,
+    "remain_q10_q50_q90": [
+      0.0,
+      3.122016761762718,
+      6.131519579251147
+    ],
+    "quantiles_crossed": false,
+    "distribution": {
+      "method": "calibrated_residual_hour_11",
+      "mean_f": 81.1675745078204,
+      "q10": 79,
+      "q50": 81,
+      "q90": 83,
+      "support": [
+        [
+          75,
+          4e-06
+        ],
+        [
+          76,
+          4e-06
+        ],
+        [
+          77,
+          0.003895
+        ],
+        [
+          78,
+          0.011676
+        ],
+        [
+          79,
+          0.13618
+        ],
+        [
+          80,
+          0.202323
+        ],
+        [
+          81,
+          0.264575
+        ],
+        [
+          82,
+          0.206214
+        ],
+        [
+          83,
+          0.105054
+        ],
+        [
+          84,
+          0.038911
+        ],
+        [
+          85,
+          0.019458
+        ],
+        [
+          86,
+          0.007785
+        ],
+        [
+          87,
+          4e-06
+        ],
+        [
+          88,
+          4e-06
+        ],
+        [
+          89,
+          4e-06
+        ],
+        [
+          90,
+          4e-06
+        ],
+        [
+          91,
+          4e-06
+        ],
+        [
+          92,
+          0.003895
+        ],
+        [
+          93,
+          4e-06
+        ],
+        [
+          94,
+          4e-06
+        ]
+      ],
+      "details": {
+        "n_residuals_raw": 257,
+        "n_samples_effective": 257,
+        "point_forecast_f": 81.22201676176272,
+        "resid_mean": 0.0546704711031117,
+        "resid_std": 1.6714159439748375,
+        "variance_floor_std": null
+      }
+    },
+    "probabilities_available": true,
+    "calibration_status": "calibration_hour_11",
+    "observation_constraint": {
+      "max_so_far_f": 78.1,
+      "clamp_point_to_max_so_far": true,
+      "integer_floor_applied": false,
+      "note": "Fractional METAR max_so_far is not an official whole-\u00b0F CLI minimum"
+    },
+    "model_artifact": "data/obs_engine/multi/artifacts/lax_airport__daily_max_temp_f/station_corrected_v2.joblib",
+    "model_version": "weather.obs_lax_airport.station_corrected.v1",
+    "feature_schema_version": "station_v2.1",
+    "reason": null,
+    "extras": {}
+  },
+  "status": "ok",
+  "probabilities_available": true,
+  "calibration_status": "calibration_hour_11",
+  "point_median_f": 81.22201676176272,
+  "observation_constraint": {
+    "max_so_far_f": 78.1,
+    "clamp_point_to_max_so_far": true,
+    "integer_floor_applied": false,
+    "note": "Fractional METAR max_so_far is not an official whole-\u00b0F CLI minimum"
+  },
+  "model_origin": "same_icao_transfer:lax_airport",
+  "model_artifact": "data/obs_engine/multi/artifacts/lax_airport__daily_max_temp_f/station_corrected_v2.joblib",
+  "attribution": {
+    "feeds_collected": [
+      "metar_KLAX",
+      "twc_metar_KLAX"
+    ],
+    "feeds_quality_ok": [
+      "metar_KLAX",
+      "twc_metar_KLAX"
+    ],
+    "features_consumed_by_model": [
+      "hour_local",
+      "doy",
+      "tmpf",
+      "dwpf",
+      "sknt",
+      "alti",
+      "max_so_far",
+      "rise_from_min",
+      "dT_1h",
+      "dT_3h",
+      "solar_el",
+      "hours_to_20_local",
+      "precip_6h",
+      "time_since_max_h",
+      "d_dewpt_3h",
+      "d_alti_3h",
+      "d_sknt_3h",
+      "wind_dir_sin",
+      "wind_dir_cos",
+      "missing_sknt",
+      "missing_alti",
+      "missing_dwpf",
+      "missing_precip_6h",
+      "sky_code"
+    ],
+    "settlement_constraints_applied": [
+      "twc_metar_max_so_far"
+    ],
+    "location_id": "twc_lax",
+    "settlement_source_family": "weather_company"
+  },
+  "sim_label": "twc_adapter_exploratory_paper",
+  "model_transfer_note": "Residual model transferred from same-ICAO ASOS/NWS-label training; settlement floor and progressive max use TWC portal \u2014 labeled exploratory.",
+  "paper_decision": {
+    "ticker": "KXHIGHLAX-26SEP16-T80",
+    "side": "yes",
+    "decision": "paper_skip_duplicate_client_order_id",
+    "reason": "duplicate_client_order_id",
+    "p": "0.64591861",
+    "ask": "0.1000",
+    "fees": "0.006300",
+    "uncertainty_buffer": "0.05",
+    "ev": "0.48961861",
+    "qty": "1",
+    "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+    "sim": {
+      "ok": false,
+      "reason": "duplicate_client_order_id",
+      "client_order_id": "paper-twc_lax-KXHIGHLAX-26SEP16-T80-yes-2026-09-16-11"
+    },
+    "live_blocked": true,
+    "live_order_submitted": false
+  },
+  "brackets": [
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B73.5",
+      "p_yes": "0E-8",
+      "p_no": "1.00000000",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "yes_ask_size": "189395.00",
+      "no_ask_size": null,
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "range_inclusive",
+        "low": 73.0,
+        "high": 74.0
+      }
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B75.5",
+      "p_yes": "0.00000778",
+      "p_no": "0.99999222",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "yes_ask_size": "106212.96",
+      "no_ask_size": null,
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "range_inclusive",
+        "low": 75.0,
+        "high": 76.0
+      }
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B77.5",
+      "p_yes": "0.01557077",
+      "p_no": "0.98442923",
+      "yes_ask": "0.2000",
+      "no_ask": "0.8200",
+      "yes_ask_size": "128.00",
+      "no_ask_size": "48.00",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "range_inclusive",
+        "low": 77.0,
+        "high": 78.0
+      }
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B79.5",
+      "p_yes": "0.33850284",
+      "p_no": "0.66149716",
+      "yes_ask": "0.7300",
+      "no_ask": "0.3100",
+      "yes_ask_size": "41.00",
+      "no_ask_size": "104.23",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "range_inclusive",
+        "low": 79.0,
+        "high": 80.0
+      }
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T80",
+      "p_yes": "0.64591861",
+      "p_no": "0.35408139",
+      "yes_ask": "0.1000",
+      "no_ask": "0.9200",
+      "yes_ask_size": "25.00",
+      "no_ask_size": "140.00",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "gt",
+        "low": 80.0,
+        "high": null
+      }
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T73",
+      "p_yes": "0E-8",
+      "p_no": "1.00000000",
+      "yes_ask": "0.0100",
+      "no_ask": null,
+      "yes_ask_size": "178465.79",
+      "no_ask_size": null,
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00",
+      "interval": {
+        "op": "lt",
+        "low": null,
+        "high": 73.0
+      }
+    }
+  ],
+  "ev_evaluations": [
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B73.5",
+      "side": "yes",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.06060000 \u2264 0 after fees/buffer",
+      "p": "0E-8",
+      "ask": "0.0100",
+      "fees": "0.000600",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.06060000",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B73.5",
+      "side": "no",
+      "decision": "blocked_unavailable_prices",
+      "reason": "no executable no ask",
+      "p": "1.00000000"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B75.5",
+      "side": "yes",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.06059222 \u2264 0 after fees/buffer",
+      "p": "0.00000778",
+      "ask": "0.0100",
+      "fees": "0.000600",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.06059222",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B75.5",
+      "side": "no",
+      "decision": "blocked_unavailable_prices",
+      "reason": "no executable no ask",
+      "p": "0.99999222"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B77.5",
+      "side": "yes",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.24562923 \u2264 0 after fees/buffer",
+      "p": "0.01557077",
+      "ask": "0.2000",
+      "fees": "0.011200",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.24562923",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B77.5",
+      "side": "no",
+      "decision": "ev_evaluated",
+      "reason": "EV=0.10412923",
+      "p": "0.98442923",
+      "ask": "0.8200",
+      "fees": "0.010300",
+      "uncertainty_buffer": "0.05",
+      "ev": "0.10412923",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B79.5",
+      "side": "yes",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.45519716 \u2264 0 after fees/buffer",
+      "p": "0.33850284",
+      "ask": "0.7300",
+      "fees": "0.013700",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.45519716",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-B79.5",
+      "side": "no",
+      "decision": "ev_evaluated",
+      "reason": "EV=0.28659716",
+      "p": "0.66149716",
+      "ask": "0.3100",
+      "fees": "0.014900",
+      "uncertainty_buffer": "0.05",
+      "ev": "0.28659716",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T80",
+      "side": "yes",
+      "decision": "ev_evaluated",
+      "reason": "EV=0.48961861",
+      "p": "0.64591861",
+      "ask": "0.1000",
+      "fees": "0.006300",
+      "uncertainty_buffer": "0.05",
+      "ev": "0.48961861",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T80",
+      "side": "no",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.62101861 \u2264 0 after fees/buffer",
+      "p": "0.35408139",
+      "ask": "0.9200",
+      "fees": "0.005100",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.62101861",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T73",
+      "side": "yes",
+      "decision": "paper_skip_negative_ev",
+      "reason": "EV=-0.06060000 \u2264 0 after fees/buffer",
+      "p": "0E-8",
+      "ask": "0.0100",
+      "fees": "0.000600",
+      "uncertainty_buffer": "0.05",
+      "ev": "-0.06060000",
+      "qty": "1",
+      "quote_ts_utc": "2026-09-16T19:16:09.523203+00:00"
+    },
+    {
+      "ticker": "KXHIGHLAX-26SEP16-T73",
+      "side": "no",
+      "decision": "blocked_unavailable_prices",
+      "reason": "no executable no ask",
+      "p": "1.00000000"
+    }
+  ],
+  "paper_ledger": {
+    "cash": "99.608800",
+    "open_notional": "0.3700",
+    "limits": {
+      "max_total_exposure": "80.00",
+      "max_per_market_exposure": "25.00",
+      "starting_cash": "100.00"
+    },
+    "positions": [
+      {
+        "ticker": "KXHIGHCHI-26SEP16-B75.5",
+        "side": "no",
+        "qty": "1",
+        "avg_price": "0.0300",
+        "fees_paid": "0.002000",
+        "location_id": "twc_chi_midway",
+        "series_ticker": "KXHIGHCHI",
+        "updated_at_utc": "2026-09-16T19:00:52.987647+00:00"
+      },
+      {
+        "ticker": "KXHIGHLAX-26SEP16-T80",
+        "side": "yes",
+        "qty": "1",
+        "avg_price": "0.1000",
+        "fees_paid": "0.006300",
+        "location_id": "twc_lax",
+        "series_ticker": "KXHIGHLAX",
+        "updated_at_utc": "2026-09-16T19:15:39.501903+00:00"
+      },
+      {
+        "ticker": "KXHIGHNY-26SEP16-B77.5",
+        "side": "no",
+        "qty": "1",
+        "avg_price": "0.2300",
+        "fees_paid": "0.012300",
+        "location_id": "twc_nyc_central_park",
+        "series_ticker": "KXHIGHNY",
+        "updated_at_utc": "2026-09-16T18:31:45.866516+00:00"
+      },
+      {
+        "ticker": "KXHIGHNY-26SEP16-B79.5",
+        "side": "yes",
+        "qty": "1",
+        "avg_price": "0.0100",
+        "fees_paid": "0.000600",
+        "location_id": "twc_nyc_central_park",
+        "series_ticker": "KXHIGHNY",
+        "updated_at_utc": "2026-09-16T18:59:01.208423+00:00"
+      }
+    ],
+    "recent_fills": [
+      {
+        "id": 4,
+        "created_at_utc": "2026-09-16T19:15:39.501903+00:00",
+        "client_order_id": "paper-twc_lax-KXHIGHLAX-26SEP16-T80-yes-2026-09-16-11",
+        "ticker": "KXHIGHLAX-26SEP16-T80",
+        "side": "yes",
+        "qty": "1",
+        "price": "0.1000",
+        "fees": "0.006300",
+        "decision_reason": "paper_sim_fill_unvalidated",
+        "location_id": "twc_lax",
+        "series_ticker": "KXHIGHLAX",
+        "quote_ts_utc": "2026-09-16T19:15:39.473815+00:00",
+        "market_ts_utc": "2026-09-16T19:15:39.473815+00:00",
+        "details_json": "{\"ticker\": \"KXHIGHLAX-26SEP16-T80\", \"side\": \"yes\", \"decision\": \"ev_evaluated\", \"reason\": \"EV=0.48961861\", \"p\": \"0.64591861\", \"ask\": \"0.1000\", \"fees\": \"0.006300\", \"uncertainty_buffer\": \"0.05\", \"ev\": \"0.48961861\", \"qty\": \"1\", \"quote_ts_utc\": \"2026-09-16T19:15:39.473815+00:00\", \"live_blocked\": true, \"live_order_submitted\": false, \"sim_label\": \"unvalidated_exploratory_paper\"}"
+      },
+      {
+        "id": 3,
+        "created_at_utc": "2026-09-16T19:00:52.987647+00:00",
+        "client_order_id": "paper-twc_chi_midway-KXHIGHCHI-26SEP16-B75.5-no-2026-09-16-14",
+        "ticker": "KXHIGHCHI-26SEP16-B75.5",
+        "side": "no",
+        "qty": "1",
+        "price": "0.0300",
+        "fees": "0.002000",
+        "decision_reason": "paper_sim_fill_unvalidated",
+        "location_id": "twc_chi_midway",
+        "series_ticker": "KXHIGHCHI",
+        "quote_ts_utc": "2026-09-16T19:00:52.952879+00:00",
+        "market_ts_utc": "2026-09-16T19:00:52.952879+00:00",
+        "details_json": "{\"ticker\": \"KXHIGHCHI-26SEP16-B75.5\", \"side\": \"no\", \"decision\": \"ev_evaluated\", \"reason\": \"EV=0.24098893\", \"p\": \"0.32298893\", \"ask\": \"0.0300\", \"fees\": \"0.002000\", \"uncertainty_buffer\": \"0.05\", \"ev\": \"0.24098893\", \"qty\": \"1\", \"quote_ts_utc\": \"2026-09-16T19:00:52.952879+00:00\", \"live_blocked\": true, \"live_order_submitted\": false, \"sim_label\": \"unvalidated_exploratory_paper\"}"
+      },
+      {
+        "id": 2,
+        "created_at_utc": "2026-09-16T18:59:01.208423+00:00",
+        "client_order_id": "paper-twc_nyc_central_park-KXHIGHNY-26SEP16-B79.5-yes-2026-09-16-14",
+        "ticker": "KXHIGHNY-26SEP16-B79.5",
+        "side": "yes",
+        "qty": "1",
+        "price": "0.0100",
+        "fees": "0.000600",
+        "decision_reason": "paper_sim_fill_unvalidated",
+        "location_id": "twc_nyc_central_park",
+        "series_ticker": "KXHIGHNY",
+        "quote_ts_utc": "2026-09-16T18:59:01.172515+00:00",
+        "market_ts_utc": "2026-09-16T18:59:01.172515+00:00",
+        "details_json": "{\"ticker\": \"KXHIGHNY-26SEP16-B79.5\", \"side\": \"yes\", \"decision\": \"ev_evaluated\", \"reason\": \"EV=0.04783567\", \"p\": \"0.10843567\", \"ask\": \"0.0100\", \"fees\": \"0.000600\", \"uncertainty_buffer\": \"0.05\", \"ev\": \"0.04783567\", \"qty\": \"1\", \"quote_ts_utc\": \"2026-09-16T18:59:01.172515+00:00\", \"live_blocked\": true, \"live_order_submitted\": false, \"sim_label\": \"unvalidated_exploratory_paper\"}"
+      },
+      {
+        "id": 1,
+        "created_at_utc": "2026-09-16T18:31:45.866516+00:00",
+        "client_order_id": "paper-twc_nyc_central_park-KXHIGHNY-26SEP16-B77.5-no-2026-09-16-14",
+        "ticker": "KXHIGHNY-26SEP16-B77.5",
+        "side": "no",
+        "qty": "1",
+        "price": "0.2300",
+        "fees": "0.012300",
+        "decision_reason": "paper_sim_fill_unvalidated",
+        "location_id": "twc_nyc_central_park",
+        "series_ticker": "KXHIGHNY",
+        "quote_ts_utc": "2026-09-16T18:31:45.831407+00:00",
+        "market_ts_utc": "2026-09-16T18:31:45.831407+00:00",
+        "details_json": "{\"ticker\": \"KXHIGHNY-26SEP16-B77.5\", \"side\": \"no\", \"decision\": \"ev_evaluated\", \"reason\": \"EV=0.28602893\", \"p\": \"0.57832893\", \"ask\": \"0.2300\", \"fees\": \"0.012300\", \"uncertainty_buffer\": \"0.05\", \"ev\": \"0.28602893\", \"qty\": \"1\", \"quote_ts_utc\": \"2026-09-16T18:31:45.831407+00:00\", \"live_blocked\": true, \"live_order_submitted\": false, \"sim_label\": \"unvalidated_exploratory_paper\"}"
+      }
+    ],
+    "recent_settlements": [],
+    "path": "data/obs_engine/multi/paper_ledger.db",
+    "live_order_submitted": false
+  },
+  "target_date": "2026-09-16",
+  "horizon": "same_day",
+  "human_forecast": "Los Angeles LAX (TWC CLILAX): today's high will be about 81\u00b0F (as of 11:00 Los_Angeles) (already seen 78\u00b0F) \u2014 climate day 2026-09-16.",
+  "callout": "Los Angeles LAX (TWC CLILAX): today's high will be about 81\u00b0F (as of 11:00 Los_Angeles) (already seen 78\u00b0F) \u2014 climate day 2026-09-16."
+}

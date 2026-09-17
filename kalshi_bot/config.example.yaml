@@ -1,0 +1,122 @@
+# Example configuration — copy to config.yaml and fill in local paths.
+# NEVER put private keys or API secrets in this file or commit them.
+
+mode: paper  # research | paper | live — live also requires live.enabled: true
+environment: production  # production | demo
+
+api:
+  # Production: https://external-api.kalshi.com/trade-api/v2
+  # Demo:       https://external-api.demo.kalshi.co/trade-api/v2
+  base_url: https://external-api.kalshi.com/trade-api/v2
+  # Local credentials live here (copy config.example.yaml → config.yaml):
+  #   data/secrets/api_key_id.txt
+  #   data/secrets/kalshi_api.key
+  # See docs/CREDENTIALS.md. Leave empty for public market-data-only.
+  private_key_path: data/secrets/kalshi_api.key
+  api_key_id: ""   # paste Key ID into config.yaml only (gitignored), not into chat
+  request_timeout_seconds: 30
+  max_retries: 3
+  rate_limit_tokens_per_second: 8
+
+storage:
+  sqlite_path: data/kalshi_bot.db
+
+scan:
+  # Categories to discover. Evaluation only runs where a model is registered.
+  categories:
+    - Climate and Weather
+    - Economics
+  series_tickers:
+    - KXHIGHNY
+    - HIGHNY
+    - KXHIGHLAX
+    - HIGHLAX
+    - KXHIGHTCHI
+    - HIGHCHI
+    - KXCPI
+  max_markets_per_scan: 200
+  scan_interval_seconds: 120
+  orderbook_depth_levels: 10
+  max_data_age_seconds: 900
+
+trading:
+  budget_dollars: 25.00           # Cap on deployable capital; deposits do NOT raise this
+  min_cash_reserve_dollars: 0.00
+  max_loss_per_trade_dollars: 5.00
+  max_event_exposure_dollars: 5.00
+  max_portfolio_exposure_dollars: 25.00
+  max_combo_exposure_dollars: 5.00
+  max_daily_loss_dollars: 25.00
+  max_drawdown_dollars: 25.00
+  min_net_edge: 0.05              # Minimum EV after fees (dollars per contract)
+  uncertainty_buffer: 0.05        # Extra edge required vs conservative probability
+  max_model_market_divergence: 0.12  # Skip unvalidated models that diverge this much from market
+  unvalidated_market_shrink: 0.65    # Blend weight toward market for UNVALIDATED models
+  unvalidated_longshot_max_price: 0.05  # Refuse unvalidated buys at/below this price
+  default_contract_quantity: "1.00"
+  max_contracts_per_order: "500.00"
+  target_trade_dollars: 5.00      # Aim ~$5 notional per individual trade
+  hold_to_settlement: true
+  fee_multiplier: 1.0             # Series M in fee formula; override per series when known
+  assume_taker: true              # Conservative: assume immediate match pays taker fee
+  balance_precision: "0.0001"     # Direct member default; use 0.01 for non-direct
+
+models:
+  weather:
+    enabled: true
+    use_ai_forecaster: true
+    # Observation-driven NYC Central Park engine — research/paper until promotion.
+    obs_engine_enabled: true
+    obs_engine_live_eligible: false   # MUST stay false until docs/PROMOTION_CRITERIA met
+    obs_engine_data_dir: data/obs_engine
+    archive_path: data/weather_archive.db
+    # Legacy Gaussian σ (fallback model only)
+    forecast_error_sigma_f: 3.0
+    min_sigma_f: 2.0
+    proxy_sigma_extra_f: 1.5
+    max_forecast_age_hours: 12
+    cities:
+      NYC:
+        series_prefixes: ["KXHIGHNY", "HIGHNY"]
+        lat: 40.7789
+        lon: -73.9692
+        station_note: "Daily max → NWS CLI Central Park (NYC)"
+      LAX:
+        series_prefixes: ["KXHIGHLAX", "HIGHLAX"]
+        lat: 33.9425
+        lon: -118.4081
+        station_note: "Daily max → TWC CLILAX / KLAX airport (KXHIGHLAX)"
+      CHI:
+        series_prefixes: ["KXHIGHTCHI", "HIGHCHI", "KXHIGHCHI"]
+        lat: 41.7868
+        lon: -87.7522
+        station_note: "Daily max → NWS CLI Midway (MDW)"
+  economics_cpi_enabled: true
+
+combos:
+  enabled: true
+  max_legs: 3
+  max_candidates_per_scan: 20
+  require_joint_model: true
+  # Without a validated joint model, dependent legs are skipped (independence only if justified).
+  allow_independence_assumption: false
+  rfq_poll_seconds: 2
+  rfq_wait_seconds: 15
+  # Set only for labeled paper RFQ simulator tests — not profit evidence.
+  paper_fixture_yes_price: null
+
+dashboard:
+  # 0.0.0.0 required for phone/tunnel access; keep password set when exposed.
+  host: 0.0.0.0
+  port: 8787
+  username: kalshi
+  password: ""  # set in config.yaml (gitignored); see data/secrets/dashboard_password.txt
+
+alerts:
+  # Optional webhook (Slack/Discord/etc). Leave empty to disable.
+  webhook_url: ""
+
+live:
+  # Also require mode: live. Prefer dashboard enablement; set true only intentionally.
+  enabled: false
+  require_budget_and_limits: true

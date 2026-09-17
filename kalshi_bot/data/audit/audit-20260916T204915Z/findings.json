@@ -1,0 +1,138 @@
+[
+  {
+    "id": "F1_sep15_live_longshots_pre_guards",
+    "severity": "critical",
+    "status": "confirmed_defect",
+    "summary": "On 2026-09-15T19:32Z, ExecutionEngine placed live YES buys at 1\u00a2 on KXHIGHNY-T70 and KXHIGHLAX-T82 using weather.high_temp.v0.2-unvalidated despite settlement_aligned=false and validation_note Paper only.",
+    "evidence": [
+      "data/kalshi_bot.db orders",
+      "opportunities estimated_prob/conservative_ev",
+      "exchange fills",
+      "market result=no for both"
+    ],
+    "timeline": {
+      "enable_live": "856d98ba 19:30:34",
+      "orders": "19:32:37",
+      "longshot_guard": "71bf28fc 19:39:48",
+      "live_gate": "a8568fda 23:15:19"
+    },
+    "affected_code": [
+      "bot/pipeline.py (then)",
+      "execution/engine.py (then)",
+      "models/weather/high_temp.py",
+      "ev/calculator.py"
+    ],
+    "loss_class": "incorrect_or_poorly_calibrated_probability + risk_control_not_yet_deployed + unvalidated_proxy_vs_TWC_settlement",
+    "realized": {
+      "NY_T70": "\u2248full premium+fees loss (YES settled no)",
+      "LAX_T82": "closed via sell; near flat minus fees (best-effort)"
+    },
+    "acceptance_test": "test_live_eligibility_gate + unvalidated longshot guard refuse price\u22640.05; scan cannot live-submit without model_live_eligible True"
+  },
+  {
+    "id": "F2_twc_live_bypasses_obs_and_risk",
+    "severity": "critical",
+    "status": "confirmed_defect",
+    "summary": "weather-twc-bet --live calls create_order_v2 without obs_engine_live_eligible and without RiskManager, while docs/config claim weather live blocked.",
+    "evidence": [
+      "multi/live_bet.py place_capped_live_bet docstring",
+      "audit_log twc_live_*",
+      "config obs_engine_live_eligible:false with mode:live"
+    ],
+    "affected_code": [
+      "multi/live_bet.py",
+      "ops.weather_twc_bet",
+      "cli weather-twc-bet"
+    ],
+    "acceptance_test": "live TWC path must require obs_engine_live_eligible or equivalent promotion flag AND RiskManager.check_purchase"
+  },
+  {
+    "id": "F3_max_ev_selected_cheap_CHI",
+    "severity": "high",
+    "status": "confirmed_defect_at_time_of_trade",
+    "summary": "CHI NO B75.5 selected by max EV at ask 3\u00a2 with model_p\u224832% while forecast median\u224876\u00b0F; cheap price dominated selection.",
+    "evidence": [
+      "/tmp/chi_live.json",
+      "order twc-live-18739f98",
+      "bet_rationale later raised min_p to 0.55 which would reject"
+    ],
+    "note": "Post-trade code changes improve selection; does not rewrite historical decision.",
+    "acceptance_test": "test_bet_rationale rejects p<0.55 longshots; rank by confidence not max EV"
+  },
+  {
+    "id": "F4_docs_live_blocked_vs_reality",
+    "severity": "high",
+    "status": "confirmed_defect",
+    "summary": "MULTI_LOCATION_STATUS and CAPABILITY docs say live blocked; runtime config live+TWC CLI produced real orders.",
+    "evidence": [
+      "docs vs config.yaml vs exchange orders"
+    ],
+    "acceptance_test": "docs state every live path; CI assert no create_order outside gated modules OR require flag"
+  },
+  {
+    "id": "F5_local_positions_not_reconciled_sep15",
+    "severity": "medium",
+    "status": "confirmed_defect",
+    "summary": "Local Store still shows Sep15 live positions open after markets finalized; settlement reconciler did not update them in this environment.",
+    "evidence": [
+      "positions_local.json status=open for SEP15",
+      "exchange markets status=finalized result=no"
+    ],
+    "acceptance_test": "reconcile closes/settles finalized markets; positions match exchange"
+  },
+  {
+    "id": "F6_lax_downtown_vs_airport",
+    "severity": "high",
+    "status": "supported_concern",
+    "summary": "Legacy high_temp/AI LAX uses downtown lat/lon while KXHIGHLAX settles CLILAX/KLAX airport.",
+    "evidence": [
+      "stations.py",
+      "config.yaml cities.LAX",
+      "VERIFIED_TWC KXHIGHLAX"
+    ],
+    "acceptance_test": "LAX NWS grid points match settlement station; KXHIGH* never use downtown coords"
+  },
+  {
+    "id": "F7_nyc_calib_fallback_if_path_none",
+    "severity": "medium",
+    "status": "supported_concern",
+    "summary": "predict_station_v2 defaults to NYC calibration when calib_path is None even if model joblib is location-specific.",
+    "evidence": [
+      "multi/predict.py DEFAULT_CALIB_PATH",
+      "pipeline passes calib_path=None when missing"
+    ],
+    "acceptance_test": "missing location calib \u2192 probabilities_unavailable, never silent NYC calib"
+  },
+  {
+    "id": "F8_non_bot_account_activity",
+    "severity": "info",
+    "status": "confirmed",
+    "summary": "Exchange account contains NFL/MVE/UCL fills not present in kalshi_bot.db \u2014 other entry points or manual trading share the account.",
+    "evidence": [
+      "non_bot_exchange_orders.json"
+    ],
+    "acceptance_test": "N/A \u2014 attribution boundary"
+  },
+  {
+    "id": "F9_no_demonstrated_positive_EV_after_costs",
+    "severity": "high",
+    "status": "supported_concern",
+    "summary": "No chronological trading backtest with executable historical prices demonstrates positive EV after fees. Holdout MAE for station_v2 is temperature skill, not trading EV.",
+    "evidence": [
+      "artifact reports MAE only",
+      "missing historical order book archive"
+    ],
+    "acceptance_test": "walk-forward paper trading with recorded books before any live"
+  },
+  {
+    "id": "F10_twc_transfer_exploratory",
+    "severity": "medium",
+    "status": "confirmed_limitation",
+    "summary": "TWC path reuses GHCND/NWS-trained residuals; labeled exploratory; not validated on TWC climate labels.",
+    "evidence": [
+      "pipeline model_origin same_icao_transfer",
+      "train label_note GHCND"
+    ],
+    "acceptance_test": "train/calibrate on TWC climate daily max labels before live"
+  }
+]

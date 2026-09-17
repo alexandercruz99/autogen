@@ -1,0 +1,11 @@
+{
+  "count": 0,
+  "rate": 0.0,
+  "causes": {
+    "asos_max_above_ghcnd_tmax": 0,
+    "rounding_or_source_mismatch_suspect": 0,
+    "near_zero_neg": 0
+  },
+  "policy": "Negative remain labels are KEPT for training. They can reflect future cooling after an early peak missed by the label source, ASOS vs GHCND mismatch, rounding, or reporting-source differences. They are not clipped without audit.",
+  "examples": []
+}

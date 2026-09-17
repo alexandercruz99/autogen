@@ -1,0 +1,18 @@
+{
+  "exists": [
+    "predict_station_v2 shared inference",
+    "select_forecast_consistent (extended by pick_contract)",
+    "chronological candidate splits",
+    "paper ledger (live books only)",
+    "prospective market_snapshots collector (sparse)"
+  ],
+  "incorrect_or_limited": [
+    "Prior CRPS used CDF form; replay uses exact energy PMF form per spec",
+    "select_forecast_consistent ranked by strike distance then p then EV; pick_contract ranks by expected net profit after fees",
+    "Archive availability approximated as valid_utc"
+  ],
+  "missing": [
+    "Dense historical Kalshi order books for trading P&L",
+    "Verified TWC/CLI settlement labels for full history"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "version": "picker.policy.v1",
+  "evaluation_quantity": 1,
+  "min_expected_net_profit_per_contract": "0.02",
+  "max_strike_distance_f": 4.0,
+  "apply_min_probability_preference": true,
+  "min_model_p_preference": "0.55",
+  "max_ask": "0.95",
+  "min_ask": "0.01",
+  "assume_taker_fees": true,
+  "fee_multiplier": "1",
+  "max_new_trades_per_event": 1,
+  "score_quantize_places": 6,
+  "live_eligible": false,
+  "notes": [
+    "Rank by expected net profit per contract at evaluation_quantity after fees.",
+    "Ties: higher purchased-side probability, then ticker, then side (YES before NO).",
+    "Most-likely bracket is reported separately from the purchased contract.",
+    "No arbitrary probability haircut; preference min_p is a filter not a calibration claim.",
+    "Research/paper only \u2014 live_eligible remains false."
+  ]
+}

@@ -1,0 +1,154 @@
+[
+  {
+    "id": 21,
+    "ts": "2026-09-15T19:23:35.265842+00:00",
+    "level": "warning",
+    "event": "live_enabled",
+    "message": "Live trading enabled by operator. Individual trades will not ask for approval.",
+    "details_json": "{\"authenticated\": true, \"connection_ok\": true, \"last_scan_ok\": true, \"model\": \"weather.high_temp.v0.1-unvalidated\", \"warning\": \"Model is unvalidated; live trading can lose money. No profit promised.\"}"
+  },
+  {
+    "id": 23,
+    "ts": "2026-09-15T19:24:37.798294+00:00",
+    "level": "warning",
+    "event": "safety",
+    "message": "Live disabled after operator enabled it; models not live_eligible. Kill switch on.",
+    "details_json": "{}"
+  },
+  {
+    "id": 24,
+    "ts": "2026-09-15T19:30:34.857190+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 27,
+    "ts": "2026-09-15T19:31:43.414578+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 32,
+    "ts": "2026-09-15T19:32:31.931703+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 34,
+    "ts": "2026-09-15T19:32:37.721515+00:00",
+    "level": "info",
+    "event": "live_order",
+    "message": "submitted 1c73fb0c-43d6-4c27-99b5-5b490502592a",
+    "details_json": "{\"resp_keys\": [\"average_fee_paid\", \"average_fill_price\", \"client_order_id\", \"fill_count\", \"order_id\", \"remaining_count\", \"ts_ms\"]}"
+  },
+  {
+    "id": 35,
+    "ts": "2026-09-15T19:32:38.013996+00:00",
+    "level": "info",
+    "event": "live_order",
+    "message": "submitted e48f1f1f-5c9b-4f4e-b1b2-506ae7596a69",
+    "details_json": "{\"resp_keys\": [\"average_fee_paid\", \"average_fill_price\", \"client_order_id\", \"fill_count\", \"order_id\", \"remaining_count\", \"ts_ms\"]}"
+  },
+  {
+    "id": 46,
+    "ts": "2026-09-15T19:39:56.752871+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 57,
+    "ts": "2026-09-15T21:32:16.121818+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 69,
+    "ts": "2026-09-15T22:15:59.113713+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 192,
+    "ts": "2026-09-16T02:52:25.745558+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 193,
+    "ts": "2026-09-16T02:52:50.111500+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 194,
+    "ts": "2026-09-16T02:53:03.101133+00:00",
+    "level": "warning",
+    "event": "live_boot",
+    "message": "live trading armed; budget=25.0 max_loss/trade=5.0 target_trade=5.0",
+    "details_json": "{}"
+  },
+  {
+    "id": 195,
+    "ts": "2026-09-16T18:43:18.551365+00:00",
+    "level": "info",
+    "event": "twc_live_submit",
+    "message": "submitting no KXHIGHNY-26SEP16-B77.5 x16.42 @ 0.2900 (~$4.9984)",
+    "details_json": "{\"callout\": \"NYC Central Park (TWC CLINYC): today's high will be about 77\\u00b0F (as of 14:00 New_York) (already seen 75\\u00b0F) \\u2014 climate day 2026-09-16.\", \"client_order_id\": \"twc-live-2186452a-921b-4b50-b7b3-d93ddb27b472\"}"
+  },
+  {
+    "id": 196,
+    "ts": "2026-09-16T18:43:18.576583+00:00",
+    "level": "info",
+    "event": "twc_live_result",
+    "message": "partial KXHIGHNY-26SEP16-B77.5 no",
+    "details_json": "{\"exchange_order_id\": \"01a0ab87-c970-7347-9241-5af47617beea\", \"filled\": \"1.00\", \"status\": \"partial\"}"
+  },
+  {
+    "id": 197,
+    "ts": "2026-09-16T19:01:37.837419+00:00",
+    "level": "info",
+    "event": "twc_live_submit",
+    "message": "submitting no KXHIGHCHI-26SEP16-B75.5 x156.07 @ 0.0300 (~$5.0000)",
+    "details_json": "{\"callout\": \"Chicago Midway (TWC CLIMDW): today's high will be about 76\\u00b0F (as of 14:00 Chicago) (already seen 75\\u00b0F) \\u2014 climate day 2026-09-16.\", \"client_order_id\": \"twc-live-18739f98-fa89-42ec-a6f6-a1e2a73bdea8\"}"
+  },
+  {
+    "id": 198,
+    "ts": "2026-09-16T19:01:37.854207+00:00",
+    "level": "info",
+    "event": "twc_live_result",
+    "message": "partial KXHIGHCHI-26SEP16-B75.5 no",
+    "details_json": "{\"exchange_order_id\": \"01a0ab98-8e68-7c9b-9ed4-df618c18f975\", \"filled\": \"5.00\", \"status\": \"partial\"}"
+  },
+  {
+    "id": 199,
+    "ts": "2026-09-16T19:16:09.638989+00:00",
+    "level": "info",
+    "event": "twc_live_submit",
+    "message": "submitting yes KXHIGHLAX-26SEP16-T80 x47.03 @ 0.1000 (~$4.9992)",
+    "details_json": "{\"callout\": \"Los Angeles LAX (TWC CLILAX): today's high will be about 81\\u00b0F (as of 11:00 Los_Angeles) (already seen 78\\u00b0F) \\u2014 climate day 2026-09-16.\", \"client_order_id\": \"twc-live-3b910c81-756f-4c0b-971f-795040019c19\"}"
+  },
+  {
+    "id": 200,
+    "ts": "2026-09-16T19:16:09.656800+00:00",
+    "level": "info",
+    "event": "twc_live_result",
+    "message": "partial KXHIGHLAX-26SEP16-T80 yes",
+    "details_json": "{\"exchange_order_id\": \"01a0aba5-dca8-7ca6-a507-4e76948ced43\", \"filled\": \"25.00\", \"status\": \"partial\"}"
+  }
+]

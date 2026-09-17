@@ -1,0 +1,554 @@
+{
+  "generated_at_utc": "2026-09-15T23:57:21.004605+00:00",
+  "n_independent_days_aligned": 1661,
+  "n_rows_aligned": 4981,
+  "coverage_loss_vs_baseline_only": {
+    "baseline": 0,
+    "local_v2": 0,
+    "neighbor": 0,
+    "cloud_precip": 0
+  },
+  "splits": {
+    "train": {
+      "n_days": 996,
+      "first": "2022-01-01",
+      "last": "2024-10-25"
+    },
+    "val": {
+      "n_days": 332,
+      "first": "2024-10-26",
+      "last": "2025-10-04"
+    },
+    "test": {
+      "n_days": 333,
+      "first": "2025-10-05",
+      "last": "2026-09-13"
+    }
+  },
+  "previously_reviewed_disclosure": "Final test days may overlap the earlier v1.1 backtest inspection window. Treat as reviewed for promotion purposes; prospective collector needed for untouched confirmation.",
+  "candidates": {
+    "baseline": {
+      "n_features": 13,
+      "feature_names": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h"
+      ],
+      "validation": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 3.6276007327298205,
+            "rmse": 4.52140895464832,
+            "mae_continuation": 8.717220543806647,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -5.089619811076826,
+              "ci80_lo": -5.431430922283568,
+              "ci80_hi": -4.7236712889779575
+            }
+          },
+          "11": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 2.4619329875005036,
+            "rmse": 3.178258636387149,
+            "mae_continuation": 5.461027190332326,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -2.999094202831823,
+              "ci80_lo": -3.242612964785168,
+              "ci80_hi": -2.7542210159634
+            }
+          },
+          "14": {
+            "n_rows": 332,
+            "n_days": 332,
+            "mae": 1.1175361228991343,
+            "rmse": 1.69255239006129,
+            "mae_continuation": 1.7096385542168675,
+            "mae_climatology": 7.075057165617235,
+            "bootstrap_vs_continuation": {
+              "n_days": 332.0,
+              "diff_mae": -0.5921024313177332,
+              "ci80_lo": -0.6714345148129087,
+              "ci80_hi": -0.5101159160998916
+            }
+          }
+        },
+        "n_eval_rows": 994
+      },
+      "test_refit_train_plus_val": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 3.4536517713644415,
+            "rmse": 4.483315014194932,
+            "mae_continuation": 8.358558558558558,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -4.9049067871941165,
+              "ci80_lo": -5.267568338221853,
+              "ci80_hi": -4.495015018074378
+            }
+          },
+          "11": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 2.3851530948727677,
+            "rmse": 3.078362440988778,
+            "mae_continuation": 5.057657657657658,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -2.6725045627848902,
+              "ci80_lo": -2.913909835952969,
+              "ci80_hi": -2.424895004960688
+            }
+          },
+          "14": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 1.0752478624849935,
+            "rmse": 1.6091134285387418,
+            "mae_continuation": 1.6432432432432433,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -0.5679953807582498,
+              "ci80_lo": -0.6426821904208041,
+              "ci80_hi": -0.49128680240663936
+            }
+          }
+        },
+        "n_eval_rows": 999
+      }
+    },
+    "local_v2": {
+      "n_features": 23,
+      "feature_names": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h",
+        "time_since_max_h",
+        "d_dewpt_3h",
+        "d_alti_3h",
+        "d_sknt_3h",
+        "wind_dir_sin",
+        "wind_dir_cos",
+        "missing_sknt",
+        "missing_alti",
+        "missing_dwpf",
+        "sky_code"
+      ],
+      "validation": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 3.52187593457974,
+            "rmse": 4.44858918117757,
+            "mae_continuation": 8.717220543806647,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -5.1953446092269076,
+              "ci80_lo": -5.541071930022918,
+              "ci80_hi": -4.851138682863213
+            }
+          },
+          "11": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 2.3257659114791034,
+            "rmse": 2.9958501771096655,
+            "mae_continuation": 5.461027190332326,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -3.135261278853223,
+              "ci80_lo": -3.354346549318598,
+              "ci80_hi": -2.912982060411638
+            }
+          },
+          "14": {
+            "n_rows": 332,
+            "n_days": 332,
+            "mae": 1.0936905404185557,
+            "rmse": 1.6508776257759807,
+            "mae_continuation": 1.7096385542168675,
+            "mae_climatology": 7.075057165617235,
+            "bootstrap_vs_continuation": {
+              "n_days": 332.0,
+              "diff_mae": -0.6159480137983118,
+              "ci80_lo": -0.7017577887438614,
+              "ci80_hi": -0.5365272525308086
+            }
+          }
+        },
+        "n_eval_rows": 994
+      },
+      "test_refit_train_plus_val": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 3.410473823090774,
+            "rmse": 4.41434544945518,
+            "mae_continuation": 8.358558558558558,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -4.948084735467784,
+              "ci80_lo": -5.303438374770786,
+              "ci80_hi": -4.537692158291949
+            }
+          },
+          "11": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 2.2983073784785377,
+            "rmse": 2.946169286486039,
+            "mae_continuation": 5.057657657657658,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -2.7593502791791202,
+              "ci80_lo": -2.994121492022367,
+              "ci80_hi": -2.5249071096069806
+            }
+          },
+          "14": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 1.0599121840308618,
+            "rmse": 1.5941919862371607,
+            "mae_continuation": 1.6432432432432433,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -0.5833310592123815,
+              "ci80_lo": -0.6558346825678705,
+              "ci80_hi": -0.5042988163346244
+            }
+          }
+        },
+        "n_eval_rows": 999
+      }
+    },
+    "neighbor": {
+      "n_features": 27,
+      "feature_names": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h",
+        "time_since_max_h",
+        "d_dewpt_3h",
+        "d_alti_3h",
+        "d_sknt_3h",
+        "wind_dir_sin",
+        "wind_dir_cos",
+        "missing_sknt",
+        "missing_alti",
+        "missing_dwpf",
+        "sky_code",
+        "lga_tmpf",
+        "lga_minus_nyc",
+        "lga_dT_3h",
+        "upwind_from_lga"
+      ],
+      "validation": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 3.484253829942552,
+            "rmse": 4.3874606499400555,
+            "mae_continuation": 8.717220543806647,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -5.232966713864095,
+              "ci80_lo": -5.577799216664842,
+              "ci80_hi": -4.883306984196444
+            }
+          },
+          "11": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 2.3490198232983808,
+            "rmse": 2.9852603225067003,
+            "mae_continuation": 5.461027190332326,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -3.1120073670339456,
+              "ci80_lo": -3.337640373383197,
+              "ci80_hi": -2.891249531348907
+            }
+          },
+          "14": {
+            "n_rows": 332,
+            "n_days": 332,
+            "mae": 1.0641043353014183,
+            "rmse": 1.6232728219716313,
+            "mae_continuation": 1.7096385542168675,
+            "mae_climatology": 7.075057165617235,
+            "bootstrap_vs_continuation": {
+              "n_days": 332.0,
+              "diff_mae": -0.6455342189154492,
+              "ci80_lo": -0.7246232949755371,
+              "ci80_hi": -0.5654016349908308
+            }
+          }
+        },
+        "n_eval_rows": 994
+      },
+      "test_refit_train_plus_val": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 3.3613796092738975,
+            "rmse": 4.37587115597423,
+            "mae_continuation": 8.358558558558558,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -4.9971789492846606,
+              "ci80_lo": -5.334379017873945,
+              "ci80_hi": -4.586731674016731
+            }
+          },
+          "11": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 2.221720725394137,
+            "rmse": 2.9062497753478387,
+            "mae_continuation": 5.057657657657658,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -2.835936932263521,
+              "ci80_lo": -3.0642119109396586,
+              "ci80_hi": -2.6024621272317088
+            }
+          },
+          "14": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 1.026966303261096,
+            "rmse": 1.5442802667102542,
+            "mae_continuation": 1.6432432432432433,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -0.6162769399821473,
+              "ci80_lo": -0.688732050297506,
+              "ci80_hi": -0.5340887188211114
+            }
+          }
+        },
+        "n_eval_rows": 999
+      }
+    },
+    "cloud_precip": {
+      "n_features": 30,
+      "feature_names": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h",
+        "time_since_max_h",
+        "d_dewpt_3h",
+        "d_alti_3h",
+        "d_sknt_3h",
+        "wind_dir_sin",
+        "wind_dir_cos",
+        "missing_sknt",
+        "missing_alti",
+        "missing_dwpf",
+        "sky_code",
+        "lga_tmpf",
+        "lga_minus_nyc",
+        "lga_dT_3h",
+        "upwind_from_lga",
+        "precip_1h",
+        "precip_flag",
+        "sky_overcast"
+      ],
+      "validation": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 3.484253829942552,
+            "rmse": 4.3874606499400555,
+            "mae_continuation": 8.717220543806647,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -5.232966713864095,
+              "ci80_lo": -5.577799216664842,
+              "ci80_hi": -4.883306984196444
+            }
+          },
+          "11": {
+            "n_rows": 331,
+            "n_days": 331,
+            "mae": 2.3490198232983808,
+            "rmse": 2.9852603225067003,
+            "mae_continuation": 5.461027190332326,
+            "mae_climatology": 7.062746160075292,
+            "bootstrap_vs_continuation": {
+              "n_days": 331.0,
+              "diff_mae": -3.1120073670339456,
+              "ci80_lo": -3.337640373383197,
+              "ci80_hi": -2.891249531348907
+            }
+          },
+          "14": {
+            "n_rows": 332,
+            "n_days": 332,
+            "mae": 1.0641043353014183,
+            "rmse": 1.6232728219716313,
+            "mae_continuation": 1.7096385542168675,
+            "mae_climatology": 7.075057165617235,
+            "bootstrap_vs_continuation": {
+              "n_days": 332.0,
+              "diff_mae": -0.6455342189154492,
+              "ci80_lo": -0.7246232949755371,
+              "ci80_hi": -0.5654016349908308
+            }
+          }
+        },
+        "n_eval_rows": 994
+      },
+      "test_refit_train_plus_val": {
+        "ok": true,
+        "by_hour": {
+          "8": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 3.359340542450913,
+            "rmse": 4.379557269376927,
+            "mae_continuation": 8.358558558558558,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -4.999218016107645,
+              "ci80_lo": -5.340837972823521,
+              "ci80_hi": -4.593357949574391
+            }
+          },
+          "11": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 2.2189595602670207,
+            "rmse": 2.902025804038741,
+            "mae_continuation": 5.057657657657658,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -2.8386980973906373,
+              "ci80_lo": -3.069987157048575,
+              "ci80_hi": -2.6039890987723595
+            }
+          },
+          "14": {
+            "n_rows": 333,
+            "n_days": 333,
+            "mae": 1.028118130127525,
+            "rmse": 1.5403397815343773,
+            "mae_continuation": 1.6432432432432433,
+            "mae_climatology": 7.265781410610456,
+            "bootstrap_vs_continuation": {
+              "n_days": 333.0,
+              "diff_mae": -0.6151251131157183,
+              "ci80_lo": -0.689726874964333,
+              "ci80_hi": -0.5334766547616918
+            }
+          }
+        },
+        "n_eval_rows": 999
+      }
+    }
+  },
+  "satellite_radar": {
+    "status": "not_integrated",
+    "blocker": "No GOES-R/NEXRAD/NYS Mesonet credentials or scoped download this run; cloud_precip uses METAR/ASOS only."
+  },
+  "live_eligible": false,
+  "selection": {
+    "metric": "macro_mean_mae_across_hours_on_validation",
+    "val_scores": {
+      "baseline": 2.4023566143764863,
+      "local_v2": 2.313777462159133,
+      "neighbor": 2.2991259961807837,
+      "cloud_precip": 2.2991259961807837
+    },
+    "selected": "neighbor",
+    "improved_vs_baseline_on_val": true,
+    "note": "Require >=0.05\u00b0F macro MAE gain on val to prefer over baseline for inference."
+  },
+  "external_benchmark": {
+    "open_meteo_historical_forecast_api": {
+      "provenance": "RETROSPECTIVE \u2014 Historical Forecast API stitches early hours of successive runs",
+      "docs": "https://open-meteo.com/en/docs/historical-forecast-api",
+      "single_runs_api": "https://open-meteo.com/en/docs/single-runs-api \u2014 not wired for decision-time cutoffs this run",
+      "n_days_cached": 1717,
+      "fair_decision_time_nws": false
+    }
+  }
+}

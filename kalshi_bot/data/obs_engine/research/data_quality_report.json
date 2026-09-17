@@ -1,0 +1,425 @@
+{
+  "station": {
+    "ghcnd": "USW00094728",
+    "cli": "NYC",
+    "metar": "KNYC",
+    "coords": [
+      40.77898,
+      -73.96925
+    ],
+    "settlement": "NWS Daily Climate Report (CLI) for Central Park",
+    "lst_climate_day": true,
+    "unit": "F"
+  },
+  "documentation_checked": [
+    "https://help.kalshi.com/en/articles/13823837-weather-markets",
+    "https://mesonet.agron.iastate.edu/request/asos/1min.phtml",
+    "https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-daily"
+  ],
+  "hourly_vs_ghcnd": {
+    "n_days": 1718,
+    "mean_ghcnd_minus_hourly_max_f": 0.8324214202561117,
+    "median_ghcnd_minus_hourly_max_f": 1.0,
+    "p90_gap_f": 2.0,
+    "frac_days_ghcnd_gt_hourly_max": 0.5820721769499418,
+    "frac_days_ghcnd_lt_hourly_max": 0.011059371362048894,
+    "interpretation": "Positive gap \u21d2 official daily max exceeded published hourly ASOS max (peak between hours, different sensor window, or rounding)."
+  },
+  "negative_remaining_rise": {
+    "n_rows": 4981,
+    "n_negative": 38,
+    "frac_negative": 0.007628990162617948,
+    "mean_negative_remain_f": -1.2789473684210524,
+    "by_hour": {
+      "8": 11,
+      "11": 12,
+      "14": 15
+    },
+    "hypothesis": "Negative remain = GHCND TMAX < max_so_far from ASOS at decision time. Causes may include: whole-\u00b0C METAR rounding above true max, station/sensor differences vs CLI/GHCND, or climate-day LST boundary mismatch. Not clipped blindly.",
+    "sample": [
+      {
+        "climate_day": "2022-09-16",
+        "decision_hour": 11,
+        "decision_time_utc": "2022-09-16T15:00:00+00:00",
+        "features": [
+          11.0,
+          259.0,
+          64.0,
+          45.0,
+          3.0,
+          30.23,
+          76.0,
+          19.0,
+          -12.0,
+          5.0,
+          43.06533559298489,
+          9.0,
+          0.0
+        ],
+        "max_so_far": 76.0,
+        "label_tmax_f": 75,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 11,
+          "latest_obs_utc": "2022-09-16T14:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2022-09-16",
+        "decision_hour": 14,
+        "decision_time_utc": "2022-09-16T18:00:00+00:00",
+        "features": [
+          14.0,
+          259.0,
+          72.0,
+          41.0,
+          0.0,
+          30.18,
+          76.0,
+          19.0,
+          2.0,
+          8.0,
+          48.42592632058853,
+          6.0,
+          0.0
+        ],
+        "max_so_far": 76.0,
+        "label_tmax_f": 75,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 14,
+          "latest_obs_utc": "2022-09-16T17:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-19",
+        "decision_hour": 8,
+        "decision_time_utc": "2023-03-19T12:00:00+00:00",
+        "features": [
+          8.0,
+          78.0,
+          30.0,
+          4.0,
+          8.0,
+          30.0,
+          41.0,
+          11.0,
+          0.0,
+          -4.0,
+          11.260742846199303,
+          12.0,
+          0.0
+        ],
+        "max_so_far": 41.0,
+        "label_tmax_f": 40,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 8,
+          "latest_obs_utc": "2023-03-19T11:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-19",
+        "decision_hour": 11,
+        "decision_time_utc": "2023-03-19T15:00:00+00:00",
+        "features": [
+          11.0,
+          78.0,
+          32.0,
+          5.0,
+          11.0,
+          30.02,
+          41.0,
+          11.0,
+          2.0,
+          2.0,
+          40.4323417286349,
+          9.0,
+          0.0
+        ],
+        "max_so_far": 41.0,
+        "label_tmax_f": 40,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 11,
+          "latest_obs_utc": "2023-03-19T14:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-19",
+        "decision_hour": 14,
+        "decision_time_utc": "2023-03-19T18:00:00+00:00",
+        "features": [
+          14.0,
+          78.0,
+          37.0,
+          7.0,
+          6.0,
+          30.02,
+          41.0,
+          11.0,
+          1.0,
+          5.0,
+          45.54775289745279,
+          6.0,
+          0.0
+        ],
+        "max_so_far": 41.0,
+        "label_tmax_f": 40,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 14,
+          "latest_obs_utc": "2023-03-19T17:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-24",
+        "decision_hour": 8,
+        "decision_time_utc": "2023-03-24T12:00:00+00:00",
+        "features": [
+          8.0,
+          83.0,
+          44.0,
+          28.9,
+          8.0,
+          29.96,
+          56.0,
+          12.0,
+          -2.0,
+          -6.0,
+          12.608578830522188,
+          12.0,
+          0.0
+        ],
+        "max_so_far": 56.0,
+        "label_tmax_f": 55,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 8,
+          "latest_obs_utc": "2023-03-24T11:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-24",
+        "decision_hour": 11,
+        "decision_time_utc": "2023-03-24T15:00:00+00:00",
+        "features": [
+          11.0,
+          83.0,
+          44.0,
+          28.0,
+          6.0,
+          30.0,
+          56.0,
+          12.0,
+          0.0,
+          0.0,
+          42.192294072811045,
+          9.0,
+          0.0
+        ],
+        "max_so_far": 56.0,
+        "label_tmax_f": 55,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 11,
+          "latest_obs_utc": "2023-03-24T14:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      },
+      {
+        "climate_day": "2023-03-24",
+        "decision_hour": 14,
+        "decision_time_utc": "2023-03-24T18:00:00+00:00",
+        "features": [
+          14.0,
+          83.0,
+          48.0,
+          27.0,
+          4.0,
+          29.98,
+          56.0,
+          12.0,
+          1.0,
+          4.0,
+          47.469173213098784,
+          6.0,
+          0.0
+        ],
+        "max_so_far": 56.0,
+        "label_tmax_f": 55,
+        "remain_f": -1.0,
+        "label_source": "GHCND:USW00094728",
+        "provenance": {
+          "n_obs_used": 14,
+          "latest_obs_utc": "2023-03-24T17:51:00+00:00",
+          "availability_note": "Features use observation valid timestamps \u2264 decision time. Publication/first-seen times not in IEM ASOS CSV \u2014 forward collection should store receiptTime.",
+          "station": "NYC",
+          "source": "iem_asos_hourly"
+        }
+      }
+    ]
+  },
+  "missingness": {
+    "n_obs": 41424,
+    "frac_missing_skyc1": 0.0,
+    "frac_missing_sknt": 0.081136539204326,
+    "baseline_feature_risk": "features.py substitutes sknt=0 and alti=30 when missing \u2014 can look like calm/high pressure. Candidate local_v2 uses explicit missing indicators."
+  },
+  "precision": {
+    "n_with_tmpf": 41393,
+    "n_exact_whole_celsius_grid": 5111,
+    "frac_on_whole_c_grid": 0.12347498369289493,
+    "n_fractional_f_readings": 816,
+    "note": "IEM ASOS tmpf often lands on whole-\u00b0C\u00d71.8+32 grid. Aviation Weather may expose finer fields (tempFloat) \u2014 prospective collector stores precision_note."
+  },
+  "cli_vs_ghcnd": {
+    "ok": true,
+    "n_pairs": 12,
+    "n_exact_match": 11,
+    "n_abs_diff_ge_1": 1,
+    "n_abs_diff_ge_2": 0,
+    "mean_diff": -0.08333333333333333,
+    "mae_diff": 0.08333333333333333,
+    "settlement_source_controls": "NWS CLI MAXIMUM (Kalshi daily high settlement)",
+    "training_label_source": "GHCND USW00094728 TMAX (same station climate record; proxy when historical CLI text unavailable)",
+    "pairs_sample": [
+      {
+        "climate_day": "2026-09-13",
+        "cli_max_f": 79,
+        "ghcnd_tmax_f": 79,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-14T06:22:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-13",
+        "cli_max_f": 78,
+        "ghcnd_tmax_f": 79,
+        "diff_cli_minus_ghcnd": -1,
+        "cli_preliminary": true,
+        "issuance": "2026-09-13T20:34:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-12",
+        "cli_max_f": 78,
+        "ghcnd_tmax_f": 78,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-13T06:34:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-12",
+        "cli_max_f": 78,
+        "ghcnd_tmax_f": 78,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": true,
+        "issuance": "2026-09-12T20:45:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-11",
+        "cli_max_f": 79,
+        "ghcnd_tmax_f": 79,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-12T06:26:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-11",
+        "cli_max_f": 79,
+        "ghcnd_tmax_f": 79,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": true,
+        "issuance": "2026-09-11T20:37:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-11",
+        "cli_max_f": 79,
+        "ghcnd_tmax_f": 79,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": true,
+        "issuance": "2026-09-11T20:33:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-10",
+        "cli_max_f": 84,
+        "ghcnd_tmax_f": 84,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-11T06:19:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-10",
+        "cli_max_f": 84,
+        "ghcnd_tmax_f": 84,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": true,
+        "issuance": "2026-09-10T20:32:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-09",
+        "cli_max_f": 82,
+        "ghcnd_tmax_f": 82,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-10T06:55:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-09",
+        "cli_max_f": 82,
+        "ghcnd_tmax_f": 82,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": true,
+        "issuance": "2026-09-09T20:38:00+00:00"
+      },
+      {
+        "climate_day": "2026-09-08",
+        "cli_max_f": 80,
+        "ghcnd_tmax_f": 80,
+        "diff_cli_minus_ghcnd": 0,
+        "cli_preliminary": false,
+        "issuance": "2026-09-09T06:32:00+00:00"
+      }
+    ],
+    "note": "Mismatches can arise from preliminary vs final CLI, rounding, or rare revisions. Kalshi settles on final CLI; GHCND is used for multi-year labels."
+  },
+  "preliminary_vs_final": {
+    "policy": "CLI prelim used as soft floor evidence only; Kalshi settles on FINAL CLI. Prelim must not be treated as irrevocable physical maximum."
+  },
+  "leakage_policy": {
+    "features": "valid_utc <= decision_utc only",
+    "limitation": "IEM publication/first-seen not available historically \u2014 disclosed"
+  },
+  "one_minute_asos": {
+    "status": "not_downloaded_in_this_run",
+    "blocker_or_plan": "IEM 1-minute ASOS can diagnose peaks between hourly reports (https://mesonet.agron.iastate.edu/request/asos/1min.phtml). Scoped download deferred unless hourly-gap audit warrants; operational use requires matching live cadence.",
+    "hourly_gap_already_quantified": true
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "reproduced_at_utc": "2026-09-15T23:46:00+00:00",
+  "n_independent_climate_days": 1661,
+  "test_split": {
+    "n_days": 333,
+    "first": "2025-10-05",
+    "last": "2026-09-13"
+  },
+  "reproduced_mae_hours": {
+    "8": 3.452589741118665,
+    "11": 2.452085199709176,
+    "14": 1.0806553949967364
+  },
+  "claimed_mae_hours_approx": {
+    "8": 3.45,
+    "11": 2.45,
+    "14": 1.08
+  },
+  "match_within_0_05f": {
+    "8": true,
+    "11": true,
+    "14": true
+  },
+  "beats_climatology_all_hours": true,
+  "outperforms_established_nws_decision_time": false,
+  "method": "run_obs_backtest(fetch_external_benchmark=False/True with cached OM CSV)"
+}

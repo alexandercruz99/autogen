@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "model_version": "weather.obs_nyc.station_corrected.v2",
+  "feature_schema_version": "station_v2.1",
+  "feature_names": [
+    "hour_local",
+    "doy",
+    "tmpf",
+    "dwpf",
+    "sknt",
+    "alti",
+    "max_so_far",
+    "rise_from_min",
+    "dT_1h",
+    "dT_3h",
+    "solar_el",
+    "hours_to_20_local",
+    "precip_6h",
+    "time_since_max_h",
+    "d_dewpt_3h",
+    "d_alti_3h",
+    "d_sknt_3h",
+    "wind_dir_sin",
+    "wind_dir_cos",
+    "missing_sknt",
+    "missing_alti",
+    "missing_dwpf",
+    "missing_precip_6h",
+    "sky_code"
+  ],
+  "n_train_days": 1162,
+  "n_calib_days": 249,
+  "n_test_days": 249,
+  "n_train_rows": 3486,
+  "n_calib_rows": 747,
+  "n_test_rows": 747,
+  "negative_remain_labels_kept": 8,
+  "raw_q50_mae_test_reference_only": {
+    "8": 3.4954311921536827,
+    "11": 2.464616615417214,
+    "14": 1.115464873081336
+  },
+  "production_distribution_eval_test": {
+    "8": {
+      "n_rows": 249,
+      "n_independent_days": 249,
+      "production_median_mae_f": 3.5261044176706826,
+      "interval_80_coverage": 0.7991967871485943,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "11": {
+      "n_rows": 249,
+      "n_independent_days": 249,
+      "production_median_mae_f": 2.4377510040160644,
+      "interval_80_coverage": 0.7791164658634538,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "14": {
+      "n_rows": 249,
+      "n_independent_days": 249,
+      "production_median_mae_f": 1.1124497991967872,
+      "interval_80_coverage": 0.8514056224899599,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    }
+  },
+  "frozen_baseline_path": "data/obs_engine/research/baseline_freeze/obs_nyc_q50_baseline.joblib",
+  "calibration_path": "data/obs_engine/feeds/models/station_corrected_v2_calibration.json",
+  "calib_residual_counts": {
+    "8": 249,
+    "11": 249,
+    "14": 249,
+    "all": 747
+  },
+  "live_eligible": false,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "generated_at_utc": "2026-09-16T05:15:26.552600+00:00",
+  "sat_radar_training": {
+    "status": "deferred",
+    "note": "Sat/radar candidate remains unpromoted. Future comparisons must use matched dates and a station-only control trained on the same days; n=9 cannot establish improvement."
+  },
+  "artifact": "data/obs_engine/feeds/models/station_corrected_v2.joblib"
+}

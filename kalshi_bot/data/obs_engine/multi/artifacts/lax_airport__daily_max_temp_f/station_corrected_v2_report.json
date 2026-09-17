@@ -1,0 +1,113 @@
+{
+  "ok": true,
+  "location_id": "lax_airport",
+  "display_name": "Los Angeles International (LAX)",
+  "series_ticker": "KXHIGHLAX",
+  "measurement": "daily_max_temp_f",
+  "model_version": "weather.obs_lax_airport.station_corrected.v1",
+  "feature_schema_version": "station_v2.1",
+  "feature_names": [
+    "hour_local",
+    "doy",
+    "tmpf",
+    "dwpf",
+    "sknt",
+    "alti",
+    "max_so_far",
+    "rise_from_min",
+    "dT_1h",
+    "dT_3h",
+    "solar_el",
+    "hours_to_20_local",
+    "precip_6h",
+    "time_since_max_h",
+    "d_dewpt_3h",
+    "d_alti_3h",
+    "d_sknt_3h",
+    "wind_dir_sin",
+    "wind_dir_cos",
+    "missing_sknt",
+    "missing_alti",
+    "missing_dwpf",
+    "missing_precip_6h",
+    "sky_code"
+  ],
+  "timezone": "America/Los_Angeles",
+  "metar_id": "KLAX",
+  "ghcnd_id": "USW00023174",
+  "n_obs": 41138,
+  "n_labels": 1717,
+  "n_train_days": 1199,
+  "n_calib_days": 257,
+  "n_test_days": 257,
+  "n_train_rows": 3595,
+  "n_calib_rows": 771,
+  "n_test_rows": 771,
+  "negative_remain_labels_kept": 0,
+  "raw_q50_mae_test_reference_only": {
+    "8": 2.7193048002214297,
+    "11": 1.2687642550991716,
+    "14": 0.5526687827333681
+  },
+  "production_distribution_eval_test": {
+    "8": {
+      "n_rows": 257,
+      "n_independent_days": 257,
+      "production_median_mae_f": 2.6964980544747084,
+      "production_median_bias_f": -1.4980544747081712,
+      "interval_80_coverage": 0.8054474708171206,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "11": {
+      "n_rows": 257,
+      "n_independent_days": 257,
+      "production_median_mae_f": 1.2373540856031129,
+      "production_median_bias_f": -0.16342412451361868,
+      "interval_80_coverage": 0.8793774319066148,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    },
+    "14": {
+      "n_rows": 257,
+      "n_independent_days": 257,
+      "production_median_mae_f": 0.5408560311284046,
+      "production_median_bias_f": 0.0038910505836575876,
+      "interval_80_coverage": 0.9688715953307393,
+      "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+    }
+  },
+  "calibration_path": "data/obs_engine/multi/artifacts/lax_airport__daily_max_temp_f/station_corrected_v2_calibration.json",
+  "calib_residual_counts": {
+    "8": 257,
+    "11": 257,
+    "14": 257,
+    "all": 771
+  },
+  "date_range": {
+    "obs_first_utc": "2022-01-01T00:53:00+00:00",
+    "obs_last_utc": "2026-09-16T18:53:00+00:00",
+    "label_first": "2022-01-01",
+    "label_last": "2026-09-13",
+    "train_days": [
+      "2022-01-01",
+      "2025-04-16"
+    ],
+    "test_days": [
+      "2025-12-30",
+      "2026-09-13"
+    ]
+  },
+  "live_eligible": false,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "noon_plan": {
+    "target_local_hour": 11,
+    "note": "Actionable decision hours are 08/11/14 local. For trading around noon, use the 11:00 local forecast window (closest validated hour)."
+  },
+  "generated_at_utc": "2026-09-16T19:15:28.582985+00:00",
+  "label_note": "GHCND USW00023174 LAX daily TMAX (\u00b0F) trains the station model for TWC CLILAX / KXHIGHLAX settlement (same ICAO). Progressive evidence uses KLAX + TWC portal.",
+  "nyc_model_not_transferred": true,
+  "artifact": "data/obs_engine/multi/artifacts/lax_airport__daily_max_temp_f/station_corrected_v2.joblib"
+}

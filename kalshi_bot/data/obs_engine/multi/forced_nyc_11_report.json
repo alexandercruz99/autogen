@@ -1,0 +1,135 @@
+{
+  "summary": {
+    "location_id": "nyc_central_park",
+    "status": "insufficient_data",
+    "reason": "Essential station coverage inadequate",
+    "decision_hour_local": 11,
+    "probabilities_available": null,
+    "point_median_f": null,
+    "calibration_status": null,
+    "coverage": null,
+    "paper_decision": "blocked_insufficient_data",
+    "live_order_submitted": false,
+    "attribution": null,
+    "collection_metar_ok": true
+  },
+  "full": {
+    "location_id": "nyc_central_park",
+    "series_ticker": "HIGHNY",
+    "measurement": "daily_max_temp_f",
+    "display_name": "New York City Central Park",
+    "mapping_status": "verified",
+    "validation_status": "operating_candidate",
+    "settlement_source_family": "nws_cli",
+    "timezone": "America/New_York",
+    "generated_at_utc": "2026-09-15T15:00:00+00:00",
+    "live_order_submitted": false,
+    "ok": true,
+    "collection": {
+      "metar": {
+        "feed": "metar",
+        "stations": {
+          "KNYC": {
+            "ok": true,
+            "n_fetched": 30,
+            "n_new": 0,
+            "latest_key": "KNYC:2026-09-15T00:51:00+00:00",
+            "usable": true
+          },
+          "KLGA": {
+            "ok": true,
+            "n_fetched": 31,
+            "n_new": 0,
+            "latest_key": "KLGA:2026-09-15T00:51:00+00:00",
+            "usable": true
+          },
+          "KJFK": {
+            "ok": true,
+            "n_fetched": 30,
+            "n_new": 0,
+            "latest_key": "KJFK:2026-09-15T00:51:00+00:00",
+            "usable": true
+          }
+        },
+        "hours_requested": 30,
+        "ok": true,
+        "usable": true
+      },
+      "cli": {
+        "ok": true,
+        "n_reports": 8,
+        "n_new": 0,
+        "latest_key": "CLI:NYC:2026-09-11:2026-09-12T06:26:00+00:00:F",
+        "feed": "cli_nyc",
+        "cli_location_id": "NYC",
+        "usable": true
+      }
+    },
+    "data_availability": {
+      "metar_primary": "KNYC",
+      "metar_usable": true,
+      "cli_location_id": "NYC",
+      "notes": "Settlement: NWS CLI MAXIMUM Central Park; METAR KNYC same station progressive evidence"
+    },
+    "features_summary": {
+      "max_so_far": null,
+      "coverage": null,
+      "cli_applied": null,
+      "attribution": {
+        "feeds_collected": [
+          "metar_KNYC",
+          "goes19_acmc",
+          "nexrad_okx_n0b",
+          "cli_nyc"
+        ],
+        "feeds_quality_ok": [
+          "goes19_acmc",
+          "nexrad_okx_n0b"
+        ],
+        "features_consumed_by_model": [],
+        "settlement_constraints_applied": [],
+        "location_id": "nyc_central_park"
+      },
+      "missing": {
+        "station_obs": true,
+        "essential_coverage": true
+      }
+    },
+    "forecast_context": {
+      "location_id": "nyc_central_park",
+      "series_ticker": "HIGHNY",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "climate_day": "2026-09-15",
+      "decision_time_utc": "2026-09-15T15:00:00+00:00",
+      "horizon": "same_day",
+      "model_version": null,
+      "feature_schema_version": "station_v2.1",
+      "decision_hour_local": 11,
+      "timezone": "America/New_York",
+      "uses_lst_climate_day": true,
+      "metar_id": "KNYC",
+      "cli_location_id": "NYC",
+      "lat": 40.77898,
+      "lon": -73.96925,
+      "elev_m": 42.7,
+      "mode": "RESEARCH",
+      "extras": {}
+    },
+    "decision_hour_local": 11,
+    "supported_decision_hours_local": [
+      8,
+      11,
+      14
+    ],
+    "generated_at_local": "2026-09-15T11:00:00-04:00",
+    "status": "insufficient_data",
+    "reason": "Essential station coverage inadequate",
+    "coverage_notes": null,
+    "paper_decision": {
+      "decision": "blocked_insufficient_data",
+      "reason": "coverage inadequate",
+      "live_blocked": true
+    }
+  }
+}

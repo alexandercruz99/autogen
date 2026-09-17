@@ -1,0 +1,29 @@
+{
+  "collected_at_utc": "2026-09-16T00:00:03.106799+00:00",
+  "db_path": "data/obs_engine/research/prospective.db",
+  "scheduling": "Invoke weather-obs-collect-once periodically, or keep `kalshi-bot run` with research_collect_hook enabled. No background daemon is started by this function alone.",
+  "live_orders": false,
+  "metar": {
+    "ok": true,
+    "n_rows_fetched": 6,
+    "n_new_inserted": 6
+  },
+  "cli": {
+    "ok": true,
+    "n_reports": 5
+  },
+  "nws": {
+    "ok": true,
+    "forecast": null
+  },
+  "markets": {
+    "ok": true,
+    "n_markets": 12
+  },
+  "prediction": {
+    "ok": true,
+    "prediction_status": "ok",
+    "target_date": "2026-09-15"
+  },
+  "ok": true
+}

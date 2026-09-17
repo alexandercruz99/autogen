@@ -1,0 +1,102 @@
+{
+  "generated_at_utc": "2026-09-16T05:16:39.732021+00:00",
+  "reviewed_commit": "8c764c995483c9602864c5aba474972f3fe01949",
+  "fix_commit": "34ee529c",
+  "fresh_operating": {
+    "generated_at_utc": "2026-09-16T05:16:09.287191+00:00",
+    "generated_at_local": "2026-09-16T01:16:09.287191-04:00",
+    "target_climate_day": "2026-09-16",
+    "status": "unsupported_decision_time",
+    "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+    "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+    "paper_decision": {
+      "decision": "blocked_unsupported_decision_time",
+      "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+      "live_blocked": true
+    },
+    "live_orders": false,
+    "probabilities_available": false
+  },
+  "historical_replay": {
+    "mode": "HISTORICAL_REPLAY",
+    "decision_time_utc": "2025-07-15T18:00:00+00:00",
+    "decision_time_local": "2025-07-15T14:00:00-04:00",
+    "target_climate_day": "2025-07-15",
+    "lst_climate_day_check": "2025-07-15",
+    "feature_schema_version": "station_v2.1",
+    "coverage": {
+      "climate_day": "2025-07-15",
+      "decision_time_utc": "2025-07-15T18:00:00+00:00",
+      "n_temp_obs": 24,
+      "n_obs_total": 24,
+      "first_obs_utc": "2025-07-15T05:15:00+00:00",
+      "last_obs_utc": "2025-07-15T17:51:00+00:00",
+      "max_gap_hours": 1.0,
+      "late_start": false,
+      "gaps_exceeded": false,
+      "adequate": true,
+      "max_so_far": 84.0,
+      "max_so_far_status": "adequate_daytime_coverage",
+      "notes": [
+        "Coverage meets documented minimums; still not a final CLI maximum"
+      ],
+      "requirements": {
+        "min_temp_obs": 4,
+        "max_gap_hours": 3.5,
+        "late_start_hour_lst": 10,
+        "climate_day_basis": "LST_UTC-5"
+      }
+    },
+    "max_so_far": 84.0,
+    "label_tmax_f": 86,
+    "remain_true": 2.0,
+    "q50_remain": 2.069533901731078,
+    "production_median_f": 86,
+    "production_abs_err": 0,
+    "calibration_status": "calibration_hour_14",
+    "n_residuals": 249,
+    "feeds_contributing_to_prediction": [
+      "asos_NYC_archive"
+    ],
+    "live_orders": false
+  },
+  "model_eval": {
+    "schema": "station_v2.1",
+    "days": {
+      "train": 1162,
+      "calib": 249,
+      "test": 249
+    },
+    "production_distribution_eval_test": {
+      "8": {
+        "n_rows": 249,
+        "n_independent_days": 249,
+        "production_median_mae_f": 3.5261044176706826,
+        "interval_80_coverage": 0.7991967871485943,
+        "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+      },
+      "11": {
+        "n_rows": 249,
+        "n_independent_days": 249,
+        "production_median_mae_f": 2.4377510040160644,
+        "interval_80_coverage": 0.7791164658634538,
+        "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+      },
+      "14": {
+        "n_rows": 249,
+        "n_independent_days": 249,
+        "production_median_mae_f": 1.1124497991967872,
+        "interval_80_coverage": 0.8514056224899599,
+        "note": "MAE of production residual distribution median, not raw GBM q50 alone"
+      }
+    },
+    "negative_remain_kept": 8
+  },
+  "blockers": [
+    "NYS Mesonet still optional/blocked",
+    "Sat/radar candidate still unpromoted (needs matched-date controlled comparison)",
+    "Archive availability assumes valid_utc (disclosed)",
+    "Fresh cycle outside 08/11/14 correctly blocked until next supported hour",
+    "Live trading remains blocked"
+  ]
+}

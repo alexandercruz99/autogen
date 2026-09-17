@@ -1,0 +1,388 @@
+{
+  "summary": {
+    "decision_local": "2026-09-15T11:00:00-05:00",
+    "status": "no_open_markets",
+    "reason": null,
+    "probabilities_available": true,
+    "point_median_f": 83.19299968913235,
+    "calibration_status": "calibration_hour_11",
+    "max_so_far": 77.0,
+    "coverage_adequate": true,
+    "n_temp_obs": 10,
+    "paper_decision": "blocked_no_markets",
+    "paper_side": null,
+    "paper_ticker": null,
+    "paper_ev": null,
+    "live_order_submitted": false,
+    "n_brackets": 0,
+    "horizon": null,
+    "target_date": null,
+    "model_artifact": "data/obs_engine/multi/artifacts/chi_midway__daily_max_temp_f/station_corrected_v2.joblib"
+  },
+  "full": {
+    "location_id": "chi_midway",
+    "series_ticker": "HIGHCHI",
+    "measurement": "daily_max_temp_f",
+    "display_name": "Chicago Midway",
+    "mapping_status": "verified",
+    "validation_status": "operating_candidate",
+    "settlement_source_family": "nws_cli",
+    "timezone": "America/Chicago",
+    "generated_at_utc": "2026-09-15T16:00:00+00:00",
+    "live_order_submitted": false,
+    "ok": true,
+    "collection": {
+      "metar": {
+        "feed": "metar",
+        "stations": {
+          "KMDW": {
+            "ok": true,
+            "n_fetched": 30,
+            "n_new": 0,
+            "latest_key": "KMDW:2026-09-15T02:53:00+00:00",
+            "usable": true
+          },
+          "KORD": {
+            "ok": true,
+            "n_fetched": 31,
+            "n_new": 0,
+            "latest_key": "KORD:2026-09-15T02:51:00+00:00",
+            "usable": true
+          }
+        },
+        "hours_requested": 30,
+        "ok": true,
+        "usable": true
+      },
+      "cli": {
+        "ok": true,
+        "n_reports": 8,
+        "n_new": 0,
+        "latest_key": "CLI:MDW:2026-09-12:2026-09-12T21:33:00+00:00:P",
+        "feed": "cli_mdw",
+        "cli_location_id": "MDW",
+        "usable": true
+      }
+    },
+    "data_availability": {
+      "metar_primary": "KMDW",
+      "metar_usable": true,
+      "cli_location_id": "MDW",
+      "notes": "CHIHIGH terms: Midway CLI \u2014 not O'Hare | Midway station_v2 trained; GHCND USW00014819 labels; live still blocked"
+    },
+    "features_summary": {
+      "max_so_far": 77.0,
+      "coverage": {
+        "climate_day": "2026-09-15",
+        "decision_time_utc": "2026-09-15T16:00:00+00:00",
+        "n_temp_obs": 10,
+        "n_obs_total": 10,
+        "first_obs_utc": "2026-09-15T06:53:00+00:00",
+        "last_obs_utc": "2026-09-15T15:53:00+00:00",
+        "max_gap_hours": 1.0,
+        "start_gap_hours": 0.8833333333333333,
+        "stale_hours": 0.11666666666666667,
+        "late_start": false,
+        "gaps_exceeded": false,
+        "start_gap_exceeded": false,
+        "stale_exceeded": false,
+        "adequate": true,
+        "max_so_far": 77.0,
+        "max_so_far_status": "adequate_window_coverage",
+        "notes": [
+          "Coverage meets documented window requirements; still not a final CLI maximum"
+        ],
+        "requirements": {
+          "min_temp_obs": 4,
+          "max_gap_hours": 3.5,
+          "max_start_gap_hours": 4.0,
+          "max_stale_hours": 2.5,
+          "expected_cadence_hours": 1.0,
+          "climate_day_basis": "LST_fixed_offset_per_location",
+          "note": "Partial max_so_far is never treated as a verified full-day maximum"
+        }
+      },
+      "cli_applied": null,
+      "attribution": {
+        "feeds_collected": [
+          "metar_KMDW",
+          "cli_mdw"
+        ],
+        "feeds_quality_ok": [
+          "metar_KMDW"
+        ],
+        "features_consumed_by_model": [
+          "hour_local",
+          "doy",
+          "tmpf",
+          "dwpf",
+          "sknt",
+          "alti",
+          "max_so_far",
+          "rise_from_min",
+          "dT_1h",
+          "dT_3h",
+          "solar_el",
+          "hours_to_20_local",
+          "precip_6h",
+          "time_since_max_h",
+          "d_dewpt_3h",
+          "d_alti_3h",
+          "d_sknt_3h",
+          "wind_dir_sin",
+          "wind_dir_cos",
+          "missing_sknt",
+          "missing_alti",
+          "missing_dwpf",
+          "missing_precip_6h",
+          "sky_code"
+        ],
+        "settlement_constraints_applied": [],
+        "location_id": "chi_midway",
+        "feeds_contributing_to_prediction": [
+          "metar_KMDW"
+        ]
+      },
+      "missing": {}
+    },
+    "forecast_context": {
+      "location_id": "chi_midway",
+      "series_ticker": "HIGHCHI",
+      "measurement": "daily_max_temp_f",
+      "settlement_source_family": "nws_cli",
+      "climate_day": "2026-09-15",
+      "decision_time_utc": "2026-09-15T16:00:00+00:00",
+      "horizon": "same_day",
+      "model_version": null,
+      "feature_schema_version": "station_v2.1",
+      "decision_hour_local": 11,
+      "timezone": "America/Chicago",
+      "uses_lst_climate_day": true,
+      "metar_id": "KMDW",
+      "cli_location_id": "MDW",
+      "lat": 41.7868,
+      "lon": -87.7522,
+      "elev_m": 189.0,
+      "mode": "RESEARCH",
+      "extras": {}
+    },
+    "decision_hour_local": 11,
+    "supported_decision_hours_local": [
+      8,
+      11,
+      14
+    ],
+    "generated_at_local": "2026-09-15T11:00:00-05:00",
+    "prediction": {
+      "ok": true,
+      "status": "ok",
+      "context": {
+        "location_id": "chi_midway",
+        "series_ticker": "HIGHCHI",
+        "measurement": "daily_max_temp_f",
+        "settlement_source_family": "nws_cli",
+        "climate_day": "2026-09-15",
+        "decision_time_utc": "2026-09-15T16:00:00+00:00",
+        "horizon": "same_day",
+        "model_version": null,
+        "feature_schema_version": "station_v2.1",
+        "decision_hour_local": 11,
+        "timezone": "America/Chicago",
+        "uses_lst_climate_day": true,
+        "metar_id": "KMDW",
+        "cli_location_id": "MDW",
+        "lat": 41.7868,
+        "lon": -87.7522,
+        "elev_m": 189.0,
+        "mode": "RESEARCH",
+        "extras": {}
+      },
+      "point_median_f": 83.19299968913235,
+      "remain_q10_q50_q90": [
+        0.0,
+        6.192999689132352,
+        10.392081056782878
+      ],
+      "quantiles_crossed": false,
+      "distribution": {
+        "method": "calibrated_residual_hour_11",
+        "mean_f": 82.98465111935943,
+        "q10": 80,
+        "q50": 83,
+        "q90": 86,
+        "support": [
+          [
+            75,
+            4e-06
+          ],
+          [
+            76,
+            4e-06
+          ],
+          [
+            77,
+            0.007785
+          ],
+          [
+            78,
+            0.019457
+          ],
+          [
+            79,
+            0.066146
+          ],
+          [
+            80,
+            0.046693
+          ],
+          [
+            81,
+            0.132288
+          ],
+          [
+            82,
+            0.171195
+          ],
+          [
+            83,
+            0.182868
+          ],
+          [
+            84,
+            0.14007
+          ],
+          [
+            85,
+            0.097272
+          ],
+          [
+            86,
+            0.054474
+          ],
+          [
+            87,
+            0.03502
+          ],
+          [
+            88,
+            0.015567
+          ],
+          [
+            89,
+            0.007785
+          ],
+          [
+            90,
+            0.003895
+          ],
+          [
+            91,
+            0.003895
+          ],
+          [
+            92,
+            0.011676
+          ],
+          [
+            93,
+            4e-06
+          ],
+          [
+            94,
+            0.003895
+          ],
+          [
+            95,
+            4e-06
+          ],
+          [
+            96,
+            4e-06
+          ]
+        ],
+        "details": {
+          "n_residuals_raw": 257,
+          "n_samples_effective": 257,
+          "point_forecast_f": 83.19299968913235,
+          "resid_mean": -0.1919893119073519,
+          "resid_std": 2.6500781712992185,
+          "variance_floor_std": null
+        }
+      },
+      "probabilities_available": true,
+      "calibration_status": "calibration_hour_11",
+      "observation_constraint": {
+        "max_so_far_f": 77.0,
+        "clamp_point_to_max_so_far": true,
+        "integer_floor_applied": false,
+        "note": "Fractional METAR max_so_far is not an official whole-\u00b0F CLI minimum"
+      },
+      "model_artifact": "data/obs_engine/multi/artifacts/chi_midway__daily_max_temp_f/station_corrected_v2.joblib",
+      "model_version": "weather.obs_chi_midway.station_corrected.v1",
+      "feature_schema_version": "station_v2.1",
+      "reason": null,
+      "extras": {}
+    },
+    "status": "no_open_markets",
+    "probabilities_available": true,
+    "calibration_status": "calibration_hour_11",
+    "point_median_f": 83.19299968913235,
+    "observation_constraint": {
+      "max_so_far_f": 77.0,
+      "clamp_point_to_max_so_far": true,
+      "integer_floor_applied": false,
+      "note": "Fractional METAR max_so_far is not an official whole-\u00b0F CLI minimum"
+    },
+    "attribution": {
+      "feeds_collected": [
+        "metar_KMDW",
+        "cli_mdw"
+      ],
+      "feeds_quality_ok": [
+        "metar_KMDW"
+      ],
+      "features_consumed_by_model": [
+        "hour_local",
+        "doy",
+        "tmpf",
+        "dwpf",
+        "sknt",
+        "alti",
+        "max_so_far",
+        "rise_from_min",
+        "dT_1h",
+        "dT_3h",
+        "solar_el",
+        "hours_to_20_local",
+        "precip_6h",
+        "time_since_max_h",
+        "d_dewpt_3h",
+        "d_alti_3h",
+        "d_sknt_3h",
+        "wind_dir_sin",
+        "wind_dir_cos",
+        "missing_sknt",
+        "missing_alti",
+        "missing_dwpf",
+        "missing_precip_6h",
+        "sky_code"
+      ],
+      "settlement_constraints_applied": [],
+      "location_id": "chi_midway",
+      "feeds_contributing_to_prediction": [
+        "metar_KMDW"
+      ]
+    },
+    "paper_decision": {
+      "decision": "blocked_no_markets",
+      "reason": "no open markets for HIGHCHI",
+      "live_blocked": true
+    },
+    "brackets": null,
+    "ev_evaluations": null,
+    "paper_ledger": null,
+    "target_date": null,
+    "horizon": null,
+    "reason": null
+  }
+}

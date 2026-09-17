@@ -29,5 +29,6 @@ data/obs_engine/multi/candidates/**/predictions_*.json
 data/obs_engine/multi/candidates/**/frozen_production_snapshot/
 data/obs_engine/multi/replay/**/*.joblib
 data/obs_engine/multi/replay/**/predictions_blind/
+data/obs_engine/multi/replay/**/forecast_rows.json
 data/obs_engine/multi/paper_ledger.db
 data/obs_engine/multi/registry.db

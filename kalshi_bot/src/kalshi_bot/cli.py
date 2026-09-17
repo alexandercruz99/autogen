@@ -148,6 +148,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Write candidate calib only; do not replace active calibration",
     )
+    p_eval = sub.add_parser(
+        "weather-eval-candidates",
+        help="Train/evaluate forecast candidates A–D chronologically (research only; no live)",
+    )
+    p_eval.add_argument(
+        "--location",
+        default=None,
+        help="Optional single location_id (default: all supported)",
+    )
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
@@ -202,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-train-location",
         "weather-score-twc",
         "weather-tune-twc",
+        "weather-eval-candidates",
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
@@ -231,6 +241,7 @@ def main(argv: list[str] | None = None) -> int:
             weather_train,
             weather_train_location,
             weather_tune_twc,
+            weather_eval_candidates,
             weather_twc_bet,
             weather_validate,
         )
@@ -239,6 +250,16 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     weather_train_location(config, location_id=getattr(args, "location", "chi_midway")),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if args.cmd == "weather-eval-candidates":
+            print(
+                json.dumps(
+                    weather_eval_candidates(config, location_id=getattr(args, "location", None)),
                     indent=2,
                     default=str,
                 )

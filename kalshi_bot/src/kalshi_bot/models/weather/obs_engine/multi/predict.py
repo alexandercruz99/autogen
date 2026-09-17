@@ -156,7 +156,7 @@ def predict_station_v2(
     crossed = (q10, q50, q90) != tuple(q_sorted)
     q10, q50, q90 = q_sorted
 
-    # Point = max_so_far + remaining rise (q50). Optionally enforce physical floor.
+    # Point = max_so_far + remaining rise (q50). Physical floor applied after bias below.
     raw_point = float(max_so_far) + q50
     point = max(raw_point, float(max_so_far)) if clamp_point_to_max_so_far else raw_point
 
@@ -243,7 +243,8 @@ def predict_station_v2(
             extras={"research_point_forecast_only": True},
         )
 
-    # Optional TWC-tuned hour bias (actual − pred median residual learned chronologically).
+    # Settlement-source hour bias: apply BEFORE the physical floor so a negative
+    # bias cannot leave the point below max_so_far after an earlier clamp.
     bias_map = (calib.get("meta") or {}).get("point_bias_by_hour") or {}
     hour_key = str(decision_hour_local) if decision_hour_local is not None else None
     bias = 0.0
@@ -252,12 +253,12 @@ def predict_station_v2(
             bias = float(bias_map[hour_key])
         except (TypeError, ValueError):
             bias = 0.0
+    raw_point = float(max_so_far) + q50 + bias
+    point = max(raw_point, float(max_so_far)) if clamp_point_to_max_so_far else raw_point
     if bias:
-        point = float(point) + bias
-        if clamp_point_to_max_so_far:
-            point = max(point, float(max_so_far))
         obs_constraint["point_bias_f"] = bias
         obs_constraint["point_bias_hour"] = hour_key
+        obs_constraint["bias_ordering"] = "bias_then_floor"
 
     dist = from_empirical_residuals(
         point,
@@ -265,11 +266,19 @@ def predict_station_v2(
         method=f"calibrated_residual_hour_{decision_hour_local}",
     )
     if cli_applied and cli_applied.get("max_temp_f") is not None:
+        # Justified whole-°F settlement floor: condition the full distribution
+        # (truncate+renormalize), then sync point to the constrained support.
         floor = float(int(cli_applied["max_temp_f"]))
         dist = truncate_below(dist, floor, reason="CLI same-day whole °F floor")
+        point = max(point, floor)
+        if len(dist.temps_f) == 1:
+            dist.details["model_data_conflict"] = (
+                "floor left single-bin support; not genuine forecast certainty"
+            )
         obs_constraint["integer_floor_applied"] = True
         obs_constraint["cli_floor_f"] = int(cli_applied["max_temp_f"])
         obs_constraint["cli_is_preliminary"] = cli_applied.get("is_preliminary")
+        obs_constraint["constraint_mode"] = "condition_distribution_then_sync_point"
 
     return UnifiedPrediction(
         ok=True,

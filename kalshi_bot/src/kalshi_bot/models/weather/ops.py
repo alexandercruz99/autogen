@@ -559,6 +559,19 @@ def weather_tune_twc(config: AppConfig, *, lookback_days: int = 100, promote: bo
     return tune_all_twc(data_dir=data_dir, lookback_days=lookback_days, promote=promote)
 
 
+def weather_eval_candidates(config: AppConfig, *, location_id: str | None = None) -> dict[str, Any]:
+    """Chronological A–D candidate evaluation (research only; never live-eligible)."""
+    from kalshi_bot.models.weather.obs_engine.multi.candidates.evaluate import (
+        evaluate_location,
+        run_candidate_evaluation,
+    )
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    if location_id:
+        return evaluate_location(location_id, data_dir=data_dir)
+    return run_candidate_evaluation(data_dir=data_dir)
+
+
 def weather_score_twc(config: AppConfig, *, n_days: int = 5) -> dict[str, Any]:
     """Score production predictions vs official TWC settlement highs (research)."""
     from kalshi_bot.models.weather.obs_engine.multi.score_vs_twc import score_recent_twc

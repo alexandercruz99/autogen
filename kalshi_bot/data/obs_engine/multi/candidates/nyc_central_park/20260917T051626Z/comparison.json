@@ -1,0 +1,776 @@
+{
+  "ok": true,
+  "location_id": "nyc_central_park",
+  "stamp": "20260917T051626Z",
+  "primary_selection_metric": "mean_crps_final_test",
+  "selection_rule": "Minimize mean CRPS on model-selection split; final test reported separately.",
+  "provisional_winner_by_selection_crps": "C_quantile_regression_forest",
+  "test_ranking_by_crps": [
+    "C_quantile_regression_forest",
+    "B_adaptive_residuals",
+    "A_corrected_baseline",
+    "D_direct_high_gbm"
+  ],
+  "test_crps": {
+    "A_corrected_baseline": 1.6908849425182413,
+    "B_adaptive_residuals": 1.675404793625833,
+    "C_quantile_regression_forest": 1.6490224400375586,
+    "D_direct_high_gbm": 2.1231124223871287
+  },
+  "test_mae": {
+    "A_corrected_baseline": 2.35475234270415,
+    "B_adaptive_residuals": 2.3627844712182062,
+    "C_quantile_regression_forest": 2.3493975903614457,
+    "D_direct_high_gbm": 2.9143239625167334
+  },
+  "split_manifest_hash": "440253d3f07f26ad",
+  "n_train_days": 913,
+  "n_selection_days": 249,
+  "n_calib_days": 249,
+  "n_test_days": 249,
+  "negative_remain_count": 8,
+  "frozen_baseline": {
+    "location_id": "nyc_central_park",
+    "frozen_at_utc": "2026-09-17T05:16:26.732324+00:00",
+    "source_dir": "data/obs_engine/multi/artifacts/nyc_central_park__daily_max_temp_f",
+    "copied": {
+      "station_corrected_v2.joblib": "copied",
+      "station_corrected_v2_calibration.json": "copied",
+      "station_corrected_v2_report.json": "copied"
+    },
+    "live_eligible": false,
+    "note": "Frozen snapshot of production artifacts at evaluation start; not modified."
+  },
+  "candidates": [
+    {
+      "candidate": "A_corrected_baseline",
+      "model_version": "candidate.A.corrected_shared_pipeline.v1",
+      "selection": {
+        "split": "selection",
+        "n": 746,
+        "overall": {
+          "n_rows": 746,
+          "n_unique_days": 249,
+          "mae_f": 2.0777479892761392,
+          "bias_f": -0.3324396782841823,
+          "crps": 1.4975736445150465,
+          "interval_80_coverage": 0.868632707774799,
+          "interval_80_width": 6.761394101876675,
+          "brier_between_1f_around_median": 0.1647284281159523,
+          "within_1f": 0.5107238605898123,
+          "within_2f": 0.6916890080428955
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.2248995983935744,
+            "bias_f": -0.14859437751004015,
+            "crps": 2.2890532939783084,
+            "interval_80_coverage": 0.8473895582329317,
+            "interval_80_width": 10.558232931726907,
+            "brier_between_1f_around_median": 0.10592102576455902,
+            "within_1f": 0.27309236947791166,
+            "within_2f": 0.4538152610441767,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.0843373493975905,
+            "bias_f": -0.5662650602409639,
+            "crps": 1.4740028903658167,
+            "interval_80_coverage": 0.8795180722891566,
+            "interval_80_width": 6.63855421686747,
+            "brier_between_1f_around_median": 0.12910432772278482,
+            "within_1f": 0.4578313253012048,
+            "within_2f": 0.6867469879518072,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 248,
+            "n_unique_days": 248,
+            "mae_f": 0.9193548387096774,
+            "bias_f": -0.28225806451612906,
+            "crps": 0.7265683423650715,
+            "interval_80_coverage": 0.8790322580645161,
+            "interval_80_width": 3.0725806451612905,
+            "brier_between_1f_around_median": 0.2595407030489992,
+            "within_1f": 0.8024193548387096,
+            "within_2f": 0.9354838709677419,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.0589022757697455,
+          "bias_f": -0.28112449799196787,
+          "crps": 1.4709567220453845,
+          "interval_80_coverage": 0.8768406961178046,
+          "interval_80_width": 6.775100401606426,
+          "brier_between_1f_around_median": 0.14808694011944634,
+          "within_1f": 0.5261044176706827,
+          "within_2f": 0.7041499330655957
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.1285140562248994,
+            "bias_f": -0.22088353413654618,
+            "crps": 2.226170030787024,
+            "interval_80_coverage": 0.8674698795180723,
+            "interval_80_width": 10.578313253012048,
+            "brier_between_1f_around_median": 0.09402734748378937,
+            "within_1f": 0.30522088353413657,
+            "within_2f": 0.46184738955823296,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.0160642570281126,
+            "bias_f": -0.3855421686746988,
+            "crps": 1.4470366483083574,
+            "interval_80_coverage": 0.8674698795180723,
+            "interval_80_width": 6.678714859437751,
+            "brier_between_1f_around_median": 0.13423278446082812,
+            "within_1f": 0.4859437751004016,
+            "within_2f": 0.714859437751004,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.0321285140562249,
+            "bias_f": -0.23694779116465864,
+            "crps": 0.7396634870407729,
+            "interval_80_coverage": 0.8955823293172691,
+            "interval_80_width": 3.068273092369478,
+            "brier_between_1f_around_median": 0.21600068841372158,
+            "within_1f": 0.7871485943775101,
+            "within_2f": 0.9357429718875502,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.35475234270415,
+          "bias_f": -0.1646586345381526,
+          "crps": 1.6908849425182413,
+          "interval_80_coverage": 0.8179384203480589,
+          "interval_80_width": 6.7269076305220885,
+          "brier_between_1f_around_median": 0.12844795736970333,
+          "within_1f": 0.47121820615796517,
+          "within_2f": 0.6720214190093708
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.5180722891566263,
+            "bias_f": -0.10441767068273092,
+            "crps": 2.5211110300412845,
+            "interval_80_coverage": 0.8112449799196787,
+            "interval_80_width": 10.546184738955823,
+            "brier_between_1f_around_median": 0.07793462908913151,
+            "within_1f": 0.26907630522088355,
+            "within_2f": 0.46586345381526106,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.461847389558233,
+            "bias_f": -0.21285140562248997,
+            "crps": 1.752568624160361,
+            "interval_80_coverage": 0.7831325301204819,
+            "interval_80_width": 6.570281124497992,
+            "brier_between_1f_around_median": 0.09052696157441,
+            "within_1f": 0.3614457831325301,
+            "within_2f": 0.6305220883534136,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.0843373493975903,
+            "bias_f": -0.17670682730923695,
+            "crps": 0.7989751733530783,
+            "interval_80_coverage": 0.8594377510040161,
+            "interval_80_width": 3.0642570281124497,
+            "brier_between_1f_around_median": 0.2168822814455685,
+            "within_1f": 0.7831325301204819,
+            "within_2f": 0.9196787148594378,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/nyc_central_park/20260917T051626Z/A_corrected_baseline",
+      "live_eligible": false
+    },
+    {
+      "candidate": "B_adaptive_residuals",
+      "model_version": "candidate.B.adaptive_location_scale.v1",
+      "s_min": 2.5,
+      "z_diag_by_hour": {
+        "8": {
+          "n": 249,
+          "mean": 0.00908038999050504,
+          "std": 0.33953972836790736
+        },
+        "11": {
+          "n": 249,
+          "mean": 0.013946201079705938,
+          "std": 0.3774065019581343
+        },
+        "14": {
+          "n": 249,
+          "mean": 0.04313213397902399,
+          "std": 0.4514583867647145
+        }
+      },
+      "selection": {
+        "split": "selection",
+        "n": 746,
+        "overall": {
+          "n_rows": 746,
+          "n_unique_days": 249,
+          "mae_f": 2.0656836461126007,
+          "bias_f": -0.29624664879356566,
+          "crps": 1.4885995656119706,
+          "interval_80_coverage": 0.8847184986595175,
+          "interval_80_width": 7.085790884718499,
+          "brier_between_1f_around_median": 0.1609486935360898,
+          "within_1f": 0.517426273458445,
+          "within_2f": 0.6916890080428955
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.2248995983935744,
+            "bias_f": -0.285140562248996,
+            "crps": 2.2903273642017266,
+            "interval_80_coverage": 0.8473895582329317,
+            "interval_80_width": 10.947791164658634,
+            "brier_between_1f_around_median": 0.10863460743366414,
+            "within_1f": 0.27309236947791166,
+            "within_2f": 0.4497991967871486,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.040160642570281,
+            "bias_f": -0.3453815261044177,
+            "crps": 1.4660224809020965,
+            "interval_80_coverage": 0.891566265060241,
+            "interval_80_width": 7.040160642570281,
+            "brier_between_1f_around_median": 0.12817504824904105,
+            "within_1f": 0.46987951807228917,
+            "within_2f": 0.6907630522088354,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 248,
+            "n_unique_days": 248,
+            "mae_f": 0.9274193548387096,
+            "bias_f": -0.25806451612903225,
+            "crps": 0.7063071149825728,
+            "interval_80_coverage": 0.9153225806451613,
+            "interval_80_width": 3.254032258064516,
+            "brier_between_1f_around_median": 0.24637952061665083,
+            "within_1f": 0.8104838709677419,
+            "within_2f": 0.9354838709677419,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.068273092369478,
+          "bias_f": -0.23962516733601072,
+          "crps": 1.4728543119106332,
+          "interval_80_coverage": 0.8835341365461847,
+          "interval_80_width": 6.761713520749665,
+          "brier_between_1f_around_median": 0.14415866230319835,
+          "within_1f": 0.5180722891566265,
+          "within_2f": 0.7068273092369478
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.144578313253012,
+            "bias_f": -0.3493975903614458,
+            "crps": 2.243424309165385,
+            "interval_80_coverage": 0.8674698795180723,
+            "interval_80_width": 10.939759036144578,
+            "brier_between_1f_around_median": 0.0873153506337947,
+            "within_1f": 0.2971887550200803,
+            "within_2f": 0.4738955823293173,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.032128514056225,
+            "bias_f": -0.14457831325301204,
+            "crps": 1.4355079209813215,
+            "interval_80_coverage": 0.8755020080321285,
+            "interval_80_width": 6.389558232931727,
+            "brier_between_1f_around_median": 0.120179534451435,
+            "within_1f": 0.46586345381526106,
+            "within_2f": 0.7108433734939759,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.0281124497991967,
+            "bias_f": -0.2248995983935743,
+            "crps": 0.7396307055851936,
+            "interval_80_coverage": 0.9076305220883534,
+            "interval_80_width": 2.9558232931726907,
+            "brier_between_1f_around_median": 0.22498110182436526,
+            "within_1f": 0.7911646586345381,
+            "within_2f": 0.9357429718875502,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.3627844712182062,
+          "bias_f": -0.11914323962516733,
+          "crps": 1.675404793625833,
+          "interval_80_coverage": 0.8487282463186078,
+          "interval_80_width": 7.295850066934404,
+          "brier_between_1f_around_median": 0.12688054138360547,
+          "within_1f": 0.4819277108433735,
+          "within_2f": 0.6546184738955824
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.502008032128514,
+            "bias_f": -0.24899598393574296,
+            "crps": 2.5063727773132447,
+            "interval_80_coverage": 0.8433734939759037,
+            "interval_80_width": 11.570281124497992,
+            "brier_between_1f_around_median": 0.07413255452592894,
+            "within_1f": 0.2971887550200803,
+            "within_2f": 0.4578313253012048,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.497991967871486,
+            "bias_f": 0.05622489959839357,
+            "crps": 1.7286432087527868,
+            "interval_80_coverage": 0.8072289156626506,
+            "interval_80_width": 7.168674698795181,
+            "brier_between_1f_around_median": 0.08723184725604836,
+            "within_1f": 0.3654618473895582,
+            "within_2f": 0.5863453815261044,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.0883534136546185,
+            "bias_f": -0.1646586345381526,
+            "crps": 0.7911983948114679,
+            "interval_80_coverage": 0.8955823293172691,
+            "interval_80_width": 3.1485943775100402,
+            "brier_between_1f_around_median": 0.2192772223688391,
+            "within_1f": 0.7831325301204819,
+            "within_2f": 0.9196787148594378,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/nyc_central_park/20260917T051626Z/B_adaptive_residuals",
+      "live_eligible": false
+    },
+    {
+      "candidate": "C_quantile_regression_forest",
+      "model_version": "candidate.C.qrf_meinshausen.v1",
+      "selection_point_bias": 0.0,
+      "selection": {
+        "split": "selection",
+        "n": 746,
+        "overall": {
+          "n_rows": 746,
+          "n_unique_days": 249,
+          "mae_f": 2.0294906166219837,
+          "bias_f": 0.0,
+          "crps": 1.4491976353387128,
+          "interval_80_coverage": 0.8780160857908847,
+          "interval_80_width": 6.666219839142091,
+          "brier_between_1f_around_median": 0.16927622673847464,
+          "within_1f": 0.5335120643431636,
+          "within_2f": 0.6970509383378016
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.1325301204819276,
+            "bias_f": 0.39357429718875503,
+            "crps": 2.2080572299618684,
+            "interval_80_coverage": 0.8634538152610441,
+            "interval_80_width": 10.730923694779117,
+            "brier_between_1f_around_median": 0.11540036640646124,
+            "within_1f": 0.3092369477911647,
+            "within_2f": 0.46987951807228917,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.0160642570281126,
+            "bias_f": -0.0963855421686747,
+            "crps": 1.4287251426249146,
+            "interval_80_coverage": 0.8674698795180723,
+            "interval_80_width": 6.301204819277109,
+            "brier_between_1f_around_median": 0.16108389788746932,
+            "within_1f": 0.4899598393574297,
+            "within_2f": 0.6907630522088354,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 248,
+            "n_unique_days": 248,
+            "mae_f": 0.9354838709677419,
+            "bias_f": -0.29838709677419356,
+            "crps": 0.707833166082947,
+            "interval_80_coverage": 0.9032258064516129,
+            "interval_80_width": 2.9516129032258065,
+            "brier_between_1f_around_median": 0.23159469087787643,
+            "within_1f": 0.8024193548387096,
+            "within_2f": 0.9314516129032258,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 1.9531459170013388,
+          "bias_f": 0.19410977242302543,
+          "crps": 1.4063263321962964,
+          "interval_80_coverage": 0.8634538152610441,
+          "interval_80_width": 6.380187416331995,
+          "brier_between_1f_around_median": 0.15698051496135915,
+          "within_1f": 0.5568942436412316,
+          "within_2f": 0.7215528781793842
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.963855421686747,
+            "bias_f": 0.7469879518072289,
+            "crps": 2.1039391677496493,
+            "interval_80_coverage": 0.8554216867469879,
+            "interval_80_width": 10.184738955823294,
+            "brier_between_1f_around_median": 0.09989124596404172,
+            "within_1f": 0.3614457831325301,
+            "within_2f": 0.5301204819277109,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.9357429718875503,
+            "bias_f": 0.23293172690763053,
+            "crps": 1.4071311494109036,
+            "interval_80_coverage": 0.8594377510040161,
+            "interval_80_width": 6.204819277108434,
+            "brier_between_1f_around_median": 0.14839471558466272,
+            "within_1f": 0.5140562248995983,
+            "within_2f": 0.714859437751004,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 0.9598393574297188,
+            "bias_f": -0.39759036144578314,
+            "crps": 0.7079086794283369,
+            "interval_80_coverage": 0.8755020080321285,
+            "interval_80_width": 2.751004016064257,
+            "brier_between_1f_around_median": 0.22265558333537305,
+            "within_1f": 0.7951807228915663,
+            "within_2f": 0.9196787148594378,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.3493975903614457,
+          "bias_f": 0.32262382864792505,
+          "crps": 1.6490224400375586,
+          "interval_80_coverage": 0.8406961178045516,
+          "interval_80_width": 6.663989290495315,
+          "brier_between_1f_around_median": 0.1386037980884281,
+          "within_1f": 0.4779116465863454,
+          "within_2f": 0.6599732262382865
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.5903614457831323,
+            "bias_f": 0.8353413654618473,
+            "crps": 2.4746647828191257,
+            "interval_80_coverage": 0.8433734939759037,
+            "interval_80_width": 10.622489959839358,
+            "brier_between_1f_around_median": 0.07155486592894789,
+            "within_1f": 0.2570281124497992,
+            "within_2f": 0.42971887550200805,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.4136546184738954,
+            "bias_f": 0.5020080321285141,
+            "crps": 1.6978931923306602,
+            "interval_80_coverage": 0.7991967871485943,
+            "interval_80_width": 6.405622489959839,
+            "brier_between_1f_around_median": 0.11592436831667652,
+            "within_1f": 0.3895582329317269,
+            "within_2f": 0.6385542168674698,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.0441767068273093,
+            "bias_f": -0.36947791164658633,
+            "crps": 0.7745093449628898,
+            "interval_80_coverage": 0.8795180722891566,
+            "interval_80_width": 2.963855421686747,
+            "brier_between_1f_around_median": 0.22833216001965992,
+            "within_1f": 0.7871485943775101,
+            "within_2f": 0.9116465863453815,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/nyc_central_park/20260917T051626Z/C_quantile_regression_forest",
+      "live_eligible": false
+    },
+    {
+      "candidate": "D_direct_high_gbm",
+      "model_version": "candidate.D.direct_high_gbm.v1",
+      "selection": {
+        "split": "selection",
+        "n": 746,
+        "overall": {
+          "n_rows": 746,
+          "n_unique_days": 249,
+          "mae_f": 2.734584450402145,
+          "bias_f": 0.45308310991957107,
+          "crps": 1.9494714076044384,
+          "interval_80_coverage": 0.8257372654155496,
+          "interval_80_width": 8.00804289544236,
+          "brier_between_1f_around_median": 0.12214975258455656,
+          "within_1f": 0.4155495978552279,
+          "within_2f": 0.5817694369973191
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 4.188755020080321,
+            "bias_f": 1.0803212851405624,
+            "crps": 2.904449000370636,
+            "interval_80_coverage": 0.8313253012048193,
+            "interval_80_width": 12.57429718875502,
+            "brier_between_1f_around_median": 0.05733429479948301,
+            "within_1f": 0.1927710843373494,
+            "within_2f": 0.3373493975903614,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.5502008032128516,
+            "bias_f": -0.10843373493975904,
+            "crps": 1.838542913010438,
+            "interval_80_coverage": 0.8273092369477911,
+            "interval_80_width": 7.614457831325301,
+            "brier_between_1f_around_median": 0.10156775662472034,
+            "within_1f": 0.37349397590361444,
+            "within_2f": 0.5903614457831325,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 248,
+            "n_unique_days": 248,
+            "mae_f": 1.4596774193548387,
+            "bias_f": 0.3870967741935484,
+            "crps": 1.1020188856492887,
+            "interval_80_coverage": 0.8185483870967742,
+            "interval_80_width": 3.818548387096774,
+            "brier_between_1f_around_median": 0.20789155090101838,
+            "within_1f": 0.6814516129032258,
+            "within_2f": 0.8185483870967742,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.424364123159304,
+          "bias_f": -0.09504685408299866,
+          "crps": 1.73616054571885,
+          "interval_80_coverage": 0.8594377510040161,
+          "interval_80_width": 8.041499330655958,
+          "brier_between_1f_around_median": 0.1433702563260211,
+          "within_1f": 0.4538152610441767,
+          "within_2f": 0.6398929049531459
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 3.8152610441767068,
+            "bias_f": 0.07228915662650602,
+            "crps": 2.6762155471823843,
+            "interval_80_coverage": 0.8393574297188755,
+            "interval_80_width": 12.666666666666666,
+            "brier_between_1f_around_median": 0.0737491237326887,
+            "within_1f": 0.21686746987951808,
+            "within_2f": 0.40963855421686746,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.1927710843373496,
+            "bias_f": -0.30522088353413657,
+            "crps": 1.6215199585064994,
+            "interval_80_coverage": 0.8634538152610441,
+            "interval_80_width": 7.586345381526105,
+            "brier_between_1f_around_median": 0.15861202004318142,
+            "within_1f": 0.46586345381526106,
+            "within_2f": 0.6265060240963856,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.2650602409638554,
+            "bias_f": -0.05220883534136546,
+            "crps": 0.9107461314676655,
+            "interval_80_coverage": 0.8755020080321285,
+            "interval_80_width": 3.8714859437751006,
+            "brier_between_1f_around_median": 0.1977496252021931,
+            "within_1f": 0.678714859437751,
+            "within_2f": 0.8835341365461847,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 747,
+        "overall": {
+          "n_rows": 747,
+          "n_unique_days": 249,
+          "mae_f": 2.9143239625167334,
+          "bias_f": 0.40829986613119146,
+          "crps": 2.1231124223871287,
+          "interval_80_coverage": 0.7991967871485943,
+          "interval_80_width": 8.05087014725569,
+          "brier_between_1f_around_median": 0.12008398809890983,
+          "within_1f": 0.42168674698795183,
+          "within_2f": 0.5903614457831325
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 4.377510040160643,
+            "bias_f": 0.7309236947791165,
+            "crps": 3.1310612303482923,
+            "interval_80_coverage": 0.8192771084337349,
+            "interval_80_width": 12.694779116465863,
+            "brier_between_1f_around_median": 0.06691918986092614,
+            "within_1f": 0.24497991967871485,
+            "within_2f": 0.39357429718875503,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 2.755020080321285,
+            "bias_f": 0.07228915662650602,
+            "crps": 2.028807878160972,
+            "interval_80_coverage": 0.7751004016064257,
+            "interval_80_width": 7.614457831325301,
+            "brier_between_1f_around_median": 0.10868201738829314,
+            "within_1f": 0.36947791164658633,
+            "within_2f": 0.570281124497992,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 249,
+            "n_unique_days": 249,
+            "mae_f": 1.6104417670682731,
+            "bias_f": 0.42168674698795183,
+            "crps": 1.2094681586521214,
+            "interval_80_coverage": 0.8032128514056225,
+            "interval_80_width": 3.8433734939759034,
+            "brier_between_1f_around_median": 0.1846507570475102,
+            "within_1f": 0.6506024096385542,
+            "within_2f": 0.8072289156626506,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/nyc_central_park/20260917T051626Z/D_direct_high_gbm",
+      "live_eligible": false
+    }
+  ],
+  "live_eligible": false,
+  "no_orders_submitted": true,
+  "artifact_root": "data/obs_engine/multi/candidates/nyc_central_park/20260917T051626Z"
+}

@@ -1,0 +1,34 @@
+{
+  "location_id": "lax_airport",
+  "display_name": "Los Angeles International",
+  "series_tickers": [
+    "HIGHLAX",
+    "KXHIGHLAX"
+  ],
+  "metric": "daily_max_temp_f",
+  "units": "fahrenheit",
+  "precision": "integer_fahrenheit",
+  "timezone": "America/Los_Angeles",
+  "climate_day_rule": "LST civil calendar day in America/Los_Angeles (DST-aware ZoneInfo)",
+  "observation_window": "Official daily maximum for the climate day (NWS CLI LAX / TWC CLILAX). Not truncated at 20:00 local.",
+  "settlement_source_family": "nws_cli_or_twc_by_series",
+  "settlement_station": "KLAX",
+  "settlement_rules_summary": "Integer \u00b0F inclusive between-bands; gt/lt per strike_type.",
+  "train_label_source": "ghcnd_tmax",
+  "train_label_id": "USW00023174",
+  "train_label_matches_settlement": false,
+  "label_transfer_note": "GHCND USW00023174 same ICAO as TWC CLILAX / KXHIGHLAX; still a source transfer until paired TWC residuals validate calibration.",
+  "metar_ids": [
+    "KLAX"
+  ],
+  "lat": 33.9425,
+  "lon": -118.4081,
+  "ghcnd_id": "USW00023174",
+  "twc_cli_id": "LAX",
+  "nws_cli_id": "LAX",
+  "hours_to_20_is_feature_only": true,
+  "hard_floor_policy": "METAR/ASOS max_so_far is evidence, not a verified settlement lower bound. CLI/TWC whole-\u00b0F preliminary floors may truncate the predictive distribution only when source+station+window match settlement; otherwise report as evidence.",
+  "live_eligible": false,
+  "data_status": "supported",
+  "extras": {}
+}

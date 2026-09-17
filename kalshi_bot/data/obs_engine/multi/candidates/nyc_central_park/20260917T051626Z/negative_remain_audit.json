@@ -1,0 +1,68 @@
+{
+  "count": 8,
+  "rate": 0.0016067483430407712,
+  "causes": {
+    "asos_max_above_ghcnd_tmax": 6,
+    "rounding_or_source_mismatch_suspect": 0,
+    "near_zero_neg": 2
+  },
+  "policy": "Negative remain labels are KEPT for training. They can reflect future cooling after an early peak missed by the label source, ASOS vs GHCND mismatch, rounding, or reporting-source differences. They are not clipped without audit.",
+  "examples": [
+    {
+      "climate_day": "2022-09-16",
+      "decision_hour": 11,
+      "max_so_far": 76.0,
+      "label_tmax_f": 75.0,
+      "remain_f": -1.0
+    },
+    {
+      "climate_day": "2022-09-16",
+      "decision_hour": 14,
+      "max_so_far": 76.0,
+      "label_tmax_f": 75.0,
+      "remain_f": -1.0
+    },
+    {
+      "climate_day": "2024-12-29",
+      "decision_hour": 14,
+      "max_so_far": 68.0,
+      "label_tmax_f": 60.0,
+      "remain_f": -8.0
+    },
+    {
+      "climate_day": "2025-02-23",
+      "decision_hour": 14,
+      "max_so_far": 46.4,
+      "label_tmax_f": 46.0,
+      "remain_f": -0.3999999999999986
+    },
+    {
+      "climate_day": "2025-03-01",
+      "decision_hour": 14,
+      "max_so_far": 64.4,
+      "label_tmax_f": 64.0,
+      "remain_f": -0.4000000000000057
+    },
+    {
+      "climate_day": "2026-06-23",
+      "decision_hour": 8,
+      "max_so_far": 71.6,
+      "label_tmax_f": 71.0,
+      "remain_f": -0.5999999999999943
+    },
+    {
+      "climate_day": "2026-06-23",
+      "decision_hour": 11,
+      "max_so_far": 71.6,
+      "label_tmax_f": 71.0,
+      "remain_f": -0.5999999999999943
+    },
+    {
+      "climate_day": "2026-06-23",
+      "decision_hour": 14,
+      "max_so_far": 71.6,
+      "label_tmax_f": 71.0,
+      "remain_f": -0.5999999999999943
+    }
+  ]
+}

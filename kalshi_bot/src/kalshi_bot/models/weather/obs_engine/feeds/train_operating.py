@@ -172,18 +172,49 @@ def _fit_quantile_models(X: np.ndarray, y: np.ndarray):
 
 
 def _fit_models_by_hour(train_rows: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    """Fit pooled + per-decision-hour quantile GBMs (morning ≠ afternoon remain dynamics)."""
+    """Fit pooled + per-decision-hour quantile GBMs; keep hour models only if they help.
+
+    Morning ≠ afternoon remain dynamics, but small hour slices can overfit. For each
+    decision hour we hold out the last 20% of that hour's train days and keep the
+    hour-specific GBM only when its q50 MAE beats the pooled model on that holdout.
+    """
     X_all = np.nan_to_num(np.asarray([r["features"] for r in train_rows], dtype=float), nan=-999.0)
     y_all = np.asarray([r["remain_f"] for r in train_rows], dtype=float)
     pooled = _fit_quantile_models(X_all, y_all)
     by_hour: dict[str, dict[str, Any]] = {}
     for hour in SUPPORTED_DECISION_HOURS_LOCAL:
         subset = [r for r in train_rows if int(r["decision_hour"]) == hour]
-        if len(subset) < 80:
+        if len(subset) < 100:
             continue
-        X = np.nan_to_num(np.asarray([r["features"] for r in subset], dtype=float), nan=-999.0)
-        y = np.asarray([r["remain_f"] for r in subset], dtype=float)
-        by_hour[str(hour)] = _fit_quantile_models(X, y)
+        days = sorted({r["climate_day"] for r in subset})
+        n_val = max(12, int(round(len(days) * 0.20)))
+        val_days = set(days[-n_val:])
+        fit_rows = [r for r in subset if r["climate_day"] not in val_days]
+        val_rows = [r for r in subset if r["climate_day"] in val_days]
+        if len(fit_rows) < 80 or len(val_rows) < 15:
+            continue
+        X = np.nan_to_num(np.asarray([r["features"] for r in fit_rows], dtype=float), nan=-999.0)
+        y = np.asarray([r["remain_f"] for r in fit_rows], dtype=float)
+        hour_models = _fit_quantile_models(X, y)
+
+        def _hour_mae(models: dict[str, Any], rows: list[dict[str, Any]]) -> float:
+            Xv = np.nan_to_num(np.asarray([r["features"] for r in rows], dtype=float), nan=-999.0)
+            rem = models["q50"].predict(Xv)
+            pred = np.maximum(
+                np.asarray([r["max_so_far"] for r in rows], dtype=float) + rem,
+                np.asarray([r["max_so_far"] for r in rows], dtype=float),
+            )
+            yv = np.asarray([r["label_tmax_f"] for r in rows], dtype=float)
+            return float(np.mean(np.abs(yv - pred)))
+
+        mae_hour = _hour_mae(hour_models, val_rows)
+        mae_pool = _hour_mae(pooled, val_rows)
+        # Require a clear gain so we don't keep noisy hour specialists.
+        if mae_hour + 0.05 < mae_pool:
+            # Refit on all hour rows for the kept specialist.
+            Xf = np.nan_to_num(np.asarray([r["features"] for r in subset], dtype=float), nan=-999.0)
+            yf = np.asarray([r["remain_f"] for r in subset], dtype=float)
+            by_hour[str(hour)] = _fit_quantile_models(Xf, yf)
     return pooled, by_hour
 
 

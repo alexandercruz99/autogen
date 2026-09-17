@@ -88,6 +88,34 @@ def _hour_bias_from_residuals(resid_map: dict[str, list[float]]) -> dict[str, fl
     return out
 
 
+def _bias_variants(full_bias: dict[str, float]) -> dict[str, dict[str, float]]:
+    """Conservative bias candidates — full median shift can over-correct on rolling windows."""
+    return {
+        "full": dict(full_bias),
+        "shrink_half": {h: 0.5 * float(v) for h, v in full_bias.items()},
+        "morning_8_11": {
+            "8": float(full_bias.get("8", 0.0)),
+            "11": float(full_bias.get("11", 0.0)),
+            "14": 0.0,
+        },
+        "morning_8_only": {
+            "8": float(full_bias.get("8", 0.0)),
+            "11": 0.0,
+            "14": 0.0,
+        },
+    }
+
+
+def _strip_point_bias(calib: dict[str, Any]) -> dict[str, Any]:
+    """Baseline compare must not inherit a previously promoted TWC bias."""
+    out = json.loads(json.dumps(calib))
+    meta = dict(out.get("meta") or {})
+    meta.pop("point_bias_by_hour", None)
+    meta.pop("tuning", None)
+    out["meta"] = meta
+    return out
+
+
 def _twc_day_splits(days: list[str], *, holdout_frac: float = 0.25, calib_frac: float = 0.35) -> dict[str, set[str]]:
     """Chronological: early = fit, middle = calib, last = holdout."""
     norm = sorted(days)
@@ -132,9 +160,10 @@ def tune_location_twc(
     if blob is None:
         return {"ok": False, "cli_id": cli_id, "error": f"model_unavailable:{status}"}
     models = blob  # full artifact so models_by_hour is honored in score/calib
-    baseline_calib = json.loads(baseline_calib_path.read_text()) if baseline_calib_path.exists() else None
-    if baseline_calib is None:
+    baseline_calib_raw = json.loads(baseline_calib_path.read_text()) if baseline_calib_path.exists() else None
+    if baseline_calib_raw is None:
         return {"ok": False, "cli_id": cli_id, "error": "baseline_calibration_missing"}
+    baseline_calib = _strip_point_bias(baseline_calib_raw)
 
     end = date.today() - timedelta(days=1)
     days = [end - timedelta(days=i) for i in range(lookback_days - 1, -1, -1)]
@@ -176,12 +205,11 @@ def tune_location_twc(
     if len(calib_rows) < max(24, MIN_CALIB_RESIDUALS // 2):
         calib_rows = [r for r in rows if r["climate_day"] not in splits["holdout"]]
 
-    # --- Candidate A: baseline GBM + hour bias / TWC residuals ---
+    # --- Candidates: baseline (no TWC bias) + bias variants + optional TWC retrain ---
     base_scored = _score_rows(hold_rows, models, baseline_calib)
 
-    def make_twc_calib(model_dict: dict[str, Any], tag: str) -> dict[str, Any]:
+    def make_twc_calib(model_dict: dict[str, Any], tag: str, bias: dict[str, float]) -> dict[str, Any]:
         resid_map = residuals_by_hour(calib_rows, model_dict)
-        bias = _hour_bias_from_residuals(resid_map)
         resid_adj: dict[str, list[float]] = {"8": [], "11": [], "14": [], "all": []}
         for hour, vals in resid_map.items():
             if hour == "all":
@@ -214,24 +242,6 @@ def tune_location_twc(
             },
         }
 
-    from kalshi_bot.models.weather.obs_engine.feeds.train_operating import _fit_quantile_models
-
-    bias_calib = make_twc_calib(models, "twc_point_bias_keep_ghcnd_gbm")
-    bias_scored = _score_rows(hold_rows, models, bias_calib)
-
-    # --- Candidate B: retrain GBM remain on TWC fit days + TWC calib ---
-    retrain_models = models
-    retrain_calib = bias_calib
-    retrain_scored = bias_scored
-    retrain_ok = False
-    if len(fit_rows) >= 36:
-        Xtr = np.nan_to_num(np.asarray([r["features"] for r in fit_rows], dtype=float), nan=-999.0)
-        ytr = np.asarray([r["remain_f"] for r in fit_rows], dtype=float)
-        retrain_models = _fit_quantile_models(Xtr, ytr)
-        retrain_calib = make_twc_calib(retrain_models, "twc_retrain_gbm_plus_bias")
-        retrain_scored = _score_rows(hold_rows, retrain_models, retrain_calib)
-        retrain_ok = True
-
     def summarize(scored: list[dict[str, Any]]) -> dict[str, Any]:
         by_h: dict[str, Any] = {}
         for hour in SUPPORTED_DECISION_HOURS_LOCAL:
@@ -255,16 +265,37 @@ def tune_location_twc(
             "by_hour": by_h,
         }
 
-    base_sum = summarize(base_scored)
-    bias_sum = summarize(bias_scored)
-    retrain_sum = summarize(retrain_scored)
+    from kalshi_bot.models.weather.obs_engine.feeds.train_operating import _fit_quantile_models
 
-    candidates = [
+    resid_for_bias = residuals_by_hour(calib_rows, models)
+    full_bias = _hour_bias_from_residuals(resid_for_bias)
+    bias_variants = _bias_variants(full_bias)
+
+    base_sum = summarize(base_scored)
+    candidates: list[tuple[str, Any, Any, dict[str, Any], Any]] = [
         ("baseline", models, baseline_calib, base_sum, base_scored),
-        ("twc_bias", models, bias_calib, bias_sum, bias_scored),
     ]
-    if retrain_ok:
+    bias_sums: dict[str, Any] = {}
+    for vname, bias in bias_variants.items():
+        tag = f"twc_point_bias_{vname}"
+        calib = make_twc_calib(models, tag, bias)
+        scored = _score_rows(hold_rows, models, calib)
+        s = summarize(scored)
+        bias_sums[vname] = s
+        candidates.append((f"twc_bias_{vname}", models, calib, s, scored))
+
+    retrain_ok = False
+    retrain_sum = None
+    if len(fit_rows) >= 36:
+        Xtr = np.nan_to_num(np.asarray([r["features"] for r in fit_rows], dtype=float), nan=-999.0)
+        ytr = np.asarray([r["remain_f"] for r in fit_rows], dtype=float)
+        retrain_models = _fit_quantile_models(Xtr, ytr)
+        retrain_bias = _hour_bias_from_residuals(residuals_by_hour(calib_rows, retrain_models))
+        retrain_calib = make_twc_calib(retrain_models, "twc_retrain_gbm_plus_bias", retrain_bias)
+        retrain_scored = _score_rows(hold_rows, retrain_models, retrain_calib)
+        retrain_sum = summarize(retrain_scored)
         candidates.append(("twc_retrain", retrain_models, retrain_calib, retrain_sum, retrain_scored))
+        retrain_ok = True
 
     def rank_key(item: tuple[str, Any, Any, dict[str, Any], Any]) -> tuple[float, float]:
         s = item[3]
@@ -280,12 +311,13 @@ def tune_location_twc(
     improved = best_name != "baseline" and rank_key(("x", None, None, best_sum, None)) < rank_key(
         ("b", None, None, base_sum, None)
     )
-    # Require at least 0.05°F overall MAE gain to promote
+    # Require at least 0.02°F overall MAE gain to promote (was 0.05; small
+    # gains still matter for settlement matching when holdout is short).
     if (
         improved
         and best_sum.get("mae_f") is not None
         and base_sum.get("mae_f") is not None
-        and (base_sum["mae_f"] - best_sum["mae_f"]) < 0.05
+        and (base_sum["mae_f"] - best_sum["mae_f"]) < 0.02
     ):
         improved = False
 
@@ -298,8 +330,10 @@ def tune_location_twc(
         "negative_remain_rows": n_neg,
         "splits": {k: sorted(v) for k, v in splits.items()},
         "point_bias_by_hour": (best_calib.get("meta") or {}).get("point_bias_by_hour"),
+        "full_bias_by_hour": full_bias,
         "baseline_holdout": base_sum,
-        "twc_bias_holdout": bias_sum,
+        "twc_bias_holdout": bias_sums.get("full"),
+        "twc_bias_variants_holdout": bias_sums,
         "twc_retrain_holdout": retrain_sum if retrain_ok else None,
         "best_candidate": best_name,
         "tuned_holdout": best_sum,

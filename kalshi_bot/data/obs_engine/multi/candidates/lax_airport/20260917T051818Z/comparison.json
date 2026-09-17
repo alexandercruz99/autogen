@@ -1,0 +1,776 @@
+{
+  "ok": true,
+  "location_id": "lax_airport",
+  "stamp": "20260917T051818Z",
+  "primary_selection_metric": "mean_crps_final_test",
+  "selection_rule": "Minimize mean CRPS on model-selection split; final test reported separately.",
+  "provisional_winner_by_selection_crps": "C_quantile_regression_forest",
+  "test_ranking_by_crps": [
+    "C_quantile_regression_forest",
+    "B_adaptive_residuals",
+    "A_corrected_baseline",
+    "D_direct_high_gbm"
+  ],
+  "test_crps": {
+    "A_corrected_baseline": 1.1360230063972319,
+    "B_adaptive_residuals": 1.1179317346397486,
+    "C_quantile_regression_forest": 0.9988467534994376,
+    "D_direct_high_gbm": 1.343783759375346
+  },
+  "test_mae": {
+    "A_corrected_baseline": 1.5123216601815823,
+    "B_adaptive_residuals": 1.5045395590142672,
+    "C_quantile_regression_forest": 1.3553826199740597,
+    "D_direct_high_gbm": 1.787289234760052
+  },
+  "split_manifest_hash": "551aa02b3815d20c",
+  "n_train_days": 942,
+  "n_selection_days": 257,
+  "n_calib_days": 257,
+  "n_test_days": 257,
+  "negative_remain_count": 0,
+  "frozen_baseline": {
+    "location_id": "lax_airport",
+    "frozen_at_utc": "2026-09-17T05:18:18.222094+00:00",
+    "source_dir": "data/obs_engine/multi/artifacts/lax_airport__daily_max_temp_f",
+    "copied": {
+      "station_corrected_v2.joblib": "copied",
+      "station_corrected_v2_calibration.json": "copied",
+      "station_corrected_v2_report.json": "copied"
+    },
+    "live_eligible": false,
+    "note": "Frozen snapshot of production artifacts at evaluation start; not modified."
+  },
+  "candidates": [
+    {
+      "candidate": "A_corrected_baseline",
+      "model_version": "candidate.A.corrected_shared_pipeline.v1",
+      "selection": {
+        "split": "selection",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.7911802853437095,
+          "bias_f": -0.5538261997405967,
+          "crps": 1.3499613781225503,
+          "interval_80_coverage": 0.8287937743190662,
+          "interval_80_width": 4.666666666666667,
+          "brier_between_1f_around_median": 0.19559806509982786,
+          "within_1f": 0.6251621271076524,
+          "within_2f": 0.7704280155642024
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 3.2217898832684826,
+            "bias_f": -1.2373540856031129,
+            "crps": 2.3850356903865744,
+            "interval_80_coverage": 0.7392996108949417,
+            "interval_80_width": 8.0,
+            "brier_between_1f_around_median": 0.1289480723384812,
+            "within_1f": 0.35019455252918286,
+            "within_2f": 0.5175097276264592,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.4552529182879377,
+            "bias_f": -0.22568093385214008,
+            "crps": 1.10847172352913,
+            "interval_80_coverage": 0.8326848249027238,
+            "interval_80_width": 4.0,
+            "brier_between_1f_around_median": 0.20432613125246393,
+            "within_1f": 0.6108949416342413,
+            "within_2f": 0.8326848249027238,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.6964980544747081,
+            "bias_f": -0.19844357976653695,
+            "crps": 0.5563767204519466,
+            "interval_80_coverage": 0.914396887159533,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.25351999170853834,
+            "within_1f": 0.914396887159533,
+            "within_2f": 0.9610894941634242,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.3398184176394292,
+          "bias_f": -0.23994811932555124,
+          "crps": 1.0052577169070456,
+          "interval_80_coverage": 0.9053177691309987,
+          "interval_80_width": 4.666666666666667,
+          "brier_between_1f_around_median": 0.20122945039357895,
+          "within_1f": 0.7185473411154345,
+          "within_2f": 0.8586251621271076
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.2762645914396886,
+            "bias_f": -0.5642023346303502,
+            "crps": 1.7159445978240235,
+            "interval_80_coverage": 0.8326848249027238,
+            "interval_80_width": 8.0,
+            "brier_between_1f_around_median": 0.16209289094952886,
+            "within_1f": 0.5058365758754864,
+            "within_2f": 0.669260700389105,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.2140077821011672,
+            "bias_f": -0.14007782101167315,
+            "crps": 0.8802612533245345,
+            "interval_80_coverage": 0.914396887159533,
+            "interval_80_width": 4.0,
+            "brier_between_1f_around_median": 0.19296186914523766,
+            "within_1f": 0.6809338521400778,
+            "within_2f": 0.914396887159533,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5291828793774319,
+            "bias_f": -0.01556420233463035,
+            "crps": 0.4195672995725792,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.24863359108597025,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9922178988326849,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.5123216601815823,
+          "bias_f": -0.5940337224383917,
+          "crps": 1.1360230063972319,
+          "interval_80_coverage": 0.8871595330739299,
+          "interval_80_width": 4.666666666666667,
+          "brier_between_1f_around_median": 0.20374452883399707,
+          "within_1f": 0.7159533073929961,
+          "within_2f": 0.8365758754863813
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.7431906614785992,
+            "bias_f": -1.6070038910505837,
+            "crps": 2.097532082831259,
+            "interval_80_coverage": 0.8054474708171206,
+            "interval_80_width": 8.0,
+            "brier_between_1f_around_median": 0.18026253103903492,
+            "within_1f": 0.5019455252918288,
+            "within_2f": 0.6264591439688716,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.2568093385214008,
+            "bias_f": -0.17509727626459143,
+            "crps": 0.8954209940532054,
+            "interval_80_coverage": 0.8871595330739299,
+            "interval_80_width": 4.0,
+            "brier_between_1f_around_median": 0.18032541706181082,
+            "within_1f": 0.6770428015564203,
+            "within_2f": 0.8871595330739299,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5369649805447471,
+            "bias_f": 0.0,
+            "crps": 0.41511594230723187,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.25064563840114534,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9961089494163424,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/lax_airport/20260917T051818Z/A_corrected_baseline",
+      "live_eligible": false
+    },
+    {
+      "candidate": "B_adaptive_residuals",
+      "model_version": "candidate.B.adaptive_location_scale.v1",
+      "s_min": 3.0,
+      "z_diag_by_hour": {
+        "8": {
+          "n": 257,
+          "mean": -0.03670139149831125,
+          "std": 0.24840442984124653
+        },
+        "11": {
+          "n": 257,
+          "mean": 0.04328311906205411,
+          "std": 0.3572561337123397
+        },
+        "14": {
+          "n": 257,
+          "mean": 0.0033595978512186474,
+          "std": 0.32491511369056775
+        }
+      },
+      "selection": {
+        "split": "selection",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.7821011673151752,
+          "bias_f": -0.25421530479896237,
+          "crps": 1.3360903343241342,
+          "interval_80_coverage": 0.8365758754863813,
+          "interval_80_width": 4.9896238651102465,
+          "brier_between_1f_around_median": 0.1915516555003195,
+          "within_1f": 0.6329442282749675,
+          "within_2f": 0.7756160830090791
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 3.178988326848249,
+            "bias_f": -0.3151750972762646,
+            "crps": 2.3403208043132975,
+            "interval_80_coverage": 0.8015564202334631,
+            "interval_80_width": 9.455252918287938,
+            "brier_between_1f_around_median": 0.11683937628280548,
+            "within_1f": 0.3735408560311284,
+            "within_2f": 0.5330739299610895,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.4708171206225682,
+            "bias_f": -0.2490272373540856,
+            "crps": 1.1164724772723837,
+            "interval_80_coverage": 0.7937743190661478,
+            "interval_80_width": 3.5136186770428015,
+            "brier_between_1f_around_median": 0.20842847765165062,
+            "within_1f": 0.6108949416342413,
+            "within_2f": 0.8326848249027238,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.6964980544747081,
+            "bias_f": -0.19844357976653695,
+            "crps": 0.5514777213867206,
+            "interval_80_coverage": 0.914396887159533,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.24938711256650228,
+            "within_1f": 0.914396887159533,
+            "within_2f": 0.9610894941634242,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.3735408560311284,
+          "bias_f": 0.08430609597924774,
+          "crps": 1.0087075348604964,
+          "interval_80_coverage": 0.8975356679636836,
+          "interval_80_width": 4.402075226977951,
+          "brier_between_1f_around_median": 0.20362731488979616,
+          "within_1f": 0.7016861219195849,
+          "within_2f": 0.8521400778210116
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.3735408560311284,
+            "bias_f": 0.41245136186770426,
+            "crps": 1.7032708820784324,
+            "interval_80_coverage": 0.8599221789883269,
+            "interval_80_width": 7.747081712062257,
+            "brier_between_1f_around_median": 0.1520424803508144,
+            "within_1f": 0.45525291828793774,
+            "within_2f": 0.6498054474708171,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.2178988326848248,
+            "bias_f": -0.14396887159533073,
+            "crps": 0.90003424323248,
+            "interval_80_coverage": 0.8638132295719845,
+            "interval_80_width": 3.4591439688715955,
+            "brier_between_1f_around_median": 0.20708549995774378,
+            "within_1f": 0.6809338521400778,
+            "within_2f": 0.914396887159533,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5291828793774319,
+            "bias_f": -0.01556420233463035,
+            "crps": 0.4228174792705764,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.25175396436083036,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9922178988326849,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.5045395590142672,
+          "bias_f": -0.2775616083009079,
+          "crps": 1.1179317346397486,
+          "interval_80_coverage": 0.8728923476005188,
+          "interval_80_width": 4.518806744487678,
+          "brier_between_1f_around_median": 0.1972254826332559,
+          "within_1f": 0.7029831387808041,
+          "within_2f": 0.8443579766536965
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.7159533073929962,
+            "bias_f": -0.6303501945525292,
+            "crps": 2.0179061134052394,
+            "interval_80_coverage": 0.8210116731517509,
+            "interval_80_width": 8.027237354085603,
+            "brier_between_1f_around_median": 0.14097034412000087,
+            "within_1f": 0.4669260700389105,
+            "within_2f": 0.6498054474708171,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.2607003891050583,
+            "bias_f": -0.20233463035019456,
+            "crps": 0.9190238146615551,
+            "interval_80_coverage": 0.8287937743190662,
+            "interval_80_width": 3.529182879377432,
+            "brier_between_1f_around_median": 0.1992085980526192,
+            "within_1f": 0.6731517509727627,
+            "within_2f": 0.8871595330739299,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5369649805447471,
+            "bias_f": 0.0,
+            "crps": 0.41686527585245076,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.2514975057271477,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9961089494163424,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/lax_airport/20260917T051818Z/B_adaptive_residuals",
+      "live_eligible": false
+    },
+    {
+      "candidate": "C_quantile_regression_forest",
+      "model_version": "candidate.C.qrf_meinshausen.v1",
+      "selection_point_bias": 0.0,
+      "selection": {
+        "split": "selection",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.6744487678339819,
+          "bias_f": -0.5460440985732814,
+          "crps": 1.2245709626502788,
+          "interval_80_coverage": 0.8456549935149157,
+          "interval_80_width": 4.38780804150454,
+          "brier_between_1f_around_median": 0.18090539270584527,
+          "within_1f": 0.6511024643320363,
+          "within_2f": 0.7963683527885862
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.8287937743190663,
+            "bias_f": -0.8210116731517509,
+            "crps": 2.0328673657762337,
+            "interval_80_coverage": 0.8132295719844358,
+            "interval_80_width": 7.509727626459144,
+            "brier_between_1f_around_median": 0.10596535487259626,
+            "within_1f": 0.3968871595330739,
+            "within_2f": 0.5914396887159533,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.4747081712062258,
+            "bias_f": -0.5953307392996109,
+            "crps": 1.0763242892686429,
+            "interval_80_coverage": 0.8171206225680934,
+            "interval_80_width": 3.6731517509727625,
+            "brier_between_1f_around_median": 0.18667283879448068,
+            "within_1f": 0.6536964980544747,
+            "within_2f": 0.8365758754863813,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.7198443579766537,
+            "bias_f": -0.22178988326848248,
+            "crps": 0.5645212329059596,
+            "interval_80_coverage": 0.9066147859922179,
+            "interval_80_width": 1.9805447470817121,
+            "brier_between_1f_around_median": 0.25007798445045876,
+            "within_1f": 0.9027237354085603,
+            "within_2f": 0.9610894941634242,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.185473411154345,
+          "bias_f": -0.2490272373540856,
+          "crps": 0.8739150418217286,
+          "interval_80_coverage": 0.9001297016861219,
+          "interval_80_width": 3.77431906614786,
+          "brier_between_1f_around_median": 0.21662342654134156,
+          "within_1f": 0.7535667963683528,
+          "within_2f": 0.8715953307392996
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.953307392996109,
+            "bias_f": -0.5291828793774319,
+            "crps": 1.4138206374351752,
+            "interval_80_coverage": 0.8443579766536965,
+            "interval_80_width": 5.782101167315175,
+            "brier_between_1f_around_median": 0.17136173423127166,
+            "within_1f": 0.5486381322957199,
+            "within_2f": 0.7159533073929961,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.0700389105058365,
+            "bias_f": -0.19844357976653695,
+            "crps": 0.8039286116918226,
+            "interval_80_coverage": 0.8871595330739299,
+            "interval_80_width": 3.5408560311284045,
+            "brier_between_1f_around_median": 0.23045201999361933,
+            "within_1f": 0.7431906614785992,
+            "within_2f": 0.9066147859922179,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5330739299610895,
+            "bias_f": -0.019455252918287938,
+            "crps": 0.4039958763381881,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 2.0,
+            "brier_between_1f_around_median": 0.24805652539913373,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9922178988326849,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.3553826199740597,
+          "bias_f": -0.522697795071336,
+          "crps": 0.9988467534994376,
+          "interval_80_coverage": 0.880674448767834,
+          "interval_80_width": 3.8495460440985734,
+          "brier_between_1f_around_median": 0.20583234843152518,
+          "within_1f": 0.74189364461738,
+          "within_2f": 0.85473411154345
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.342412451361868,
+            "bias_f": -1.1517509727626458,
+            "crps": 1.734527654044209,
+            "interval_80_coverage": 0.8054474708171206,
+            "interval_80_width": 6.070038910505836,
+            "brier_between_1f_around_median": 0.15961244978632294,
+            "within_1f": 0.5408560311284046,
+            "within_2f": 0.6809338521400778,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.1906614785992218,
+            "bias_f": -0.41245136186770426,
+            "crps": 0.864538316545426,
+            "interval_80_coverage": 0.867704280155642,
+            "interval_80_width": 3.482490272373541,
+            "brier_between_1f_around_median": 0.2088365093718919,
+            "within_1f": 0.7159533073929961,
+            "within_2f": 0.8871595330739299,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.5330739299610895,
+            "bias_f": -0.0038910505836575876,
+            "crps": 0.3974742899086776,
+            "interval_80_coverage": 0.9688715953307393,
+            "interval_80_width": 1.9961089494163424,
+            "brier_between_1f_around_median": 0.24904808613636062,
+            "within_1f": 0.9688715953307393,
+            "within_2f": 0.9961089494163424,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/lax_airport/20260917T051818Z/C_quantile_regression_forest",
+      "live_eligible": false
+    },
+    {
+      "candidate": "D_direct_high_gbm",
+      "model_version": "candidate.D.direct_high_gbm.v1",
+      "selection": {
+        "split": "selection",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 2.041504539559014,
+          "bias_f": -0.3761348897535668,
+          "crps": 1.5284415608004032,
+          "interval_80_coverage": 0.7872892347600519,
+          "interval_80_width": 4.9286640726329445,
+          "brier_between_1f_around_median": 0.16846697628331453,
+          "within_1f": 0.5499351491569391,
+          "within_2f": 0.7367055771725033
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 3.4863813229571985,
+            "bias_f": -0.7782101167315175,
+            "crps": 2.6192244385821515,
+            "interval_80_coverage": 0.7237354085603113,
+            "interval_80_width": 8.482490272373541,
+            "brier_between_1f_around_median": 0.10189233506694619,
+            "within_1f": 0.30739299610894943,
+            "within_2f": 0.4669260700389105,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.6653696498054475,
+            "bias_f": -0.07003891050583658,
+            "crps": 1.2221716899118746,
+            "interval_80_coverage": 0.8093385214007782,
+            "interval_80_width": 3.9688715953307394,
+            "brier_between_1f_around_median": 0.16539148789016547,
+            "within_1f": 0.5525291828793775,
+            "within_2f": 0.8093385214007782,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.9727626459143969,
+            "bias_f": -0.2801556420233463,
+            "crps": 0.7439285539071835,
+            "interval_80_coverage": 0.8287937743190662,
+            "interval_80_width": 2.3346303501945527,
+            "brier_between_1f_around_median": 0.23811710589283194,
+            "within_1f": 0.7898832684824902,
+            "within_2f": 0.933852140077821,
+            "group": "hour_14"
+          }
+        }
+      },
+      "calib_sanity": {
+        "split": "calib",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.3670557717250325,
+          "bias_f": -0.1556420233463035,
+          "crps": 1.032378575742782,
+          "interval_80_coverage": 0.9001297016861219,
+          "interval_80_width": 4.874189364461738,
+          "brier_between_1f_around_median": 0.20903978704801568,
+          "within_1f": 0.7107652399481194,
+          "within_2f": 0.8482490272373541
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 2.280155642023346,
+            "bias_f": -0.4357976653696498,
+            "crps": 1.7337579434090424,
+            "interval_80_coverage": 0.8754863813229572,
+            "interval_80_width": 8.447470817120623,
+            "brier_between_1f_around_median": 0.16522728518191315,
+            "within_1f": 0.5252918287937743,
+            "within_2f": 0.6614785992217899,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.1361867704280155,
+            "bias_f": -0.07003891050583658,
+            "crps": 0.8382985023882784,
+            "interval_80_coverage": 0.9066147859922179,
+            "interval_80_width": 3.9299610894941632,
+            "brier_between_1f_around_median": 0.21487698647517703,
+            "within_1f": 0.7042801556420234,
+            "within_2f": 0.9066147859922179,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.6848249027237354,
+            "bias_f": 0.038910505836575876,
+            "crps": 0.5250792814310244,
+            "interval_80_coverage": 0.9182879377431906,
+            "interval_80_width": 2.245136186770428,
+            "brier_between_1f_around_median": 0.24701508948695675,
+            "within_1f": 0.9027237354085603,
+            "within_2f": 0.9766536964980544,
+            "group": "hour_14"
+          }
+        }
+      },
+      "test": {
+        "split": "test",
+        "n": 771,
+        "overall": {
+          "n_rows": 771,
+          "n_unique_days": 257,
+          "mae_f": 1.787289234760052,
+          "bias_f": -1.0635538261997406,
+          "crps": 1.343783759375346,
+          "interval_80_coverage": 0.8508430609597925,
+          "interval_80_width": 4.885862516212711,
+          "brier_between_1f_around_median": 0.19509310578139935,
+          "within_1f": 0.6653696498054474,
+          "within_2f": 0.8158236057068742
+        },
+        "by_hour": {
+          "8": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 3.2840466926070038,
+            "bias_f": -2.311284046692607,
+            "crps": 2.524452953942134,
+            "interval_80_coverage": 0.7782101167315175,
+            "interval_80_width": 8.43579766536965,
+            "brier_between_1f_around_median": 0.16076182490649532,
+            "within_1f": 0.4396887159533074,
+            "within_2f": 0.6147859922178989,
+            "group": "hour_8"
+          },
+          "11": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 1.404669260700389,
+            "bias_f": -0.6108949416342413,
+            "crps": 0.9915002393132784,
+            "interval_80_coverage": 0.8482490272373541,
+            "interval_80_width": 3.9260700389105057,
+            "brier_between_1f_around_median": 0.1746061766019036,
+            "within_1f": 0.6614785992217899,
+            "within_2f": 0.8482490272373541,
+            "group": "hour_11"
+          },
+          "14": {
+            "n_rows": 257,
+            "n_unique_days": 257,
+            "mae_f": 0.6731517509727627,
+            "bias_f": -0.26848249027237353,
+            "crps": 0.5153980848706267,
+            "interval_80_coverage": 0.9260700389105059,
+            "interval_80_width": 2.2957198443579765,
+            "brier_between_1f_around_median": 0.24991131583579915,
+            "within_1f": 0.8949416342412452,
+            "within_2f": 0.9844357976653697,
+            "group": "hour_14"
+          }
+        }
+      },
+      "artifact_dir": "data/obs_engine/multi/candidates/lax_airport/20260917T051818Z/D_direct_high_gbm",
+      "live_eligible": false
+    }
+  ],
+  "live_eligible": false,
+  "no_orders_submitted": true,
+  "artifact_root": "data/obs_engine/multi/candidates/lax_airport/20260917T051818Z"
+}

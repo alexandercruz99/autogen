@@ -1,0 +1,34 @@
+{
+  "location_id": "nyc_central_park",
+  "display_name": "NYC Central Park",
+  "series_tickers": [
+    "HIGHNY",
+    "KXHIGHNY"
+  ],
+  "metric": "daily_max_temp_f",
+  "units": "fahrenheit",
+  "precision": "integer_fahrenheit",
+  "timezone": "America/New_York",
+  "climate_day_rule": "LST civil calendar day in America/New_York (DST-aware ZoneInfo)",
+  "observation_window": "Settlement uses the official daily maximum for the climate day as published by the market's settlement source (NWS CLI Central Park for HIGHNY; Weather Company climate maxTemp for KXHIGHNY). The calendar day does NOT end at 20:00 local; hours_to_20_local is a named feature only.",
+  "settlement_source_family": "nws_cli_or_twc_by_series",
+  "settlement_station": "KNYC / Central Park",
+  "settlement_rules_summary": "Inclusive integer \u00b0F bands for between contracts; gt/lt use strike floors/caps per market.strike_type. P(a\u2264Y\u2264b)=F(b)-F(a-1) on integer support.",
+  "train_label_source": "ghcnd_tmax",
+  "train_label_id": "USW00094728",
+  "train_label_matches_settlement": false,
+  "label_transfer_note": "GHCND TMAX at USW00094728 is a same-station proxy for NWS CLI MAXIMUM; TWC KXHIGHNY uses Weather Company climate maxTemp \u2014 transfer must be evaluated on paired TWC days. Median bias alone does not make transfer live-eligible.",
+  "metar_ids": [
+    "KNYC"
+  ],
+  "lat": 40.7789,
+  "lon": -73.9692,
+  "ghcnd_id": "USW00094728",
+  "twc_cli_id": "NYC",
+  "nws_cli_id": "NYC",
+  "hours_to_20_is_feature_only": true,
+  "hard_floor_policy": "METAR/ASOS max_so_far is evidence, not a verified settlement lower bound. CLI/TWC whole-\u00b0F preliminary floors may truncate the predictive distribution only when source+station+window match settlement; otherwise report as evidence.",
+  "live_eligible": false,
+  "data_status": "supported",
+  "extras": {}
+}

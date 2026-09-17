@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "artifact": "data/obs_engine/research/obs_nyc_neighbor_candidate.joblib",
+  "feature_set": "neighbor",
+  "train_end_day": "2025-10-04",
+  "n_train_days": 1328,
+  "selection_from_experiments": {
+    "metric": "macro_mean_mae_across_hours_on_validation",
+    "val_scores": {
+      "baseline": 2.4023566143764863,
+      "local_v2": 2.313777462159133,
+      "neighbor": 2.2991259961807837,
+      "cloud_precip": 2.2991259961807837
+    },
+    "selected": "neighbor",
+    "improved_vs_baseline_on_val": true,
+    "note": "Require >=0.05\u00b0F macro MAE gain on val to prefer over baseline for inference."
+  },
+  "promoted_for_default_predict": false,
+  "generated_at_utc": "2026-09-16T00:00:02.193498+00:00",
+  "live_eligible": false
+}

@@ -1,0 +1,37 @@
+{
+  "run_id": "audit-20260916T204915Z",
+  "generated_at_utc": "2026-09-16T20:57:37.635350+00:00",
+  "repo": "alexandercruz99/autogen",
+  "commits": {
+    "workspace_HEAD": "2a4ede86a93633746ddfc699f32274726b18fdc6",
+    "pr1_branch_HEAD": "2a4ede86a93633746ddfc699f32274726b18fdc6",
+    "origin_main": "c1646f21c062021e3a614f67499dc8fd50cb12c6"
+  },
+  "pr1_branch": "cursor/kalshi-trading-bot-5068",
+  "running_processes_observed": [
+    "tmux kalshi-dashboard: python3 -m kalshi_bot.cli --config config.yaml dashboard",
+    "tmux weather-feeds-collector"
+  ],
+  "config_note": "local config.yaml mode=live live.enabled=true obs_engine_live_eligible=false (secrets redacted, not copied)",
+  "date_range_trades": "2026-09-12 to 2026-09-16 (exchange fills); bot Store live from 2026-09-15",
+  "commands_run": [
+    "git rev-parse; gh pr view 1",
+    "sqlite3 read-only dumps of kalshi_bot.db",
+    "KalshiClient get_balance/get_orders/get_fills/get_positions/get_market (READ ONLY)",
+    "pytest tests/test_live_eligibility_gate.py tests/test_bet_rationale.py tests/test_multi_location.py tests/test_fees.py"
+  ],
+  "tests_run_result": "32 passed (see pytest_focused.txt)",
+  "artifacts": [
+    "audit_live_related.json",
+    "bot_state.json",
+    "exchange_readonly.json",
+    "findings.json",
+    "model_inventory.json",
+    "non_bot_exchange_orders.json",
+    "orders_local.json",
+    "positions_local.json",
+    "pytest_focused.txt",
+    "trade_audit.csv"
+  ],
+  "safety": "No orders placed/cancelled; no live enable changes; no retrain; no position changes by auditor"
+}

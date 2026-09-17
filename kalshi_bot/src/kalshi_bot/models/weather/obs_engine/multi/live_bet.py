@@ -29,11 +29,51 @@ from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
 )
 from kalshi_bot.models.weather.obs_engine.multi.pipeline import process_location
 from kalshi_bot.models.weather.obs_engine.multi.registry import VERIFIED_TWC_DAILY_MAX
+from kalshi_bot.models.weather.obs_engine.multi.session_budget import (
+    DEFAULT_PER_BET_MAX,
+    LIVE_SERIES_ALLOWLIST,
+    SessionBudgetPolicy,
+    commit as budget_commit,
+    default_session_id,
+    release as budget_release,
+    remaining as budget_remaining,
+    reserve as budget_reserve,
+    snapshot as budget_snapshot,
+)
 from kalshi_bot.money import D, ONE, ZERO, fp_count, fp_price
 
 logger = logging.getLogger(__name__)
 
 ARTIFACT_ROOT = Path("data/obs_engine/multi")
+
+
+def arm_store_for_live(config: AppConfig, store: Store) -> dict[str, Any]:
+    """Sync sqlite bot state to live when config is already armed.
+
+    weather-twc-bet does not go through CLI build_runtime; without this the
+    store can remain paper/live_enabled=false and block submits.
+    """
+    if config.mode != "live" or not config.live.enabled:
+        return {
+            "ok": False,
+            "error": f"config not armed (mode={config.mode}, live.enabled={config.live.enabled})",
+        }
+    state = store.get_state()
+    updates: dict[str, Any] = {
+        "mode": "live",
+        "live_enabled": True,
+        "kill_switch": False,
+        "pause_buying": False,
+        "trading_budget": str(config.trading.budget_dollars),
+    }
+    if not state.live_ack_at:
+        updates["live_ack_at"] = utcnow()
+    store.update_state(**updates)
+    store.audit(
+        "twc_live_arm",
+        f"armed for capped TWC live; budget={config.trading.budget_dollars}",
+    )
+    return {"ok": True, "updates": updates}
 
 
 def format_max_callout(
@@ -178,13 +218,15 @@ def place_capped_live_bet(
     *,
     dollars: float = 5.0,
     dry_run: bool = False,
+    session_id: str | None = None,
+    session_max: float | None = 20.0,
+    budget_root: Path | None = None,
 ) -> dict[str, Any]:
     """Size a candidate and optionally submit via ExecutionEngine (never direct create_order).
 
-    Live requires the same gates as scan: mode+live_enabled, model_live_eligible=True,
-    RiskManager, and EV requalified at the refreshed executable price. A dollar cap or
-    user_requested flag does not bypass eligibility. force_decision must not be used to
-    invent a live-eligible decision hour — callers must pass an already-valid forecast.
+    Live requires: mode+live_enabled, model_live_eligible=True (from config promotion
+    flag), RiskManager, EV requalify at refreshed ask, and session spend ≤ session_max
+    (default $20) with per-bet ≤ $5. force_decision cannot invent a live hour.
     """
     from datetime import datetime as _dt
 
@@ -193,10 +235,18 @@ def place_capped_live_bet(
     from kalshi_bot.models.base import Prediction
 
     dollars_d = D(str(dollars))
-    if dollars_d <= ZERO or dollars_d > D("25"):
-        return {"ok": False, "error": "dollars must be in (0, 25]"}
+    if dollars_d <= ZERO or dollars_d > DEFAULT_PER_BET_MAX:
+        return {"ok": False, "error": f"dollars must be in (0, {DEFAULT_PER_BET_MAX}]"}
 
+    series = str(result.get("series_ticker") or "").upper()
     callout = result.get("callout") or result.get("human_forecast")
+    sid = session_id or default_session_id()
+    pol = SessionBudgetPolicy(
+        session_id=sid,
+        max_spend=D(str(session_max if session_max is not None else 20)),
+        per_bet_max=DEFAULT_PER_BET_MAX,
+    )
+
     if not result.get("probabilities_available"):
         return {
             "ok": False,
@@ -219,6 +269,23 @@ def place_capped_live_bet(
                 "live_order_submitted": False,
             }
 
+    if series and series not in LIVE_SERIES_ALLOWLIST:
+        return {
+            "ok": False,
+            "error": f"series {series} not in live allowlist {sorted(LIVE_SERIES_ALLOWLIST)}",
+            "live_order_submitted": False,
+        }
+
+    left = budget_remaining(sid, policy=pol, root=budget_root)
+    if dollars_d > left:
+        return {
+            "ok": False,
+            "error": f"session budget remaining {left} < requested {dollars_d}",
+            "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
+            "live_order_submitted": False,
+        }
+    dollars_d = min(dollars_d, left, DEFAULT_PER_BET_MAX)
+
     candidate = _best_live_candidate(result, dollars=dollars_d)
     if candidate is None:
         return {
@@ -227,6 +294,7 @@ def place_capped_live_bet(
             "callout": callout,
             "paper_decision": result.get("paper_decision"),
             "selection_rejected": result.get("live_selection_rejected"),
+            "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
             "live_order_submitted": False,
         }
 
@@ -237,27 +305,33 @@ def place_capped_live_bet(
         "live_order_submitted": False,
         "dry_run": dry_run,
         "execution_path": "ExecutionEngine.place_individual",
+        "session_id": sid,
+        "dollars_cap": str(dollars_d),
+        "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
     }
     if dry_run:
         out["decision"] = "dry_run_would_submit_via_execution_engine"
         out["note"] = (
-            "Dry-run only. Live still requires model_live_eligible=True and RiskManager."
+            "Dry-run only. Live still requires model_live_eligible=True, "
+            "config/store armed, session budget, and RiskManager."
         )
         return out
 
-    # Transfer / exploratory TWC models are not live-eligible unless explicitly promoted.
+    # Live only when config promotion flag is on AND forecast stamped eligible.
     model_live_eligible = bool(result.get("model_live_eligible") is True)
-    if not model_live_eligible:
+    cfg_live = bool(getattr(config.models.weather, "obs_engine_live_eligible", False))
+    if not model_live_eligible or not cfg_live:
         return {
             **out,
             "ok": False,
             "error": (
-                "model_live_eligible is not True — refusing live submit. "
-                "user_requested / dollar cap cannot bypass promotion gates. "
-                "Paper/research forecasting remains available without --live."
+                "live blocked: need model_live_eligible=True and "
+                "models.weather.obs_engine_live_eligible=true "
+                f"(got model={model_live_eligible}, config={cfg_live})"
             ),
             "model_origin": result.get("model_origin"),
-            "model_live_eligible": False,
+            "model_live_eligible": model_live_eligible,
+            "obs_engine_live_eligible": cfg_live,
         }
 
     if config.mode != "live" or not config.live.enabled:
@@ -268,11 +342,36 @@ def place_capped_live_bet(
         }
 
     store = Store(config.storage.sqlite_path)
+    arm = arm_store_for_live(config, store)
+    if not arm.get("ok"):
+        return {**out, "ok": False, "error": arm.get("error"), "live_order_submitted": False}
+
+    reservation = budget_reserve(
+        dollars_d,
+        series_ticker=series or "UNKNOWN",
+        session_id=sid,
+        policy=pol,
+        root=budget_root,
+        note=f"candidate={candidate.get('ticker')}:{candidate.get('side')}",
+    )
+    if not reservation.get("ok"):
+        return {
+            **out,
+            "ok": False,
+            "error": reservation.get("error"),
+            "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
+            "live_order_submitted": False,
+        }
+    res_id = str(reservation["reservation_id"])
+    out["session_reservation"] = reservation
+
     client = KalshiClient(config.api)
     try:
-        # Do not force-enable live here; require pre-armed state.
         state = store.get_state()
         if state.mode != "live" or not state.live_enabled:
+            budget_release(
+                res_id, session_id=sid, policy=pol, root=budget_root, reason="store_not_armed"
+            )
             return {
                 **out,
                 "ok": False,
@@ -287,12 +386,16 @@ def place_capped_live_bet(
             market = {"ticker": ticker}
         status = (market.get("status") or "").lower()
         if status and status not in ("active", "open", "initialized", ""):
+            budget_release(
+                res_id, session_id=sid, policy=pol, root=budget_root, reason=f"status={status}"
+            )
             return {**out, "ok": False, "error": f"market status={status} not tradable"}
 
         raw_book = client.get_orderbook(ticker, depth=10)
         book = parse_orderbook(raw_book)
         ask = book.best_yes_ask if side == "yes" else book.best_no_ask
         if ask is None or ask <= ZERO or ask >= ONE:
+            budget_release(res_id, session_id=sid, policy=pol, root=budget_root, reason="no_ask")
             return {**out, "ok": False, "error": f"no executable {side} ask at submit time"}
 
         # Immutable decision context → Prediction for EV requalify at refreshed ask.
@@ -329,6 +432,7 @@ def place_capped_live_bet(
         evs = evaluate_binary_contract(pred, book, config.trading, quantity=qty)
         ev = next((e for e in evs if e.side == side), None)
         if ev is None or not ev.qualifies:
+            budget_release(res_id, session_id=sid, policy=pol, root=budget_root, reason="requalify_failed")
             return {
                 **out,
                 "ok": False,
@@ -341,13 +445,16 @@ def place_capped_live_bet(
                     "qualifies": ev.qualifies,
                 },
                 "live_order_submitted": False,
+                "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
             }
         if ev.capital_required > dollars_d:
+            budget_release(res_id, session_id=sid, policy=pol, root=budget_root, reason="over_dollars_cap")
             return {
                 **out,
                 "ok": False,
                 "error": f"capital_required {ev.capital_required} exceeds dollars cap {dollars_d}",
                 "live_order_submitted": False,
+                "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
             }
 
         # Cap quantity to dollar limit after EV sizing.
@@ -383,11 +490,13 @@ def place_capped_live_bet(
             correlation_keys=[
                 f"series:{result.get('series_ticker') or market.get('event_ticker')}",
                 f"twc:{result.get('location_id')}",
+                f"session:{sid}",
             ],
             mode="live",
             model_live_eligible=True,
         )
         if order is None:
+            budget_release(res_id, session_id=sid, policy=pol, root=budget_root, reason="engine_rejected")
             return {
                 **out,
                 "ok": False,
@@ -395,8 +504,23 @@ def place_capped_live_bet(
                 "live_order_submitted": False,
                 "refreshed_ask": str(ask),
                 "conservative_ev": str(ev.conservative_ev),
+                "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
             }
-        out["live_order_submitted"] = order.status not in ("rejected", "error", "canceled")
+        submitted = order.status not in ("rejected", "error", "canceled")
+        if submitted:
+            budget_commit(
+                res_id,
+                actual_spend=ev.capital_required,
+                session_id=sid,
+                policy=pol,
+                root=budget_root,
+                order_id=order.client_order_id or order.exchange_order_id,
+            )
+        else:
+            budget_release(
+                res_id, session_id=sid, policy=pol, root=budget_root, reason=f"order_status={order.status}"
+            )
+        out["live_order_submitted"] = submitted
         out["order"] = {
             "client_order_id": order.client_order_id,
             "exchange_order_id": order.exchange_order_id,
@@ -416,15 +540,26 @@ def place_capped_live_bet(
             "quantity": str(ev.quantity),
             "reason": ev.reason,
         }
+        out["session_budget"] = budget_snapshot(sid, policy=pol, root=budget_root)
         out["decision"] = f"live_{order.status}"
         return out
     except Exception as exc:
         logger.exception("live bet failed")
         try:
+            budget_release(res_id, session_id=sid, policy=pol, root=budget_root, reason=str(exc)[:200])
+        except Exception:
+            pass
+        try:
             store.audit("twc_live_error", str(exc), level="error")
         except Exception:
             pass
-        return {**out, "ok": False, "error": str(exc), "live_order_submitted": False}
+        return {
+            **out,
+            "ok": False,
+            "error": str(exc),
+            "live_order_submitted": False,
+            "session_budget": budget_snapshot(sid, policy=pol, root=budget_root),
+        }
     finally:
         client.close()
 
@@ -436,6 +571,8 @@ def weather_twc_bet(
     dollars: float = 5.0,
     live: bool = False,
     dry_run: bool = False,
+    session_id: str | None = None,
+    session_max: float = 20.0,
 ) -> dict[str, Any]:
     """CLI entry: forecast callout, then optional gated live bet via ExecutionEngine."""
     # force_decision is research/paper labeling only — never for live eligibility.
@@ -445,8 +582,19 @@ def weather_twc_bet(
         collect=True,
         force_decision=bool(dry_run) and not live,
     )
-    # Mark transfer models ineligible for live unless explicitly promoted upstream.
-    if forecast.get("model_live_eligible") is None:
+    forecast["series_ticker"] = str(series_ticker).upper()
+
+    # Eligibility: only when config flag is explicitly true (user-armed session).
+    cfg_live = bool(getattr(config.models.weather, "obs_engine_live_eligible", False))
+    tick = str(series_ticker).upper()
+    if cfg_live and tick in LIVE_SERIES_ALLOWLIST:
+        forecast["model_live_eligible"] = True
+        forecast["validation_evidence"] = (
+            forecast.get("validation_evidence")
+            or "USER_AUTHORIZED_SESSION: obs_engine_live_eligible=true; "
+            "PROMOTION_CRITERIA not fully met — capped session risk only."
+        )
+    elif forecast.get("model_live_eligible") is None:
         origin = str(forecast.get("model_origin") or "")
         forecast["model_live_eligible"] = False
         if origin.startswith("same_icao_transfer") or "transfer" in origin:
@@ -455,6 +603,7 @@ def weather_twc_bet(
                 or "RESEARCH/TWC same-ICAO transfer — not live_eligible"
             )
 
+    sid = session_id or default_session_id()
     payload: dict[str, Any] = {
         "callout": forecast.get("callout"),
         "human_forecast": forecast.get("human_forecast"),
@@ -467,22 +616,36 @@ def weather_twc_bet(
         "why_buy": (forecast.get("paper_decision") or {}).get("why_buy"),
         "model_origin": forecast.get("model_origin"),
         "model_live_eligible": forecast.get("model_live_eligible"),
+        "obs_engine_live_eligible": cfg_live,
         "live_requested": live,
         "dollars": dollars,
+        "session_id": sid,
+        "session_max": session_max,
+        "session_budget": budget_snapshot(
+            sid,
+            policy=SessionBudgetPolicy(session_id=sid, max_spend=D(str(session_max))),
+        ),
         "report": forecast.get("report"),
         "force_decision_used": bool(dry_run) and not live,
     }
     if not live:
         payload["live_order_submitted"] = False
         payload["note"] = (
-            "Pass --live only after model_live_eligible promotion. "
-            "Dry-run uses ExecutionEngine gates without create_order. "
-            "force_decision is research-only and does not enable live."
+            "Pass --live with obs_engine_live_eligible=true for capped submits. "
+            "Session max $20 / $5 per bet. force_decision is research-only."
         )
         return payload
 
-    bet = place_capped_live_bet(forecast, config, dollars=dollars, dry_run=dry_run)
+    bet = place_capped_live_bet(
+        forecast,
+        config,
+        dollars=dollars,
+        dry_run=dry_run,
+        session_id=sid,
+        session_max=session_max,
+    )
     payload["bet"] = bet
     payload["why_buy"] = (bet.get("candidate") or {}).get("why_buy") or payload.get("why_buy")
     payload["live_order_submitted"] = bool(bet.get("live_order_submitted"))
+    payload["session_budget"] = bet.get("session_budget") or payload["session_budget"]
     return payload

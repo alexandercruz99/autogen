@@ -13,4 +13,4 @@ A strategy may be marked **live_eligible** only if **all** of the following hold
 9. **Multiple testing:** log all model versions/configs tried; promotion uses only pre-registered candidate, not the max over a search without correction.
 10. **Human gate:** dashboard one-time live enablement still required; meeting these criteria does not auto-enable live.
 
-**Current status:** weather and CPI models are **research/paper only**. No strategy is live_eligible.
+**Current status:** weather and CPI models remain **research/paper by default**. A user-authorized capped session (`docs/CAPPED_LIVE_SESSION.md`: $5/bet, $20 max, NYC/CHI/LAX allowlist) can enable `obs_engine_live_eligible` without claiming PROMOTION_CRITERIA are met.

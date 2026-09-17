@@ -73,6 +73,7 @@ def test_twc_live_ineligible_model_never_hits_exchange(tmp_path):
     cfg = AppConfig(trading=TradingConfig(budget_dollars=D("25")))
     cfg.mode = "live"
     cfg.live.enabled = True
+    cfg.models.weather.obs_engine_live_eligible = False
     cfg.storage.sqlite_path = store_path
     store = Store(store_path)
     store.update_state(mode="live", live_enabled=True, paper_cash="25", trading_budget="25")
@@ -81,7 +82,13 @@ def test_twc_live_ineligible_model_never_hits_exchange(tmp_path):
     with patch("kalshi_bot.models.weather.obs_engine.multi.live_bet.KalshiClient", return_value=client), patch(
         "kalshi_bot.models.weather.obs_engine.multi.live_bet.Store", return_value=store
     ):
-        out = place_capped_live_bet(_forecast_result(model_live_eligible=False), cfg, dollars=5.0)
+        out = place_capped_live_bet(
+            _forecast_result(model_live_eligible=False),
+            cfg,
+            dollars=5.0,
+            budget_root=tmp_path / "budgets",
+            session_id="audit-ineligible",
+        )
     assert out["ok"] is False
     assert out.get("live_order_submitted") is False
     client.create_order_v2.assert_not_called()
@@ -92,11 +99,14 @@ def test_force_decision_refuses_live(tmp_path):
     cfg = AppConfig(trading=TradingConfig(budget_dollars=D("25")))
     cfg.mode = "live"
     cfg.live.enabled = True
+    cfg.models.weather.obs_engine_live_eligible = True
     out = place_capped_live_bet(
         _forecast_result(model_live_eligible=True, force_decision=True),
         cfg,
         dollars=5.0,
         dry_run=False,
+        budget_root=tmp_path / "budgets",
+        session_id="audit-force",
     )
     assert out["ok"] is False
     assert "research-only" in out["error"]
@@ -117,6 +127,7 @@ def test_requalify_rejects_when_ask_moves_040_to_090(tmp_path):
     )
     cfg.mode = "live"
     cfg.live.enabled = True
+    cfg.models.weather.obs_engine_live_eligible = True
     cfg.storage.sqlite_path = store_path
     store = Store(store_path)
     store.update_state(mode="live", live_enabled=True, paper_cash="25", trading_budget="25", peak_equity="25")
@@ -142,6 +153,8 @@ def test_requalify_rejects_when_ask_moves_040_to_090(tmp_path):
             cfg,
             dollars=5.0,
             dry_run=False,
+            budget_root=tmp_path / "budgets",
+            session_id="audit-requalify",
         )
     assert out["ok"] is False
     assert out.get("error") == "requalify_failed_at_refreshed_price"
@@ -190,6 +203,7 @@ def test_closed_market_rejects_before_submit(tmp_path):
     cfg = AppConfig(trading=TradingConfig(budget_dollars=D("25")))
     cfg.mode = "live"
     cfg.live.enabled = True
+    cfg.models.weather.obs_engine_live_eligible = True
     cfg.storage.sqlite_path = store_path
     store = Store(store_path)
     store.update_state(mode="live", live_enabled=True, paper_cash="25", trading_budget="25")
@@ -198,7 +212,13 @@ def test_closed_market_rejects_before_submit(tmp_path):
     with patch("kalshi_bot.models.weather.obs_engine.multi.live_bet.KalshiClient", return_value=client), patch(
         "kalshi_bot.models.weather.obs_engine.multi.live_bet.Store", return_value=store
     ):
-        out = place_capped_live_bet(_forecast_result(model_live_eligible=True), cfg, dollars=5.0)
+        out = place_capped_live_bet(
+            _forecast_result(model_live_eligible=True),
+            cfg,
+            dollars=5.0,
+            budget_root=tmp_path / "budgets",
+            session_id="audit-closed",
+        )
     assert out["ok"] is False
     assert "not tradable" in out["error"]
     client.create_order_v2.assert_not_called()

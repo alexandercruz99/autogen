@@ -40,14 +40,14 @@ scan:
   max_data_age_seconds: 900
 
 trading:
-  budget_dollars: 25.00           # Cap on deployable capital; deposits do NOT raise this
+  budget_dollars: 20.00           # Cap on deployable capital; deposits do NOT raise this
   min_cash_reserve_dollars: 0.00
   max_loss_per_trade_dollars: 5.00
   max_event_exposure_dollars: 5.00
-  max_portfolio_exposure_dollars: 25.00
+  max_portfolio_exposure_dollars: 20.00
   max_combo_exposure_dollars: 5.00
-  max_daily_loss_dollars: 25.00
-  max_drawdown_dollars: 25.00
+  max_daily_loss_dollars: 20.00
+  max_drawdown_dollars: 20.00
   min_net_edge: 0.05              # Minimum EV after fees (dollars per contract)
   uncertainty_buffer: 0.05        # Extra edge required vs conservative probability
   max_model_market_divergence: 0.12  # Skip unvalidated models that diverge this much from market
@@ -67,7 +67,10 @@ models:
     use_ai_forecaster: true
     # Observation-driven NYC Central Park engine — research/paper until promotion.
     obs_engine_enabled: true
+    # Hard gate for weather-twc-bet --live. Also needs session ledger ($5/bet, $20 max)
+    # under data/obs_engine/multi/session_budgets/. Prefer false until PROMOTION_CRITERIA met.
     obs_engine_live_eligible: false   # MUST stay false until docs/PROMOTION_CRITERIA met
+    # When true: allowlist KXHIGHNY/CHI/LAX only; session_budget enforces $20 total.
     obs_engine_data_dir: data/obs_engine
     archive_path: data/weather_archive.db
     # Legacy Gaussian σ (fallback model only)

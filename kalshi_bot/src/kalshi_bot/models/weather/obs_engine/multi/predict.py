@@ -300,6 +300,11 @@ def predict_from_rows(
             from datetime import date as _date
 
             ctx.climate_day = _date.fromisoformat(ctx.climate_day)
+        if isinstance(ctx.decision_time_utc, str):
+            raw_ts = ctx.decision_time_utc.replace("Z", "+00:00")
+            ctx.decision_time_utc = datetime.fromisoformat(raw_ts)
+            if ctx.decision_time_utc.tzinfo is None:
+                ctx.decision_time_utc = ctx.decision_time_utc.replace(tzinfo=timezone.utc)
         pred = predict_station_v2(
             context=ctx,
             features=fmap,

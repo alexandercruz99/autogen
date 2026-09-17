@@ -551,6 +551,14 @@ def weather_multi_status(config: AppConfig) -> dict[str, Any]:
         registry.close()
 
 
+def weather_score_twc(config: AppConfig, *, n_days: int = 5) -> dict[str, Any]:
+    """Score production predictions vs official TWC settlement highs (research)."""
+    from kalshi_bot.models.weather.obs_engine.multi.score_vs_twc import score_recent_twc
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    return score_recent_twc(n_days=n_days, data_dir=data_dir, ensure_nyc=True)
+
+
 def weather_twc_bet(
     config: AppConfig,
     *,

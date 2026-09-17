@@ -133,6 +133,11 @@ def main(argv: list[str] | None = None) -> int:
         default="chi_midway",
         help="location_id (default: chi_midway)",
     )
+    p_score = sub.add_parser(
+        "weather-score-twc",
+        help="Score production predictions vs official TWC settlement highs (no live)",
+    )
+    p_score.add_argument("--days", type=int, default=5, help="Number of completed climate days to score")
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
@@ -185,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-feeds-status",
         "weather-feeds-train",
         "weather-train-location",
+        "weather-score-twc",
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
@@ -210,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
             weather_obs_reconcile_labels,
             weather_obs_train,
             weather_obs_validate,
+            weather_score_twc,
             weather_train,
             weather_train_location,
             weather_twc_bet,
@@ -220,6 +227,16 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     weather_train_location(config, location_id=getattr(args, "location", "chi_midway")),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if args.cmd == "weather-score-twc":
+            print(
+                json.dumps(
+                    weather_score_twc(config, n_days=int(getattr(args, "days", 5))),
                     indent=2,
                     default=str,
                 )

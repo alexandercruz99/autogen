@@ -146,6 +146,9 @@ def predict_station_v2(
     vec = vector_for_model(features, feature_names)
     X = np.nan_to_num(np.asarray([vec], dtype=float), nan=-999.0)
     models = model_blob["models"]
+    by_hour = model_blob.get("models_by_hour") or {}
+    if decision_hour_local is not None and str(decision_hour_local) in by_hour:
+        models = by_hour[str(decision_hour_local)]
     q10 = float(models["q10"].predict(X)[0])
     q50 = float(models["q50"].predict(X)[0])
     q90 = float(models["q90"].predict(X)[0])
@@ -329,7 +332,7 @@ def predict_from_rows(
             coverage_adequate=bool(r.get("coverage_adequate", True)),
             decision_hour_local=hour,
             cli_applied=r.get("cli_applied"),
-            model_blob={"models": models, "feature_names": STATION_V2_FEATURES, "model_version": "batch"},
+            model_blob=models if "models" in models else {"models": models, "feature_names": STATION_V2_FEATURES, "model_version": "batch"},
             calibration=calibration,
             require_supported_hour=True,
             require_location_id=require_location_id,

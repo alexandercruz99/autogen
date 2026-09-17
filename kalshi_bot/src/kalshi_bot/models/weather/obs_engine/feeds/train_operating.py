@@ -171,6 +171,36 @@ def _fit_quantile_models(X: np.ndarray, y: np.ndarray):
     return models
 
 
+def _fit_models_by_hour(train_rows: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Fit pooled + per-decision-hour quantile GBMs (morning ≠ afternoon remain dynamics)."""
+    X_all = np.nan_to_num(np.asarray([r["features"] for r in train_rows], dtype=float), nan=-999.0)
+    y_all = np.asarray([r["remain_f"] for r in train_rows], dtype=float)
+    pooled = _fit_quantile_models(X_all, y_all)
+    by_hour: dict[str, dict[str, Any]] = {}
+    for hour in SUPPORTED_DECISION_HOURS_LOCAL:
+        subset = [r for r in train_rows if int(r["decision_hour"]) == hour]
+        if len(subset) < 80:
+            continue
+        X = np.nan_to_num(np.asarray([r["features"] for r in subset], dtype=float), nan=-999.0)
+        y = np.asarray([r["remain_f"] for r in subset], dtype=float)
+        by_hour[str(hour)] = _fit_quantile_models(X, y)
+    return pooled, by_hour
+
+
+def _models_for_hour(blob_or_models: dict[str, Any], hour: int | None) -> dict[str, Any]:
+    """Select hour-specific GBM bundle when present."""
+    if "q50" in blob_or_models and "models" not in blob_or_models:
+        # Already a bare models dict
+        models = blob_or_models
+        by_hour = {}
+    else:
+        models = blob_or_models.get("models") or blob_or_models
+        by_hour = blob_or_models.get("models_by_hour") or {}
+    if hour is not None and str(hour) in by_hour:
+        return by_hour[str(hour)]
+    return models
+
+
 def _eval_production_distribution(
     rows: list[dict[str, Any]],
     models: dict[str, Any],
@@ -272,11 +302,10 @@ def train_location_station_corrected(
     calib = [r for r in rows if r["climate_day"] in splits["calib"]]
     test = [r for r in rows if r["climate_day"] in splits["test"]]
 
-    Xtr = np.nan_to_num(np.asarray([r["features"] for r in train], dtype=float), nan=-999.0)
-    ytr = np.asarray([r["remain_f"] for r in train], dtype=float)
-    models = _fit_quantile_models(Xtr, ytr)
+    models, models_by_hour = _fit_models_by_hour(train)
+    model_blob = {"models": models, "models_by_hour": models_by_hour}
 
-    resid_map = residuals_by_hour(calib, models)
+    resid_map = residuals_by_hour(calib, model_blob)
     artifact_dir = Path("data/obs_engine/multi/artifacts") / f"{profile['location_id']}__{profile['measurement']}"
     artifact_dir.mkdir(parents=True, exist_ok=True)
     calib_path = artifact_dir / "station_corrected_v2_calibration.json"
@@ -299,10 +328,11 @@ def train_location_station_corrected(
             "availability_assumption": "archive_valid_utc_equals_availability_DISCLOSED",
             "label_note": profile.get("label_note"),
             "pooling": "none_location_specific",
+            "models_by_hour_keys": sorted(models_by_hour.keys()),
         },
     )
 
-    prod_eval = _eval_production_distribution(test, models, resid_map)
+    prod_eval = _eval_production_distribution(test, model_blob, resid_map)
 
     def raw_mae(rows_):
         by = {}
@@ -310,8 +340,9 @@ def train_location_station_corrected(
             hrs = [r for r in rows_ if int(r["decision_hour"]) == hour]
             if not hrs:
                 continue
+            hour_models = _models_for_hour(model_blob, hour)
             X = np.nan_to_num(np.asarray([r["features"] for r in hrs], dtype=float), nan=-999.0)
-            rem = models["q50"].predict(X)
+            rem = hour_models["q50"].predict(X)
             pred = np.maximum(
                 np.asarray([r["max_so_far"] for r in hrs]) + rem,
                 np.asarray([r["max_so_far"] for r in hrs]),
@@ -372,6 +403,7 @@ def train_location_station_corrected(
     model_path = artifact_dir / "station_corrected_v2.joblib"
     blob = {
         "models": models,
+        "models_by_hour": models_by_hour,
         "feature_names": STATION_V2_FEATURES,
         "feature_schema_version": FEATURE_SCHEMA_VERSION,
         "feature_set": FEATURE_SCHEMA_VERSION,
@@ -387,6 +419,7 @@ def train_location_station_corrected(
     }
     joblib.dump(blob, model_path)
     report["artifact"] = str(model_path)
+    report["models_by_hour_keys"] = sorted(models_by_hour.keys())
     (artifact_dir / "station_corrected_v2_report.json").write_text(json.dumps(report, indent=2, default=str))
 
     # NYC also mirrors into legacy feeds/models path for existing worker
@@ -397,7 +430,11 @@ def train_location_station_corrected(
         save_calibration_artifact(
             legacy / "station_corrected_v2_calibration.json",
             residuals_by_hour=resid_map,
-            meta={"location_id": "nyc_central_park", "mirrored_from": str(calib_path)},
+            meta={
+                "location_id": "nyc_central_park",
+                "mirrored_from": str(calib_path),
+                "models_by_hour_keys": sorted(models_by_hour.keys()),
+            },
         )
         (legacy / "station_corrected_v2_report.json").write_text(json.dumps(report, indent=2, default=str))
         (legacy / "station_corrected_report.json").write_text(json.dumps(report, indent=2, default=str))

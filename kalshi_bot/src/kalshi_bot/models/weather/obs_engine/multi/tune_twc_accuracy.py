@@ -131,7 +131,7 @@ def tune_location_twc(
     blob, model_art, status = load_operating_model(model_path)
     if blob is None:
         return {"ok": False, "cli_id": cli_id, "error": f"model_unavailable:{status}"}
-    models = blob.get("models") or {}
+    models = blob  # full artifact so models_by_hour is honored in score/calib
     baseline_calib = json.loads(baseline_calib_path.read_text()) if baseline_calib_path.exists() else None
     if baseline_calib is None:
         return {"ok": False, "cli_id": cli_id, "error": "baseline_calibration_missing"}

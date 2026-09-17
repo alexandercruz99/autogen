@@ -198,7 +198,8 @@ def score_location_vs_twc(
             "error": "model_missing_quantiles",
             "model_keys": list(models),
         }
-    preds = predict_from_rows(rows, models, calibration=calib, feature_key="features")
+    # Pass full blob so models_by_hour (if present) is used at the matching decision hour.
+    preds = predict_from_rows(rows, blob, calibration=calib, feature_key="features")
 
     table: list[dict[str, Any]] = []
     abs_err: list[float] = []

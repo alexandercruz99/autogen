@@ -39,10 +39,15 @@ def residuals_by_hour(
 ) -> dict[str, list[float]]:
     """outcome_tmax − (max_so_far + q50_remain) on calibration rows, keyed by decision hour."""
     by: dict[str, list[float]] = {"8": [], "11": [], "14": [], "all": []}
+    # models may be bare {q10,q50,q90} or a blob with models + models_by_hour
+    by_hour = models.get("models_by_hour") if isinstance(models, dict) else None
+    base_models = models.get("models") if isinstance(models, dict) and "models" in models else models
     for r in rows:
-        hour = str(int(r["decision_hour"]))
+        hour_i = int(r["decision_hour"])
+        hour = str(hour_i)
+        hour_models = (by_hour or {}).get(hour) or base_models
         X = np.nan_to_num(np.asarray([r[feature_key]], dtype=float), nan=-999.0)
-        rem = float(models["q50"].predict(X)[0])
+        rem = float(hour_models["q50"].predict(X)[0])
         # Same clamp as multi.predict.predict_station_v2 (operating + eval parity)
         pred = max(float(r["max_so_far"]) + rem, float(r["max_so_far"]))
         resid = float(r["label_tmax_f"]) - pred

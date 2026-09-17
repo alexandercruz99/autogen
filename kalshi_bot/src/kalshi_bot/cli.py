@@ -157,6 +157,15 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Optional single location_id (default: all supported)",
     )
+    p_replay = sub.add_parser(
+        "weather-historical-replay",
+        help="Chronological weather replay + deterministic picker (research; no live)",
+    )
+    p_replay.add_argument(
+        "--location",
+        default=None,
+        help="Optional single location_id (default: all supported)",
+    )
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
@@ -212,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-score-twc",
         "weather-tune-twc",
         "weather-eval-candidates",
+        "weather-historical-replay",
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
@@ -242,6 +252,7 @@ def main(argv: list[str] | None = None) -> int:
             weather_train_location,
             weather_tune_twc,
             weather_eval_candidates,
+            weather_historical_replay,
             weather_twc_bet,
             weather_validate,
         )
@@ -260,6 +271,16 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     weather_eval_candidates(config, location_id=getattr(args, "location", None)),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if args.cmd == "weather-historical-replay":
+            print(
+                json.dumps(
+                    weather_historical_replay(config, location_id=getattr(args, "location", None)),
                     indent=2,
                     default=str,
                 )

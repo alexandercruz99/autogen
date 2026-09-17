@@ -572,6 +572,19 @@ def weather_eval_candidates(config: AppConfig, *, location_id: str | None = None
     return run_candidate_evaluation(data_dir=data_dir)
 
 
+def weather_historical_replay(config: AppConfig, *, location_id: str | None = None) -> dict[str, Any]:
+    """Chronological weather replay + deterministic picker (research; no live orders)."""
+    from kalshi_bot.models.weather.obs_engine.multi.replay.runner import (
+        replay_location,
+        run_historical_replay,
+    )
+
+    data_dir = Path(getattr(config.models.weather, "obs_engine_data_dir", None) or "data/obs_engine")
+    if location_id:
+        return replay_location(location_id, data_dir=data_dir)
+    return run_historical_replay(data_dir=data_dir)
+
+
 def weather_score_twc(config: AppConfig, *, n_days: int = 5) -> dict[str, Any]:
     """Score production predictions vs official TWC settlement highs (research)."""
     from kalshi_bot.models.weather.obs_engine.multi.score_vs_twc import score_recent_twc

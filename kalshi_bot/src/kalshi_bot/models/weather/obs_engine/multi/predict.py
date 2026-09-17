@@ -240,6 +240,22 @@ def predict_station_v2(
             extras={"research_point_forecast_only": True},
         )
 
+    # Optional TWC-tuned hour bias (actual − pred median residual learned chronologically).
+    bias_map = (calib.get("meta") or {}).get("point_bias_by_hour") or {}
+    hour_key = str(decision_hour_local) if decision_hour_local is not None else None
+    bias = 0.0
+    if hour_key and hour_key in bias_map:
+        try:
+            bias = float(bias_map[hour_key])
+        except (TypeError, ValueError):
+            bias = 0.0
+    if bias:
+        point = float(point) + bias
+        if clamp_point_to_max_so_far:
+            point = max(point, float(max_so_far))
+        obs_constraint["point_bias_f"] = bias
+        obs_constraint["point_bias_hour"] = hour_key
+
     dist = from_empirical_residuals(
         point,
         residuals,
@@ -275,6 +291,7 @@ def predict_from_rows(
     calibration: dict[str, Any] | None,
     feature_key: str = "features",
     clamp_point_to_max_so_far: bool = True,
+    require_location_id: bool = False,
 ) -> list[dict[str, Any]]:
     """Batch helper for train/eval using the same point + residual rules as operating."""
     out: list[dict[str, Any]] = []
@@ -315,6 +332,7 @@ def predict_from_rows(
             model_blob={"models": models, "feature_names": STATION_V2_FEATURES, "model_version": "batch"},
             calibration=calibration,
             require_supported_hour=True,
+            require_location_id=require_location_id,
             clamp_point_to_max_so_far=clamp_point_to_max_so_far,
         )
         out.append(pred.as_dict())

@@ -138,6 +138,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Score production predictions vs official TWC settlement highs (no live)",
     )
     p_score.add_argument("--days", type=int, default=5, help="Number of completed climate days to score")
+    p_tune = sub.add_parser(
+        "weather-tune-twc",
+        help="Tune hour bias vs TWC actuals; promote only if holdout improves (no live)",
+    )
+    p_tune.add_argument("--days", type=int, default=100, help="Lookback days of TWC labels")
+    p_tune.add_argument(
+        "--no-promote",
+        action="store_true",
+        help="Write candidate calib only; do not replace active calibration",
+    )
     p_feeds_run = sub.add_parser("weather-feeds-run", help="Start persistent feed collector worker (foreground)")
     p_feeds_run.add_argument("--interval", type=int, default=300)
     sub.add_parser("weather-feeds-stop", help="Stop persistent feed collector worker")
@@ -191,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
         "weather-feeds-train",
         "weather-train-location",
         "weather-score-twc",
+        "weather-tune-twc",
         "weather-discover",
         "weather-multi-once",
         "weather-multi-status",
@@ -219,6 +230,7 @@ def main(argv: list[str] | None = None) -> int:
             weather_score_twc,
             weather_train,
             weather_train_location,
+            weather_tune_twc,
             weather_twc_bet,
             weather_validate,
         )
@@ -237,6 +249,20 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     weather_score_twc(config, n_days=int(getattr(args, "days", 5))),
+                    indent=2,
+                    default=str,
+                )
+            )
+            return 0
+
+        if args.cmd == "weather-tune-twc":
+            print(
+                json.dumps(
+                    weather_tune_twc(
+                        config,
+                        lookback_days=int(getattr(args, "days", 100)),
+                        promote=not bool(getattr(args, "no_promote", False)),
+                    ),
                     indent=2,
                     default=str,
                 )

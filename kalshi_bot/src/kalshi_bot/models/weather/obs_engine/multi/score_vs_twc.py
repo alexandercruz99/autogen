@@ -177,7 +177,7 @@ def score_location_vs_twc(
         tz_name=profile["timezone"],
         lat=float(profile["lat"]),
         lon=float(profile["lon"]),
-        station_id=profile["metar_id"],
+        station_id=str(profile["location_id"]),
     )
     if not rows:
         return {

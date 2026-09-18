@@ -180,6 +180,11 @@ def main(argv: list[str] | None = None) -> int:
     p_twc_bet.add_argument("--dollars", type=float, default=5.0, help="Max capital for live bet (default 5)")
     p_twc_bet.add_argument("--live", action="store_true", help="Submit capped live order (requires auth)")
     p_twc_bet.add_argument("--dry-run", action="store_true", help="With --live, size/select but do not submit")
+    p_twc_bet.add_argument(
+        "--force-decision",
+        action="store_true",
+        help="Snap to latest trained hour (8/11/14) if off-hour; required with --live off-hour",
+    )
 
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
@@ -320,6 +325,7 @@ def main(argv: list[str] | None = None) -> int:
                         dollars=float(getattr(args, "dollars", 5.0)),
                         live=bool(getattr(args, "live", False)),
                         dry_run=bool(getattr(args, "dry_run", False)),
+                        force_decision=bool(getattr(args, "force_decision", False)),
                     ),
                     indent=2,
                     default=str,

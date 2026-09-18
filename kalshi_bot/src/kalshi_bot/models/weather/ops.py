@@ -600,6 +600,7 @@ def weather_twc_bet(
     dollars: float = 5.0,
     live: bool = False,
     dry_run: bool = False,
+    force_decision: bool = False,
 ) -> dict[str, Any]:
     """TWC daily-max callout + optional user-requested capped live bet."""
     from kalshi_bot.models.weather.obs_engine.multi.live_bet import weather_twc_bet as _run
@@ -610,4 +611,5 @@ def weather_twc_bet(
         dollars=dollars,
         live=live,
         dry_run=dry_run,
+        force_decision=force_decision,
     )

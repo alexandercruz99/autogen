@@ -221,12 +221,13 @@ def place_capped_live_bet(
     session_id: str | None = None,
     session_max: float | None = 20.0,
     budget_root: Path | None = None,
+    allow_force_live: bool = False,
 ) -> dict[str, Any]:
     """Size a candidate and optionally submit via ExecutionEngine (never direct create_order).
 
     Live requires: mode+live_enabled, model_live_eligible=True (from config promotion
     flag), RiskManager, EV requalify at refreshed ask, and session spend ≤ session_max
-    (default $20) with per-bet ≤ $5. force_decision cannot invent a live hour.
+    (default $20) with per-bet ≤ $5. Off-hour force_decision only if allow_force_live.
     """
     from datetime import datetime as _dt
 
@@ -256,14 +257,15 @@ def place_capped_live_bet(
             "reason": result.get("reason"),
         }
 
-    # Live path: unsupported / forced decision hours are research-only.
+    # Live path: unsupported / forced decision hours blocked unless caller
+    # explicitly passed allow_force_live (CLI --force-decision with --live).
     if result.get("force_decision") or result.get("status") == "unsupported_decision_time":
-        if not dry_run:
+        if not dry_run and not allow_force_live:
             return {
                 "ok": False,
                 "error": (
                     "force_decision / unsupported_decision_time is research-only; "
-                    "refusing live execution"
+                    "refusing live execution (pass allow_force_live to override)"
                 ),
                 "callout": callout,
                 "live_order_submitted": False,
@@ -571,16 +573,18 @@ def weather_twc_bet(
     dollars: float = 5.0,
     live: bool = False,
     dry_run: bool = False,
+    force_decision: bool = False,
     session_id: str | None = None,
     session_max: float = 20.0,
 ) -> dict[str, Any]:
     """CLI entry: forecast callout, then optional gated live bet via ExecutionEngine."""
-    # force_decision is research/paper labeling only — never for live eligibility.
+    # Snap to trained hour when dry-run OR explicit --force-decision (incl. live).
+    use_force = bool(force_decision) or (bool(dry_run) and not live)
     forecast = run_twc_forecast(
         series_ticker,
         do_paper=True,
         collect=True,
-        force_decision=bool(dry_run) and not live,
+        force_decision=use_force,
     )
     forecast["series_ticker"] = str(series_ticker).upper()
 
@@ -621,18 +625,19 @@ def weather_twc_bet(
         "dollars": dollars,
         "session_id": sid,
         "session_max": session_max,
+        "force_decision": use_force,
         "session_budget": budget_snapshot(
             sid,
             policy=SessionBudgetPolicy(session_id=sid, max_spend=D(str(session_max))),
         ),
         "report": forecast.get("report"),
-        "force_decision_used": bool(dry_run) and not live,
+        "force_decision_used": use_force,
     }
     if not live:
         payload["live_order_submitted"] = False
         payload["note"] = (
             "Pass --live with obs_engine_live_eligible=true for capped submits. "
-            "Session max $20 / $5 per bet. force_decision is research-only."
+            "Session max $20 / $5 per bet. --force-decision snaps off-hour."
         )
         return payload
 
@@ -643,6 +648,7 @@ def weather_twc_bet(
         dry_run=dry_run,
         session_id=sid,
         session_max=session_max,
+        allow_force_live=bool(force_decision),
     )
     payload["bet"] = bet
     payload["why_buy"] = (bet.get("candidate") or {}).get("why_buy") or payload.get("why_buy")

@@ -1,0 +1,12 @@
+{
+  "nws_point_forecast": {
+    "status": "partial",
+    "detail": "nws_client.daily_high_forecast exists for live/prospective pulls; no archived same-vintage NWS forecast time series matched to decision hours is wired into this candidate harness yet."
+  },
+  "hrrr": {
+    "status": "unavailable",
+    "detail": "HRRR (https://rapidrefresh.noaa.gov/hrrr/) is not ingested. Requires AWS/NOMADS archival access, station extraction, and issue-time alignment. Do not substitute reanalysis. Prospective collection recommended.",
+    "reference": "https://rapidrefresh.noaa.gov/hrrr/"
+  },
+  "claim": "No claim is made that observation-only candidates beat external forecasts."
+}

@@ -1,0 +1,43 @@
+{
+  "ok": false,
+  "mode": "RESEARCH",
+  "live_orders": false,
+  "live_order_submitted": false,
+  "generated_at_utc": "2026-09-16T05:16:09.287191+00:00",
+  "generated_at_local": "2026-09-16T01:16:09.287191-04:00",
+  "target_climate_day": "2026-09-16",
+  "feature_schema_version": "station_v2.1",
+  "coverage": null,
+  "attribution": {
+    "feeds_collected": [
+      "metar_KNYC",
+      "goes19_acmc",
+      "nexrad_okx_n0b",
+      "cli_nyc"
+    ],
+    "feeds_quality_ok": [
+      "goes19_acmc",
+      "nexrad_okx_n0b"
+    ],
+    "features_consumed_by_model": [],
+    "settlement_constraints_applied": []
+  },
+  "calibration_status": null,
+  "probabilities_available": false,
+  "paper_decision": {
+    "decision": "blocked_unsupported_decision_time",
+    "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+    "live_blocked": true
+  },
+  "decision_hour_local": null,
+  "supported_decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "status": "unsupported_decision_time",
+  "reason": "Actionable forecasts restricted to local hours (8, 11, 14); now=01:16 EDT",
+  "next_supported_run_utc": "2026-09-16T12:00:00+00:00",
+  "next_supported_run_local": "2026-09-16T08:00:00-04:00",
+  "historical_replay_ok": true
+}

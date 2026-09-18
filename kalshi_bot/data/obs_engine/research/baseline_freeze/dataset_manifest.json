@@ -1,0 +1,99 @@
+{
+  "frozen_at_utc": "2026-09-15T23:57:35.508075+00:00",
+  "station": {
+    "display": "New York City Central Park",
+    "ghcnd": "USW00094728",
+    "cli": "NYC",
+    "metar": "KNYC",
+    "lat": 40.77898,
+    "lon": -73.96925,
+    "timezone": "America/New_York",
+    "settlement_source": "NWS Daily Climate Report (CLI) for Central Park"
+  },
+  "baseline_model_version": "weather.obs_nyc.v1.1-research",
+  "current_code_model_version": "weather.obs_nyc.v1.1-research",
+  "feature_names_baseline": [
+    "hour_local",
+    "doy",
+    "tmpf",
+    "dwpf",
+    "sknt",
+    "alti",
+    "max_so_far",
+    "rise_from_min",
+    "dT_1h",
+    "dT_3h",
+    "solar_el",
+    "hours_to_20_local",
+    "precip_6h"
+  ],
+  "decision_hours_local": [
+    8,
+    11,
+    14
+  ],
+  "asos_files": [
+    {
+      "path": "data/obs_engine/asos_NYC_2022.csv",
+      "sha256": "0a310c88f8d53fdfa1b0bed3e9c3589444d782e3ffbc17ae0dc51b97e4957ef0",
+      "bytes": 542452
+    },
+    {
+      "path": "data/obs_engine/asos_NYC_2023.csv",
+      "sha256": "c41540487a08e6ab20bc5a1f9eef78411edfbe24fb298dce4a16e76f870b6164",
+      "bytes": 541930
+    },
+    {
+      "path": "data/obs_engine/asos_NYC_2024.csv",
+      "sha256": "0fdb8b4d3f259b3c7ca3b58ea953d0fbc0ea2f22ecb4ff7845b87efaaff761a9",
+      "bytes": 541180
+    },
+    {
+      "path": "data/obs_engine/asos_NYC_2025.csv",
+      "sha256": "1c536c88f0c6cf0657c8446a8c33dabfde76147a49f00a1446b7b15fe5d95f6d",
+      "bytes": 599426
+    },
+    {
+      "path": "data/obs_engine/asos_NYC_2026.csv",
+      "sha256": "fec79c93b4680feae4070ae7011bab8e9db06d70898de4df0dc26b417a39fe8d",
+      "bytes": 421671
+    }
+  ],
+  "ghcnd_path": "data/obs_engine/nyc_central_park_ghcnd_tmax_f.csv",
+  "ghcnd_sha256": "6496ef5a50aca6df410cd635f0d274ef13b02648b1ef462cab2e65040c399351",
+  "n_hourly_obs": 41424,
+  "n_asos_local_days": 1720,
+  "asos_span": [
+    "2021-12-31",
+    "2026-09-15"
+  ],
+  "n_ghcnd_days": 2448,
+  "n_overlap_climate_days": 1718,
+  "independent_station_days_note": "Independent outcomes = unique climate days with labels, not hourly row counts.",
+  "backtest_claim": {
+    "test_n_days": 333,
+    "test_span": [
+      "2025-10-05",
+      "2026-09-13"
+    ],
+    "mae_hours_f": {
+      "8": 3.45,
+      "11": 2.45,
+      "14": 1.08
+    },
+    "beats_climatology": true,
+    "beats_decision_time_nws": false
+  },
+  "software": {
+    "python": "3.12.3",
+    "platform": "Linux-6.12.94+-x86_64-with-glibc2.39",
+    "numpy": "2.4.4",
+    "sklearn": "1.9.1"
+  },
+  "artifact_sha256": {
+    "obs_nyc_q50_baseline.joblib": "88ceff95764a6dd8922a52ef506712561fab46e74387b3db526db7e6d7e83e12",
+    "backtest_report.json": "dbc1c6c33afbde7beb146d9c85787b60e46b1c4ef32dc7f396bdb9ecd2876757",
+    "features.py": "02ef7259d4742aae230ebf14d0af9e16b63b6f6b8a9d4a3bdc7bf834d03e335c",
+    "backtest.py": "4a405c5d3ca5d2d93b1dcfe30dd9cfcd92b89e85fb71746732653c6b7dcd67b9"
+  }
+}

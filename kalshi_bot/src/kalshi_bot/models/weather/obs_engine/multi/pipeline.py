@@ -747,7 +747,10 @@ def _paper_evaluate(
     from kalshi_bot.config import load_config
     from kalshi_bot.models.weather.obs_engine.multi.bet_rationale import (
         format_bet_rationale,
-        select_forecast_consistent,
+    )
+    from kalshi_bot.models.weather.obs_engine.multi.paper_policy import (
+        DEFAULT_PAPER_POLICY,
+        select_high_confidence_paper,
         selection_rule_text,
     )
 
@@ -888,14 +891,27 @@ def _paper_evaluate(
             median_f = getattr(pred, "median_f", None)
             median_f = float(median_f) if median_f is not None else None
 
+        remain = getattr(pred, "remain_q10_q50_q90", None)
+        if remain is None and hasattr(pred, "as_dict"):
+            remain = (pred.as_dict() or {}).get("remain_q10_q50_q90")
+
+        paper_policy = DEFAULT_PAPER_POLICY
         paper_decision: dict[str, Any]
         best = None
         rejected: list[dict[str, Any]] = []
         if median_f is not None:
-            best, rejected = select_forecast_consistent(
-                evaluations, median_f=median_f, brackets=brackets
+            best, rejected = select_high_confidence_paper(
+                evaluations,
+                median_f=median_f,
+                brackets=brackets,
+                decision_hour_local=decision_hour,
+                max_so_far=float(max_so_far) if max_so_far is not None else None,
+                remain_q10_q50_q90=remain,
+                policy=paper_policy,
             )
         out["selection_rejected"] = rejected
+        out["paper_policy"] = paper_policy.version
+        out["selection_rule"] = selection_rule_text(paper_policy)
 
         if best is not None and median_f is not None:
             oid = f"paper-{location_id}-{best['ticker']}-{best['side']}-{climate_day.isoformat()}-{decision_hour}"
@@ -915,7 +931,7 @@ def _paper_evaluate(
                 qty=D(best["qty"]),
                 price=D(best["ask"]),
                 fees=D(best["fees"]),
-                decision_reason="paper_sim_fill_unvalidated",
+                decision_reason="paper_sim_fill_high_confidence",
                 details={**best, "why_buy": why},
                 location_id=location_id,
                 series_ticker=series_ticker,
@@ -925,10 +941,10 @@ def _paper_evaluate(
             if sim.get("ok") and sim.get("filled"):
                 paper_decision = {
                     **best,
-                    "decision": "paper_sim_fill_unvalidated",
-                    "reason": "Simulated taker fill; live order NOT submitted",
+                    "decision": "paper_sim_fill_high_confidence",
+                    "reason": "High-confidence paper sim; live order NOT submitted",
                     "why_buy": why,
-                    "selection_rule": selection_rule_text(),
+                    "selection_rule": selection_rule_text(paper_policy),
                     "sim": sim,
                     "live_blocked": True,
                     "live_order_submitted": False,
@@ -944,12 +960,12 @@ def _paper_evaluate(
                     "live_order_submitted": False,
                 }
         elif evaluations:
-            # No forecast-consistent +EV row — do not fall back to raw max-EV cheap tickets.
+            # No high-confidence YES — do not fall back to cheap NO / tails.
             paper_decision = {
-                "decision": "paper_skip_no_forecast_consistent_ev",
+                "decision": "paper_skip_no_high_confidence",
                 "reason": (
-                    "No +EV contract within the forecast band after min model_p filter; "
-                    "refusing cheapest-ask fallback"
+                    "No YES ticket with model_p≥0.95 on the modal/locked bracket; "
+                    f"{selection_rule_text(paper_policy)}"
                 ),
                 "selection_rejected": rejected,
                 "live_blocked": True,

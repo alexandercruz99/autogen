@@ -69,6 +69,7 @@ models:
     obs_engine_enabled: true
     # Hard gate for weather-twc-bet --live. Also needs session ledger ($5/bet, $20 max)
     # under data/obs_engine/multi/session_budgets/. Prefer false until PROMOTION_CRITERIA met.
+    # Paper path uses paper.high_confidence.v1 (YES-only p≥0.95) — see docs/PAPER_HIGH_CONFIDENCE.md
     obs_engine_live_eligible: false   # MUST stay false until docs/PROMOTION_CRITERIA met
     # When true: allowlist KXHIGHNY/CHI/LAX only; session_budget enforces $20 total.
     obs_engine_data_dir: data/obs_engine

@@ -1,0 +1,43 @@
+{
+  "mode": "HISTORICAL_REPLAY",
+  "decision_time_utc": "2025-07-15T18:00:00+00:00",
+  "decision_time_local": "2025-07-15T14:00:00-04:00",
+  "target_climate_day": "2025-07-15",
+  "lst_climate_day_check": "2025-07-15",
+  "feature_schema_version": "station_v2.1",
+  "coverage": {
+    "climate_day": "2025-07-15",
+    "decision_time_utc": "2025-07-15T18:00:00+00:00",
+    "n_temp_obs": 24,
+    "n_obs_total": 24,
+    "first_obs_utc": "2025-07-15T05:15:00+00:00",
+    "last_obs_utc": "2025-07-15T17:51:00+00:00",
+    "max_gap_hours": 1.0,
+    "late_start": false,
+    "gaps_exceeded": false,
+    "adequate": true,
+    "max_so_far": 84.0,
+    "max_so_far_status": "adequate_daytime_coverage",
+    "notes": [
+      "Coverage meets documented minimums; still not a final CLI maximum"
+    ],
+    "requirements": {
+      "min_temp_obs": 4,
+      "max_gap_hours": 3.5,
+      "late_start_hour_lst": 10,
+      "climate_day_basis": "LST_UTC-5"
+    }
+  },
+  "max_so_far": 84.0,
+  "label_tmax_f": 86,
+  "remain_true": 2.0,
+  "q50_remain": 2.069533901731078,
+  "production_median_f": 86,
+  "production_abs_err": 0,
+  "calibration_status": "calibration_hour_14",
+  "n_residuals": 249,
+  "feeds_contributing_to_prediction": [
+    "asos_NYC_archive"
+  ],
+  "live_orders": false
+}

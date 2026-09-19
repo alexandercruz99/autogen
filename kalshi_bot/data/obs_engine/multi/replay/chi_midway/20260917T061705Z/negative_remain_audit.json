@@ -1,0 +1,33 @@
+{
+  "count": 3,
+  "rate": 0.0005839984426708196,
+  "causes": {
+    "asos_max_above_ghcnd_tmax": 0,
+    "rounding_or_source_mismatch_suspect": 0,
+    "near_zero_neg": 3
+  },
+  "policy": "Negative remain labels are KEPT for training. They can reflect future cooling after an early peak missed by the label source, ASOS vs GHCND mismatch, rounding, or reporting-source differences. They are not clipped without audit.",
+  "examples": [
+    {
+      "climate_day": "2022-12-17",
+      "decision_hour": 8,
+      "max_so_far": 26.1,
+      "label_tmax_f": 26.0,
+      "remain_f": -0.10000000000000142
+    },
+    {
+      "climate_day": "2022-12-17",
+      "decision_hour": 11,
+      "max_so_far": 26.1,
+      "label_tmax_f": 26.0,
+      "remain_f": -0.10000000000000142
+    },
+    {
+      "climate_day": "2022-12-17",
+      "decision_hour": 14,
+      "max_so_far": 26.1,
+      "label_tmax_f": 26.0,
+      "remain_f": -0.10000000000000142
+    }
+  ]
+}
